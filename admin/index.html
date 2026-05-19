@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="admin.css" />
   <link rel="stylesheet" href="editor.css" />
+  <link rel="stylesheet" href="attendance.css" />
 </head>
 <body data-state="loading">
   <!-- LOADING -->
@@ -52,6 +53,9 @@
       <nav class="admin-sidebar__nav" id="sidebarNav">
         <a href="#/paginas" data-view="pages" class="is-active">
           <span class="admin-sidebar__icon" data-icon="pages"></span> Páginas
+        </a>
+        <a href="#/presenca" data-view="presenca" data-secretaria-only hidden>
+          <span class="admin-sidebar__icon" data-icon="attendance"></span> Presença
         </a>
         <a href="#/membros" data-view="members" data-admin-only hidden>
           <span class="admin-sidebar__icon" data-icon="users"></span> Membros

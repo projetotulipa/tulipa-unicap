@@ -11,6 +11,11 @@ import {
 import { renderPages }      from './views/pages.js';
 import { renderPageEditor } from './views/page-editor.js';
 import { renderMembers }    from './views/members.js';
+import { renderAttendanceDashboard } from './views/attendance.js';
+import { renderAttendanceGroups }    from './views/attendance-groups.js';
+import { renderAttendancePeople }    from './views/attendance-people.js';
+import { renderAttendanceGroupDetail } from './views/attendance-group.js';
+import { renderAttendanceMeeting }   from './views/attendance-meeting.js';
 
 // ---------- estado ----------
 const state = {
@@ -101,6 +106,10 @@ function enterApp() {
   for (const el of $$('[data-admin-only]')) {
     el.hidden = state.role !== 'admin';
   }
+  // mostra "Presença" pra admin OR setor secretaria
+  for (const el of $$('[data-secretaria-only]')) {
+    el.hidden = !canManageAttendance();
+  }
 
   setBodyState('app');
   if (!location.hash || location.hash === '#/' || location.hash === '#/visao-geral' || location.hash === '#/navbar') {
@@ -135,6 +144,7 @@ function route() {
       markDirty: (scope) => { state.dirty.add(scope); },
       clearDirty: (scope) => { state.dirty.delete(scope); },
       canEditScope,
+      canManageAttendance,
     },
   };
 
@@ -143,6 +153,13 @@ function route() {
       case 'paginas':
         if (parts[1]) return renderPageEditor(ctx, parts[1]);
         return renderPages(ctx);
+      case 'presenca':
+        if (!canManageAttendance()) { location.hash = '#/paginas'; return; }
+        if (parts[1] === 'grupos' && parts[2]) return renderAttendanceGroupDetail(ctx, parts[2]);
+        if (parts[1] === 'grupos')             return renderAttendanceGroups(ctx);
+        if (parts[1] === 'pessoas')            return renderAttendancePeople(ctx);
+        if (parts[1] === 'encontros' && parts[2]) return renderAttendanceMeeting(ctx, parts[2]);
+        return renderAttendanceDashboard(ctx);
       case 'membros':
         if (state.role !== 'admin') {
           location.hash = '#/paginas'; return;
@@ -155,6 +172,11 @@ function route() {
     console.error(e);
     main.innerHTML = `<div class="empty-state">Erro ao carregar: ${escapeHtml(e?.message || String(e))}</div>`;
   }
+}
+
+function canManageAttendance() {
+  if (state.role === 'admin') return true;
+  return state.sector === 'secretaria';
 }
 
 function canEditScope(scope) {

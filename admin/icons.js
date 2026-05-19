@@ -145,6 +145,63 @@ const ICONS = {
     <path d="M9 13 L16 13 M9 17 L14 17"/>
   </svg>`,
 
+  // ---- presença ----
+  calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="3" y="5" width="18" height="16" rx="2"/>
+    <path d="M3 9 L21 9"/>
+    <path d="M8 3 L8 7 M16 3 L16 7"/>
+  </svg>`,
+
+  attendance: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="4" y="3" width="16" height="18" rx="2"/>
+    <path d="M8 8 L16 8 M8 12 L16 12 M8 16 L13 16"/>
+    <path d="M8 8 L8 16" opacity="0.4"/>
+  </svg>`,
+
+  group: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="9" cy="9" r="3"/>
+    <circle cx="17" cy="11" r="2.5"/>
+    <path d="M3 19 C 3 15.5, 6 14, 9 14 C 12 14, 15 15.5, 15 19"/>
+    <path d="M14 16 C 16 15, 21 15, 21 19"/>
+  </svg>`,
+
+  'user-plus': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="9" cy="8" r="3.5"/>
+    <path d="M3 20 C 3 16, 6 14, 9 14 C 11 14, 13 14.7, 14.4 16"/>
+    <path d="M18 14 L18 20 M15 17 L21 17"/>
+  </svg>`,
+
+  'check-circle': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9"/>
+    <path d="M8 12.5 L11 15.5 L16.5 9.5"/>
+  </svg>`,
+
+  'x-circle': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9"/>
+    <path d="M9 9 L15 15 M15 9 L9 15"/>
+  </svg>`,
+
+  alert: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 3 L22 20 L2 20 Z"/>
+    <path d="M12 10 L12 14"/>
+    <circle cx="12" cy="17" r="0.9" fill="currentColor"/>
+  </svg>`,
+
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 6 L20 6"/>
+    <path d="M9 6 L9 4 L15 4 L15 6"/>
+    <path d="M6 6 L7 20 C 7 20.6, 7.4 21, 8 21 L16 21 C 16.6 21, 17 20.6, 17 20 L18 6"/>
+    <path d="M10 11 L10 17 M14 11 L14 17"/>
+  </svg>`,
+
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+    <path d="M12 5 L12 19 M5 12 L19 12"/>
+  </svg>`,
+
+  star: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 3 L14.5 9 L21 9.5 L16 14 L17.5 20.5 L12 17 L6.5 20.5 L8 14 L3 9.5 L9.5 9 Z"/>
+  </svg>`,
+
   // marca brand do TULIPA (uso no login/sidebar)
   brand: `<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M16 5 C 11.5 9, 10.4 15, 12.5 20 C 14.2 23.4, 16 24.5, 16 24.5 C 16 24.5, 17.8 23.4, 19.5 20 C 21.6 15, 20.5 9, 16 5 Z" fill="currentColor" fill-opacity="0.12"/>
