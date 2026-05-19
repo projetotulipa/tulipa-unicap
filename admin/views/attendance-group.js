@@ -3,6 +3,7 @@
 import { icon } from '../icons.js';
 import * as data from '../attendance/data.js';
 import { calcMonthlyStatus, STATUS_COLORS, currentMonthRange, monthLabel } from '../attendance/status.js';
+import { categoryLabel } from '../attendance/categories.js';
 
 const WEEKDAY_LABELS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const SCHEDULE_LABELS = { weekly: 'Toda semana', biweekly: 'Quinzenal', monthly: 'Mensal', manual: 'Sob demanda' };
@@ -61,6 +62,13 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
         </header>
         <div id="membersList" class="empty-state">carregando…</div>
       </section>
+
+      <section class="att-section">
+        <header class="att-section__head">
+          <h2>Faltas justificadas · ${escapeHtml(monthLabel(year, month))}</h2>
+        </header>
+        <div id="justificationsList" class="empty-state">carregando…</div>
+      </section>
     </div>
   `;
 
@@ -96,7 +104,39 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
   await Promise.all([
     loadMeetings(groupId, group, from, to),
     loadMembers(groupId, group, from, to),
+    loadJustifications(groupId, from, to),
   ]);
+}
+
+async function loadJustifications(groupId, from, to) {
+  const box = document.getElementById('justificationsList');
+  if (!box) return;
+  const { data: rows, error } = await data.listJustifications(groupId, from, to);
+  if (error) { box.innerHTML = `<p class="muted">${error.message}</p>`; return; }
+  if (!rows?.length) {
+    box.innerHTML = `<p class="muted">Nenhuma falta justificada este mês.</p>`;
+    return;
+  }
+  box.className = '';
+  box.innerHTML = `
+    <table class="table att-just-table">
+      <thead><tr><th>Data</th><th>Pessoa</th><th>Categoria</th><th>Motivo</th></tr></thead>
+      <tbody>
+        ${rows.map((r) => {
+          const d = r.meeting?.date ? new Date(r.meeting.date + 'T00:00:00') : null;
+          const dStr = d ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '—';
+          return `
+            <tr>
+              <td>${escapeHtml(dStr)}</td>
+              <td><strong>${escapeHtml(r.person?.full_name || '—')}</strong></td>
+              <td><span class="att-pill">${escapeHtml(categoryLabel(r.justification_category))}</span></td>
+              <td class="muted">${escapeHtml(r.notes || '—')}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 async function loadMeetings(groupId, group, from, to) {

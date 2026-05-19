@@ -2,6 +2,7 @@
 
 import { icon } from '../icons.js';
 import * as data from '../attendance/data.js';
+import { JUSTIFICATION_CATEGORIES, categoryLabel } from '../attendance/categories.js';
 
 export async function renderAttendanceMeeting(ctx, meetingId) {
   const { root } = ctx;
@@ -95,39 +96,32 @@ export async function renderAttendanceMeeting(ctx, meetingId) {
 
   // switches
   for (const li of document.querySelectorAll('.att-roster-row')) {
-    const personId = li.dataset.personId;
-    const presentSw = li.querySelector('[data-action="toggle-present"]');
-    const justifySw = li.querySelector('[data-action="toggle-justified"]');
-
-    presentSw.addEventListener('change', async () => {
-      await save(personId, presentSw.checked, justifySw?.checked || false, li);
-    });
-    justifySw.addEventListener('change', async () => {
-      // marcar justified implica falta (não presente)
-      if (justifySw.checked) presentSw.checked = false;
-      await save(personId, presentSw.checked, justifySw.checked, li);
-    });
+    wireRow(li);
   }
 
   document.getElementById('markAllPresent').addEventListener('click', async () => {
-    const rows = Array.from(document.querySelectorAll('.att-roster-row'));
-    for (const li of rows) {
+    for (const li of document.querySelectorAll('.att-roster-row')) {
       const sw = li.querySelector('[data-action="toggle-present"]');
-      if (!sw.checked) {
+      const jsw = li.querySelector('[data-action="toggle-justified"]');
+      const justBlock = li.querySelector('.att-justification');
+      if (!sw.checked || jsw.checked) {
         sw.checked = true;
-        const jsw = li.querySelector('[data-action="toggle-justified"]');
-        if (jsw) jsw.checked = false;
-        await save(li.dataset.personId, true, false, li);
+        jsw.checked = false;
+        if (justBlock) justBlock.hidden = true;
+        await save(li.dataset.personId, { isPresent: true, justified: false, category: null, notes: null }, li);
       }
     }
   });
   document.getElementById('markAllAbsent').addEventListener('click', async () => {
-    const rows = Array.from(document.querySelectorAll('.att-roster-row'));
-    for (const li of rows) {
+    for (const li of document.querySelectorAll('.att-roster-row')) {
       const sw = li.querySelector('[data-action="toggle-present"]');
-      if (sw.checked) {
+      const jsw = li.querySelector('[data-action="toggle-justified"]');
+      const justBlock = li.querySelector('.att-justification');
+      if (sw.checked || jsw.checked) {
         sw.checked = false;
-        await save(li.dataset.personId, false, false, li);
+        jsw.checked = false;
+        if (justBlock) justBlock.hidden = true;
+        await save(li.dataset.personId, { isPresent: false, justified: false, category: null, notes: null }, li);
       }
     }
   });
@@ -136,48 +130,123 @@ export async function renderAttendanceMeeting(ctx, meetingId) {
 function personRow(person, att) {
   const isPresent = !!att?.is_present;
   const isJustified = !!att?.justified;
+  const category = att?.justification_category || '';
+  const notes = att?.notes || '';
   return `
     <div class="att-roster-row ${isPresent ? 'is-present' : ''} ${isJustified ? 'is-justified' : ''}" data-person-id="${escapeAttr(person.id)}">
-      <div class="att-roster-row__main">
-        <strong>${escapeHtml(person.full_name)}</strong>
-        ${person.is_primary ? `<span class="att-pill att-pill--primary">${icon('star', { size: 11 })}<span style="margin-left:4px;">prioritário</span></span>` : ''}
-        ${person.email ? `<span class="muted" style="font-size:12px;">${escapeHtml(person.email)}</span>` : ''}
+      <div class="att-roster-row__top">
+        <div class="att-roster-row__main">
+          <strong>${escapeHtml(person.full_name)}</strong>
+          ${person.is_primary ? `<span class="att-pill att-pill--primary">${icon('star', { size: 11 })}<span style="margin-left:4px;">prioritário</span></span>` : ''}
+          ${person.email ? `<span class="muted" style="font-size:12px;">${escapeHtml(person.email)}</span>` : ''}
+        </div>
+        <div class="att-roster-row__actions">
+          <label class="att-switch" title="${isPresent ? 'Presente' : 'Ausente'}">
+            <input type="checkbox" data-action="toggle-present" ${isPresent ? 'checked' : ''} />
+            <span class="att-switch__track">
+              <span class="att-switch__thumb"></span>
+            </span>
+            <span class="att-switch__label">${isPresent ? 'presente' : 'ausente'}</span>
+          </label>
+          <label class="att-checkbox" title="Falta justificada (atestado, viagem, etc)">
+            <input type="checkbox" data-action="toggle-justified" ${isJustified ? 'checked' : ''} />
+            <span class="att-checkbox__mark">${icon('check', { size: 12 })}</span>
+            <span class="att-checkbox__label">justificar falta</span>
+          </label>
+        </div>
       </div>
-      <div class="att-roster-row__actions">
-        <label class="att-switch" title="${isPresent ? 'Presente' : 'Ausente'}">
-          <input type="checkbox" data-action="toggle-present" ${isPresent ? 'checked' : ''} />
-          <span class="att-switch__track">
-            <span class="att-switch__thumb"></span>
-          </span>
-          <span class="att-switch__label">${isPresent ? 'presente' : 'ausente'}</span>
-        </label>
-        <label class="att-checkbox" title="Falta justificada (atestado, viagem, etc)">
-          <input type="checkbox" data-action="toggle-justified" ${isJustified ? 'checked' : ''} />
-          <span class="att-checkbox__mark">${icon('check', { size: 12 })}</span>
-          <span class="att-checkbox__label">justificada</span>
-        </label>
+      <div class="att-justification" ${isJustified ? '' : 'hidden'}>
+        <div class="att-justification__fields">
+          <label class="drawer-field" style="margin:0; flex:0 0 200px;">
+            <span class="drawer-field__label">Categoria</span>
+            <select data-action="justification-category" class="drawer-field__input">
+              <option value="">— escolha —</option>
+              ${JUSTIFICATION_CATEGORIES.map((c) => `<option value="${escapeAttr(c.value)}" ${category === c.value ? 'selected' : ''}>${escapeHtml(c.label)}</option>`).join('')}
+            </select>
+          </label>
+          <label class="drawer-field" style="margin:0; flex:1;">
+            <span class="drawer-field__label">Motivo (opcional)</span>
+            <input type="text" data-action="justification-notes" class="drawer-field__input"
+                   value="${escapeAttr(notes)}"
+                   placeholder="ex.: atestado médico, viagem de trabalho…" />
+          </label>
+        </div>
       </div>
     </div>
   `;
 }
 
-async function save(personId, isPresent, justified, row) {
-  const sw = row.querySelector('[data-action="toggle-present"]');
+function wireRow(li) {
+  const personId = li.dataset.personId;
+  const presentSw = li.querySelector('[data-action="toggle-present"]');
+  const justifySw = li.querySelector('[data-action="toggle-justified"]');
+  const justBlock = li.querySelector('.att-justification');
+  const catSel    = li.querySelector('[data-action="justification-category"]');
+  const notesIn   = li.querySelector('[data-action="justification-notes"]');
+
+  function readState() {
+    return {
+      isPresent: !!presentSw.checked,
+      justified: !!justifySw.checked,
+      category: catSel?.value || null,
+      notes: notesIn?.value?.trim() || null,
+    };
+  }
+
+  presentSw.addEventListener('change', async () => {
+    if (presentSw.checked) {
+      // presente exclui justificada
+      justifySw.checked = false;
+      justBlock.hidden = true;
+    }
+    await save(personId, readState(), li);
+  });
+
+  justifySw.addEventListener('change', async () => {
+    if (justifySw.checked) {
+      presentSw.checked = false;
+      justBlock.hidden = false;
+      // foco rápido no select se vazio
+      if (!catSel.value) catSel.focus();
+    } else {
+      justBlock.hidden = true;
+    }
+    await save(personId, readState(), li);
+  });
+
+  // categoria / notes — só salva quando há justificada ativa
+  let timer = null;
+  function debouncedSave() {
+    if (!justifySw.checked) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => save(personId, readState(), li), 250);
+  }
+  catSel?.addEventListener('change', debouncedSave);
+  notesIn?.addEventListener('input', debouncedSave);
+  notesIn?.addEventListener('blur', () => {
+    if (justifySw.checked) save(personId, readState(), li);
+  });
+}
+
+async function save(personId, st, row) {
   const lab = row.querySelector('.att-switch__label');
   const status = document.getElementById('saveStatus');
 
-  row.classList.toggle('is-present', isPresent);
-  row.classList.toggle('is-justified', justified);
-  if (lab) lab.textContent = isPresent ? 'presente' : 'ausente';
+  row.classList.toggle('is-present', st.isPresent);
+  row.classList.toggle('is-justified', st.justified);
+  if (lab) lab.textContent = st.isPresent ? 'presente' : 'ausente';
 
   status.textContent = 'salvando…';
   status.className = 'publish-bar__status is-dirty';
   const meetingId = location.hash.split('/')[3];
-  const { error } = await data.markPresent(meetingId, personId, isPresent, { justified });
+  const { error } = await data.markPresent(meetingId, personId, st.isPresent, {
+    justified: st.justified,
+    notes: st.notes,
+    justification_category: st.category,
+  });
   if (error) {
     status.textContent = `erro: ${error.message}`;
     status.className = 'publish-bar__status is-error';
-    sw.checked = !isPresent;
   } else {
     status.textContent = 'salvo';
     status.className = 'publish-bar__status is-success';

@@ -167,13 +167,34 @@ export async function initMeetingAttendance(meeting_id) {
 }
 
 export async function markPresent(meeting_id, person_id, is_present, opts = {}) {
-  const { justified = false, notes = null } = opts;
+  const { justified = false, notes = null, justification_category = null } = opts;
   return supabase
     .from('attendance')
     .upsert(
-      { meeting_id, person_id, is_present, justified, notes, marked_at: new Date().toISOString() },
+      {
+        meeting_id, person_id, is_present, justified,
+        notes,
+        justification_category: justified ? justification_category : null,
+        marked_at: new Date().toISOString(),
+      },
       { onConflict: 'meeting_id,person_id' }
     );
+}
+
+export async function listJustifications(group_id, from, to) {
+  // todas as faltas justificadas de um grupo num intervalo
+  return supabase
+    .from('attendance')
+    .select(`
+      meeting_id, person_id, justified, justification_category, notes, marked_at,
+      meeting:meetings!inner(date, group_id, status),
+      person:people(full_name, email)
+    `)
+    .eq('justified', true)
+    .eq('meeting.group_id', group_id)
+    .gte('meeting.date', from)
+    .lte('meeting.date', to)
+    .order('marked_at', { ascending: false });
 }
 
 export async function bulkUpdateAttendance(meeting_id, rows) {
