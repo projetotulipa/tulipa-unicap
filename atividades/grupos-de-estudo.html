@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grupos de Estudo — TULIPA</title>
+  <meta name="description" content="Os Grupos de Estudo da TULIPA percorrem a obra de C. G. Jung, Marie-Louise von Franz, Nise da Silveira e pós-junguianos. Projeto de extensão em Psicologia Analítica na UNICAP." />
+  <meta name="theme-color" content="#3D1820" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=Cormorant+SC:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 20 C 35 30, 30 50, 35 65 C 40 78, 50 80, 50 80 C 50 80, 60 78, 65 65 C 70 50, 65 30, 50 20 Z' fill='%235C2230'/%3E%3Cpath d='M50 78 L50 95' stroke='%234A5C36' stroke-width='2' fill='none'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <a class="skip-link" href="#topo">Pular para o conteúdo</a>
+
+  <!-- =====  LOADING SCREEN  ===== -->
+  <div class="loader" id="loader" aria-hidden="true">
+    <svg class="loader__bloom" viewBox="0 0 200 200">
+      <g transform="translate(100 100)">
+        <path class="petal petal--1" d="M0 0 C -16 -10, -22 -38, 0 -60 C 22 -38, 16 -10, 0 0 Z" fill="#5C2230"/>
+        <path class="petal petal--2" d="M0 0 C -10 -16, -38 -22, -60 0 C -38 22, -10 16, 0 0 Z" fill="#7A3543"/>
+        <path class="petal petal--3" d="M0 0 C 10 -16, 38 -22, 60 0 C 38 22, 10 16, 0 0 Z" fill="#7A3543"/>
+        <path class="petal petal--4" d="M0 0 C -16 10, -22 38, 0 60 C 22 38, 16 10, 0 0 Z" fill="#4A1A26"/>
+        <circle r="6" fill="#2F3D22"/>
+      </g>
+      <path class="stem" d="M100 160 L100 200" stroke="#2F3D22" stroke-width="2" fill="none"/>
+    </svg>
+    <span class="loader__word">TULIPA</span>
+  </div>
+
+  <!-- =====  NAVIGATION  ===== -->
+  <nav class="nav on-dark" id="nav">
+    <div class="nav__inner">
+      <a href="../index.html" class="nav__brand" data-magnetic>
+        <img src="../assets/logo.png" alt="Logo TULIPA" class="nav__mark" />
+        <span>TULIPA</span>
+      </a>
+      <ul class="nav__menu">
+        <li><a href="../index.html#sobre">Quem somos</a></li>
+        <li><a href="../index.html#missao">Missão</a></li>
+        <li><a href="../index.html#nome">O nome</a></li>
+        <li><a href="../index.html#atividades">Atividades</a></li>
+        <li><a href="../index.html#departamentos">Departamentos</a></li>
+        <li><a href="../index.html#contato" class="nav__cta" data-magnetic>Contato</a></li>
+      </ul>
+      <button class="nav__burger" aria-label="Abrir menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- =====  HERO (LP)  ===== -->
+  <header class="hero hero--lp" id="topo">
+    <div class="hero__mesh" aria-hidden="true">
+      <span class="blob blob--1"></span>
+      <span class="blob blob--2"></span>
+      <span class="blob blob--3"></span>
+      <span class="blob blob--4"></span>
+      <span class="blob blob--5"></span>
+    </div>
+
+    <svg class="hero__noise" aria-hidden="true">
+      <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/></filter>
+      <rect width="100%" height="100%" filter="url(#noise)"/>
+    </svg>
+
+    <div class="petals" id="petals" aria-hidden="true"></div>
+
+    <div class="hero__content">
+      <p class="hero__breadcrumb"><a href="../index.html#atividades">← Atividades</a></p>
+
+      <div class="hero__seal" id="heroSeal" aria-hidden="true">
+        <img src="../assets/logo.png" alt="Logo TULIPA — UNICAP" />
+      </div>
+
+      <p class="hero__eyebrow">Atividade · I · TULIPA</p>
+
+      <h1 class="hero__title">
+        <span class="hero__title-line">Apresentamos os</span>
+        <span class="hero__title-display">Grupos de Estudo</span>
+      </h1>
+
+      <p class="hero__sub">
+        <span class="rule"></span>
+        <em>Leituras de Jung e pós-junguianos</em>
+        <span class="rule"></span>
+      </p>
+
+      <p class="hero__lede">
+        Encontros regulares onde a obra junguiana se torna terreno fértil —
+        para discussão, dúvida e símbolo compartilhado.
+      </p>
+
+      <div class="hero__actions">
+        <a href="#sobre" class="btn btn--primary" data-magnetic data-magnetic-strength="0.4">
+          <span>Conheça o método</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="https://instagram.com/tulipa.unicap" target="_blank" rel="noopener" class="btn btn--ghost" data-magnetic data-magnetic-strength="0.3">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="5"/>
+            <circle cx="12" cy="12" r="4"/>
+            <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+          @tulipa.unicap
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====  O QUE É  ===== -->
+  <section class="section section--sobre" id="sobre">
+    <div class="section__inner section--lp">
+      <p class="eyebrow"><span>I</span> · O que é</p>
+      <h2>A obra como caminho de individuação.</h2>
+      <p class="lead"><span class="dropcap">N</span>os Grupos de Estudo da TULIPA, percorremos juntes os textos centrais da <strong>Psicologia Analítica</strong> e os herdeiros que a continuaram. A leitura é prévia ou conjunta — e cada reunião abre espaço para discussão, dúvida e interpretação coletiva dos conceitos.</p>
+      <p>Não buscamos consenso interpretativo. Buscamos o que o texto faz vibrar em cada um — e como esse eco soma sentido ao corpo teórico, à vivência clínica e à própria psique de quem lê.</p>
+      <p>É um trabalho lento, paciente e simbólico. Um pouco como ler à luz de vela: a leitura precisa do tempo dela.</p>
+    </div>
+  </section>
+
+  <!-- =====  AUTORES (musgo) ===== -->
+  <section class="section section--missao">
+    <div class="section__inner section--lp">
+      <p class="eyebrow eyebrow--light"><span>II</span> · Autores</p>
+      <h2>Quem percorremos.</h2>
+      <p>Da obra fundadora aos pós-junguianos contemporâneos — passando pela contribuição brasileira de Nise da Silveira:</p>
+      <ul class="lp-list">
+        <li>
+          <span class="lp-list__bullet">I</span>
+          <div>
+            <strong>C. G. Jung</strong>
+            <span>Tipos Psicológicos · Memórias, Sonhos, Reflexões · Aion · O Homem e seus Símbolos · O Livro Vermelho</span>
+          </div>
+        </li>
+        <li>
+          <span class="lp-list__bullet">II</span>
+          <div>
+            <strong>Marie-Louise von Franz</strong>
+            <span>A Interpretação dos Contos de Fada · A Sombra e o Mal nos Contos de Fada · O Caminho dos Sonhos</span>
+          </div>
+        </li>
+        <li>
+          <span class="lp-list__bullet">III</span>
+          <div>
+            <strong>Erich Neumann</strong>
+            <span>História da Origem da Consciência · A Grande Mãe — estudo arquetípico do feminino</span>
+          </div>
+        </li>
+        <li>
+          <span class="lp-list__bullet">IV</span>
+          <div>
+            <strong>James Hillman</strong>
+            <span>Psicologia Arquetípica · O Código do Ser · Re-Vendo a Psicologia</span>
+          </div>
+        </li>
+        <li>
+          <span class="lp-list__bullet">V</span>
+          <div>
+            <strong>Nise da Silveira</strong>
+            <span>Psiquiatra pernambucana, fundadora do Museu de Imagens do Inconsciente — referência brasileira na clínica junguiana</span>
+          </div>
+        </li>
+        <li>
+          <span class="lp-list__bullet">VI</span>
+          <div>
+            <strong>Edward Edinger · Marion Woodman · outros pós-junguianos</strong>
+            <span>Ego e Arquétipo, o feminino arquetípico, e o que se escreve hoje no campo</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- =====  PULL QUOTE  ===== -->
+  <section class="pullquote">
+    <div class="pullquote__inner">
+      <span class="pullquote__marks" aria-hidden="true">❝</span>
+      <blockquote>
+        Conhecer a nossa <em>sombra</em> é o único meio
+        de não a projetarmos sobre o outro.
+      </blockquote>
+      <p class="pullquote__author">— C. G. Jung</p>
+    </div>
+  </section>
+
+  <!-- =====  COMO FUNCIONA (paper)  ===== -->
+  <section class="section section--detalhes">
+    <div class="section__inner section--lp">
+      <p class="eyebrow"><span>III</span> · Como funciona</p>
+      <h2>Encontros, ritmo, método.</h2>
+      <p><span class="dropcap">E</span>ncontros <strong>quinzenais</strong>, presenciais e/ou online, sem hierarquia entre os participantes. A leitura prévia é recomendada — mas não obrigatória. Quem chega sem ter lido também encontra espaço.</p>
+      <p>Cada encontro alterna entre <strong>exposição</strong> de um trecho-chave (em rotação entre membros), <strong>discussão livre</strong> e <strong>amplificação</strong> — buscando paralelos clínicos, mitológicos e culturais que dêem corpo ao conceito.</p>
+      <p>O calendário, as obras em pauta e as inscrições são divulgados pelo Instagram <a href="https://instagram.com/tulipa.unicap" target="_blank" rel="noopener"><strong>@tulipa.unicap</strong></a>.</p>
+    </div>
+  </section>
+
+  <!-- =====  PARA QUEM (cream)  ===== -->
+  <section class="section section--sobre">
+    <div class="section__inner section--lp">
+      <p class="eyebrow"><span>IV</span> · Para quem</p>
+      <h2>Quem pode participar.</h2>
+      <p class="lead"><span class="dropcap">E</span>studantes da UNICAP de <strong>qualquer curso</strong>, profissionais da saúde mental, pesquisadores e quem sente o chamado dos símbolos — independente de formação prévia em psicologia.</p>
+      <p>A inscrição é simples: mande mensagem pelo Instagram. Se for o seu primeiro contato com Jung, ainda melhor — é justamente aí que os grupos brilham.</p>
+      <p><em>O acolhimento é o nosso primeiro princípio.</em></p>
+    </div>
+  </section>
+
+  <!-- =====  OUTRAS ATIVIDADES  ===== -->
+  <section class="section section--outras">
+    <div class="section__inner">
+      <p class="eyebrow"><span>V</span> · Continue explorando</p>
+      <h2>Outras atividades da TULIPA.</h2>
+      <div class="outras-grid">
+        <a href="leitura-conjunta.html" class="outras-grid__card">
+          <span class="outras-grid__num">II</span>
+          <h3>Grupo de Leitura Conjunta</h3>
+          <p>Mitos, contos de fadas, arte e literatura sob a ótica junguiana.</p>
+          <span class="outras-grid__arrow">explorar →</span>
+        </a>
+        <a href="arteterapia.html" class="outras-grid__card outras-grid__card--moss">
+          <span class="outras-grid__num">III</span>
+          <h3>Oficina de Arteterapia</h3>
+          <p>Pintura, colagem, modelagem — a arte como linguagem da psique.</p>
+          <span class="outras-grid__arrow">explorar →</span>
+        </a>
+        <a href="https://allos.org.br" target="_blank" rel="noopener" class="outras-grid__card">
+          <span class="outras-grid__num">IV</span>
+          <h3>Parceria Associação Allos</h3>
+          <p>Formação complementar em psicologia, divulgação científica, projetos sociais.</p>
+          <span class="outras-grid__arrow">allos.org.br ↗</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====  CONTATO  ===== -->
+  <section class="section section--contato" id="contato">
+    <div class="section__inner contato__inner">
+      <div class="contato__left">
+        <p class="eyebrow"><span>VI</span> · Contato</p>
+        <h2>Quer participar dos Grupos de Estudo?</h2>
+        <p>Mande mensagem pelo Instagram, ou nos encontre presencialmente na UNICAP. <em>Acolhimento é o nosso primeiro princípio.</em></p>
+
+        <div class="contato__links">
+          <a href="https://instagram.com/tulipa.unicap" target="_blank" rel="noopener" class="contato__link" data-magnetic>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/>
+            </svg>
+            <div><strong>@tulipa.unicap</strong><span>Instagram oficial — DM aberta</span></div>
+          </a>
+          <div class="contato__link" data-magnetic>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path d="M12 22s8-8 8-13a8 8 0 1 0-16 0c0 5 8 13 8 13Z"/>
+              <circle cx="12" cy="9" r="3"/>
+            </svg>
+            <div><strong>UNICAP — Boa Vista</strong><span>R. do Príncipe, 526 · Recife/PE · 50050-900</span></div>
+          </div>
+          <a href="mailto:tulipa.unicap@gmail.com" class="contato__link" data-magnetic>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="2"/>
+              <path d="M3 7l9 6 9-6"/>
+            </svg>
+            <div><strong>Escreva para nós</strong><span>Dúvidas, parcerias e propostas</span></div>
+          </a>
+        </div>
+      </div>
+
+      <aside class="contato__card" data-tilt>
+        <div class="seal" aria-hidden="true">
+          <img src="../assets/logo.png" alt="Logo TULIPA — UNICAP" />
+        </div>
+        <blockquote class="contato__quote">
+          <em>"Conhecer-se é começar."</em>
+        </blockquote>
+      </aside>
+    </div>
+  </section>
+
+  <!-- =====  FOOTER  ===== -->
+  <footer class="footer">
+    <div class="footer__inner footer__inner--expanded">
+      <div class="footer__brand-col">
+        <div class="footer__brand">
+          <img src="../assets/logo.png" alt="Logo TULIPA — UNICAP" class="nav__mark" />
+          <p><strong>TULIPA</strong><br/>Tessitura Universitária de Linguagens em Psicologia Analítica</p>
+        </div>
+        <p class="footer__about">Projeto de extensão em Psicologia Analítica Junguiana da UNICAP. Recife, Pernambuco.</p>
+        <div class="footer__social">
+          <a href="https://instagram.com/tulipa.unicap" target="_blank" rel="noopener" aria-label="Perfil da TULIPA no Instagram">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/>
+            </svg>
+            @tulipa.unicap
+          </a>
+        </div>
+      </div>
+      <nav class="footer__nav" aria-label="Mapa do site">
+        <div class="footer__col">
+          <h4>O projeto</h4>
+          <ul>
+            <li><a href="../index.html#sobre">Quem somos</a></li>
+            <li><a href="../index.html#missao">Missão</a></li>
+            <li><a href="../index.html#nome">O nome</a></li>
+            <li><a href="../index.html#contato">Contato</a></li>
+            <li><a href="../sitemap.html">Mapa do site</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>Atividades</h4>
+          <ul>
+            <li><a href="grupos-de-estudo.html">Grupos de Estudo</a></li>
+            <li><a href="leitura-conjunta.html">Leitura Conjunta</a></li>
+            <li><a href="arteterapia.html">Arteterapia</a></li>
+            <li><a href="https://allos.org.br" target="_blank" rel="noopener">Allos ↗</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>Departamentos</h4>
+          <ul>
+            <li><a href="presidencia.html">Presidência</a></li>
+            <li><a href="professor-orientador.html">Prof. Orientador</a></li>
+            <li><a href="professor-colaborador.html">Prof. Colaborador</a></li>
+            <li><a href="midia.html">Mídia</a></li>
+            <li><a href="pesquisa.html">Pesquisa</a></li>
+            <li><a href="tesouraria.html">Tesouraria</a></li>
+            <li><a href="secretaria.html">Secretaria</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    <div class="footer__bottom">
+      <p>Projeto de extensão · Universidade Católica de Pernambuco · <span id="year"></span></p>
+      <p><em>Feito com cuidado para o desabrochar da psique.</em></p>
+    </div>
+  </footer>
+
+  <button class="to-top" id="toTop" aria-label="Voltar ao topo">
+    <svg viewBox="0 0 60 60" aria-hidden="true">
+      <g transform="translate(30 30)">
+        <path class="to-top__petal" d="M0 -18 C -10 -10, -12 0, -8 8 C -4 14, 0 16, 0 16 C 0 16, 4 14, 8 8 C 12 0, 10 -10, 0 -18 Z" fill="currentColor"/>
+        <path d="M0 16 L0 26" stroke="currentColor" stroke-width="1.4"/>
+      </g>
+    </svg>
+  </button>
+
+  <script src="../script.js" defer></script>
+</body>
+</html>

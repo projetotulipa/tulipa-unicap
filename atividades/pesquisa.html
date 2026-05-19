@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Departamento de Pesquisa — TULIPA</title>
+  <meta name="description" content="Manual de trabalho do Departamento de Pesquisa da TULIPA — sob direção de Nilo Fam com coordenação geral de Pedro Emmanuel. Fichamentos, revisão teórica, sondagem de periódicos." />
+  <meta name="theme-color" content="#3D1820" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=Cormorant+SC:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#tldr">Pular para o conteúdo</a>
+
+  <div class="loader" id="loader" aria-hidden="true">
+    <svg class="loader__bloom" viewBox="0 0 200 200"><g transform="translate(100 100)"><path class="petal petal--1" d="M0 0 C -16 -10, -22 -38, 0 -60 C 22 -38, 16 -10, 0 0 Z" fill="#5C2230"/><path class="petal petal--2" d="M0 0 C -10 -16, -38 -22, -60 0 C -38 22, -10 16, 0 0 Z" fill="#7A3543"/><path class="petal petal--3" d="M0 0 C 10 -16, 38 -22, 60 0 C 38 22, 10 16, 0 0 Z" fill="#7A3543"/><path class="petal petal--4" d="M0 0 C -16 10, -22 38, 0 60 C 22 38, 16 10, 0 0 Z" fill="#4A1A26"/><circle r="6" fill="#2F3D22"/></g></svg>
+    <span class="loader__word">TULIPA</span>
+  </div>
+
+  <nav class="nav on-dark" id="nav">
+    <div class="nav__inner">
+      <a href="../index.html" class="nav__brand" data-magnetic>
+        <img src="../assets/logo.png" alt="Logo TULIPA" class="nav__mark" />
+        <span>TULIPA</span>
+      </a>
+      <ul class="nav__menu">
+        <li><a href="../index.html#sobre">Quem somos</a></li>
+        <li><a href="../index.html#missao">Missão</a></li>
+        <li><a href="../index.html#nome">O nome</a></li>
+        <li><a href="../index.html#atividades">Atividades</a></li>
+        <li><a href="../index.html#departamentos">Departamentos</a></li>
+        <li><a href="../index.html#contato" class="nav__cta" data-magnetic>Contato</a></li>
+      </ul>
+      <button class="nav__burger" aria-label="Abrir menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero hero--lp hero--secretaria" id="topo">
+    <div class="hero__content">
+      <p class="hero__breadcrumb"><a href="../index.html#departamentos">← Departamentos</a></p>
+      <p class="hero__eyebrow">Manual de trabalho · TULIPA</p>
+      <h1 class="hero__title">
+        <span class="hero__title-line">Departamento de</span>
+        <span class="hero__title-display">Pesquisa</span>
+      </h1>
+      <p class="hero__sub"><span class="rule"></span><em>O núcleo intelectual do projeto</em><span class="rule"></span></p>
+      <div class="hero__meta">
+        <div class="hero__meta-item">
+          <span class="hero__meta-label">Diretor</span>
+          <span class="hero__meta-value">Nilo Fam</span>
+        </div>
+        <div class="hero__meta-item">
+          <span class="hero__meta-label">Coord. Geral</span>
+          <span class="hero__meta-value">Pedro Emmanuel</span>
+        </div>
+        <div class="hero__meta-item">
+          <span class="hero__meta-label">Atualizado</span>
+          <span class="hero__meta-value">NOV/2025</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- QUICK NAV -->
+  <nav class="quick-nav" aria-label="Índice do manual">
+    <ul>
+      <li><a href="#tldr">Essencial</a></li>
+      <li><a href="#finalidade">1 · Finalidade</a></li>
+      <li><a href="#setores">2 · Setores</a></li>
+      <li><a href="#fichamento">3 · Fichamento</a></li>
+      <li><a href="#revisao">4 · Revisão</a></li>
+      <li><a href="#periodicos">5 · Periódicos</a></li>
+      <li><a href="#drive">6 · Drive</a></li>
+      <li><a href="#prazos">7 · Prazos</a></li>
+      <li><a href="#direcao">8 · Direção</a></li>
+    </ul>
+  </nav>
+
+  <!-- TL;DR -->
+  <section class="section section--sobre section--tight" id="tldr">
+    <div class="section__inner" style="max-width:1200px">
+      <p class="eyebrow"><span>·</span> O essencial em 1 minuto</p>
+      <h2>Se você for novo na equipe, comece por aqui.</h2>
+
+      <div class="tldr">
+        <div class="tldr__item">
+          <span class="tldr__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="9" y1="13" x2="15" y2="13"/>
+              <line x1="9" y1="17" x2="13" y2="17"/>
+            </svg>
+          </span>
+          <div>
+            <strong>Faça o fichamento</strong>
+            <span>1-3 páginas com referências · ABNT/APA · até 7 dias</span>
+          </div>
+        </div>
+        <div class="tldr__item">
+          <span class="tldr__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 11l3 3L22 4"/>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          </span>
+          <div>
+            <strong>Revise os posts</strong>
+            <span>48h · Mídia só publica após retorno da Pesquisa</span>
+          </div>
+        </div>
+        <div class="tldr__item">
+          <span class="tldr__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </span>
+          <div>
+            <strong>Sugira conteúdo</strong>
+            <span>1-2 ideias/mês para a Mídia, baseadas em fichamentos</span>
+          </div>
+        </div>
+        <div class="tldr__item">
+          <span class="tldr__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <div>
+            <strong>Mapeie revistas</strong>
+            <span>Periódicos, editais, núcleos de escrita futuros</span>
+          </div>
+        </div>
+        <div class="tldr__item">
+          <span class="tldr__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+          </span>
+          <div>
+            <strong>Salve no Drive</strong>
+            <span>Fichamentos por grupo + data · pastas claras</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1 · FINALIDADE -->
+  <section class="section section--sobre" id="finalidade">
+    <div class="section__inner section--lp">
+      <p class="eyebrow"><span>1</span> · Finalidade</p>
+      <h2>O núcleo intelectual.</h2>
+      <p><span class="dropcap">O</span> Departamento de Pesquisa é o <strong>núcleo intelectual, teórico e metodológico</strong> do Projeto TULIPA. Responsável por assegurar a produção de conhecimento, o rigor conceitual e a sustentação científica do projeto.</p>
+      <p>Cuida da elaboração de fichamentos, validações teóricas, mapeamento de periódicos e — quando o terreno estiver pronto — futuras publicações.</p>
+      <p>É através da Pesquisa que a TULIPA ganha <em>profundidade acadêmica</em> e prepara a evolução para <strong>Liga Acadêmica</strong>.</p>
+    </div>
+  </section>
+
+  <!-- 2 · SETORES -->
+  <section class="section section--missao" id="setores">
+    <div class="section__inner section--lp">
+      <p class="eyebrow eyebrow--light"><span>2</span> · Estrutura interna</p>
+      <h2>Cinco setores, uma vocação.</h2>
+      <p style="color:#D5DBC0">O Departamento se organiza em setores especializados, conforme modelo estabelecido pelo diretor:</p>
+
+      <ul class="lp-list" style="margin-top:30px">
+        <li>
+          <span class="lp-list__bullet">I</span>
+          <div>
+            <strong>Setor de Fichamentos</strong>
+            <span>Elabora fichamentos teóricos — atualmente, um por encontro de cada grupo de estudo</span>
+          </div>
+        </li>
+        <li>
+          <span class="lp-list__bullet">II</span>
+          <div>
+            <strong>Setor de Revisão Teórica</strong>
+            <span>Revisa textos enviados pelo <a href="midia.html">Departamento de Mídia</a> antes da publicação</span>
+          </div>
+        </li>
+        <li>
+          <span class="lp-list__bullet">III</span>
+          <div>
+            <strong>Setor de Artigos &amp; Projetos</strong>
+            <span>Organiza ideias para artigos, construção de manuscritos e formação de núcleos de escrita</span>
+          </div>
+        </li>
+        <li>
+          <span class="lp-list__bullet">IV</span>
+          <div>
+            <strong>Setor de Sondagem de Periódicos</strong>
+            <span>Mapeia revistas científicas, editais e oportunidades de publicação</span>
+          </div>
+        </li>
+        <li>
+          <span class="lp-list__bullet">V</span>
+          <div>
+            <strong>Mini-Setor de Secretaria da Pesquisa</strong>
+            <span>Organização do Drive da Pesquisa e acesso às gravações dos encontros</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3 · FICHAMENTO TEÓRICO -->
+  <section class="section section--sobre" id="fichamento">
+    <div class="section__inner section--lp">
+      <p class="eyebrow"><span>3</span> · Demanda central</p>
+      <h2>O fichamento teórico.</h2>
+      <p>Documento acadêmico que <strong>aprofunda, registra e fundamenta teoricamente</strong> o que foi discutido em cada encontro. É a produção que dá densidade ao projeto.</p>
+
+      <div class="spec-grid">
+        <article class="spec-card">
+          <header class="spec-card__head">
+            <span class="spec-card__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="9" y1="13" x2="15" y2="13"/>
+                <line x1="9" y1="17" x2="13" y2="17"/>
+              </svg>
+            </span>
+            <span class="spec-card__badge">Requisitos</span>
+          </header>
+          <h3 class="spec-card__title">O que deve conter</h3>
+          <ul class="spec-card__list">
+            <li>Texto acadêmico desenvolvido</li>
+            <li>Entre <strong>1 e 3 páginas</strong> (mais, se necessário)</li>
+            <li><strong>Referências bibliográficas</strong> — obrigatórias</li>
+            <li>Análise teórica relevante sobre o tema</li>
+            <li>Formatação <strong>ABNT</strong> ou <strong>APA</strong></li>
+          </ul>
+          <dl class="spec-card__meta">
+            <div class="spec-card__row">
+              <dt>Prazo</dt>
+              <dd>Até <strong>7 dias</strong> após o encontro</dd>
+            </div>
+            <div class="spec-card__row">
+              <dt>Onde salvar</dt>
+              <dd>Drive → Pesquisa → Fichamentos → [grupo]</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="spec-card spec-card--alt">
+          <header class="spec-card__head">
+            <span class="spec-card__icon spec-card__icon--gold" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="spec-card__badge spec-card__badge--gold">Funcionamento</span>
+          </header>
+          <h3 class="spec-card__title">Como se distribui</h3>
+          <ul class="spec-card__list">
+            <li>Cada grupo tem <strong>2 a 3 membros</strong> responsáveis</li>
+            <li>Os responsáveis podem se alternar semanalmente (em grupos semanais)</li>
+            <li>Salvar diretamente na pasta específica do Drive</li>
+            <li>Em caso de ausência no encontro, pode-se usar a <strong>gravação</strong></li>
+          </ul>
+          <dl class="spec-card__meta">
+            <div class="spec-card__row">
+              <dt>Sugestão</dt>
+              <dd>Rotação de membros — pode ser ajustado pela equipe</dd>
+            </div>
+          </dl>
+        </article>
+      </div>
+
+      <div class="status-callout status-callout--warn" style="margin-top:36px">
+        <strong>Problema atual (NOV/2025):</strong>
+        <ul style="margin:10px 0 0;padding-left:20px;line-height:1.7">
+          <li>Atrasos frequentes nos fichamentos</li>
+          <li>Pessoas que não estão realizando o que lhes cabe</li>
+          <li>Fichamentos não sendo enviados ao Drive</li>
+          <li>Ausência de padrão de entrega</li>
+        </ul>
+      </div>
+
+      <div class="alert-banner" style="margin-top:24px;padding:28px 32px;background:linear-gradient(135deg, rgba(74, 92, 54, 0.95) 0%, rgba(47, 61, 34, 0.95) 100%);border-left-color:#C7D4B0">
+        <span class="alert-banner__badge" style="background:rgba(199, 212, 176, 0.22);border-color:rgba(199, 212, 176, 0.55);color:#D5DBC0">Nova norma</span>
+        <h2 style="font-size:1.5rem;margin-bottom:12px">Todo encontro → fichamento em 7 dias.</h2>
+        <p style="margin:0">Salvo raríssimas exceções definidas pela Diretoria da Pesquisa. Problemas acontecem — a diretoria será flexível em entender certos casos, mas <em>não devemos transformar o extraordinário em ordinário</em>.</p>
+      </div>
+
+      <div class="placeholder-card" style="margin-top:28px">
+        <strong>Membros responsáveis &amp; seus grupos</strong>
+        <p><strong>Talita Cordeiro</strong> — grupo a definir.<br/>Demais nomes: <em>favor preencher conforme distribuição do diretor</em>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · REVISÃO TEÓRICA & PRODUÇÃO -->
+  <section class="section section--missao" id="revisao">
+    <div class="section__inner section--lp">
+      <p class="eyebrow eyebrow--light"><span>4</span> · Interseção com Mídia</p>
+      <h2>Revisão teórica &amp; produção de conteúdo.</h2>
+      <p style="color:#D5DBC0">Todas as postagens do Instagram da TULIPA têm conteúdo teórico — e <strong>nenhuma pode ser feita sem checagem prévia da Pesquisa</strong>.</p>
+
+      <h3 style="color:#F4D7DC;font-family:var(--ff-fraunces);font-style:italic;font-weight:500;font-size:1.4rem;margin:30px 0 18px">Fluxo correto de uma postagem</h3>
+
+      <ol class="process-steps">
+        <li><strong>Mídia sugere o post</strong> e envia o texto corrido ao grupo da Pesquisa.</li>
+        <li><strong>Pesquisa revisa</strong> teórica e conceitualmente — pode discutir no grupo geral para engajar mais pessoas.</li>
+        <li><strong>Pesquisa devolve</strong> o texto revisado e validado.</li>
+        <li><strong>Mídia produz a arte e publica</strong> — apenas após o retorno.</li>
+      </ol>
+
+      <div class="status-callout status-callout--warn" style="margin-top:32px">
+        <strong>Problema atual (NOV/2025):</strong> muitas postagens estão subindo sem revisão teórica. O setor está desorganizado, o fluxo não está funcionando.
+      </div>
+
+      <div class="alert-banner" style="margin-top:24px;padding:28px 32px;background:linear-gradient(135deg, rgba(92, 34, 48, 0.95) 0%, rgba(61, 24, 32, 0.95) 100%);border-left-color:#FFB0BE">
+        <span class="alert-banner__badge">Nova norma</span>
+        <h2 style="font-size:1.5rem;margin-bottom:14px">Revisão em até 48 horas (ideal: 24h).</h2>
+        <p style="margin:0 0 8px">A Mídia <strong>só pode publicar após o retorno da Pesquisa</strong>. Revisões podem ser discutidas no grupo geral pra engajar mais pessoas.</p>
+      </div>
+
+      <h3 style="color:#F4D7DC;font-family:var(--ff-fraunces);font-style:italic;font-weight:500;font-size:1.4rem;margin:40px 0 16px">Produção de conteúdo próprio</h3>
+      <p style="color:#D5DBC0">Além de revisar, a Pesquisa também <strong>sugere conteúdos</strong>. Isso aproxima Pesquisa e Mídia, torna a página da TULIPA mais profunda e valoriza a produção interna dos extensionistas.</p>
+
+      <ul class="lp-list" style="margin-top:18px">
+        <li><span class="lp-list__bullet">·</span><div><strong>1 a 2 ideias de post por mês</strong><span>Enviadas ao Departamento de Mídia para arte e publicação</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Baseadas em fichamentos</strong><span>O material já produzido pelos setores é matéria-prima</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Textos curtos ou carrosséis</strong><span>Pode ser desde nota com referência básica até carrossel completo</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Reduz dependência de produção via ChatGPT</strong><span>Conteúdo genérico fora — o pensamento da TULIPA dentro</span></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5 · PERIÓDICOS -->
+  <section class="section section--sobre" id="periodicos">
+    <div class="section__inner section--lp">
+      <p class="eyebrow"><span>5</span> · Sondagem de periódicos &amp; editais</p>
+      <h2>Mapear o que existe lá fora.</h2>
+      <p>Setor com <strong>responsabilidade fundamental para o futuro da Liga Acadêmica</strong>. Garante que a TULIPA não fique estagnada e comece a gerar produção científica formal.</p>
+
+      <h3 style="color:var(--rose-deep);font-family:var(--ff-fraunces);font-style:italic;font-weight:500;font-size:1.35rem;margin:32px 0 16px">Para cada revista mapeada, verificar:</h3>
+
+      <ul class="lp-list">
+        <li><span class="lp-list__bullet">·</span><div><strong>Qualis</strong><span>Classificação CAPES da revista</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Temáticas aceitas</strong><span>Filtro inicial — psicologia analítica, junguiana, símbolos?</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Periodicidade</strong><span>Quantas edições por ano, frequência das chamadas</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Regras de submissão</strong><span>Formatação exigida, requisitos de autoria, taxa</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Prazos de submissão</strong><span>Janelas abertas e fechadas — agenda-se aviso à Presidência</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Tipos de artigos aceitos</strong><span>Artigos originais, revisões, ensaios, resenhas, relatos</span></div></li>
+      </ul>
+
+      <h3 style="color:var(--rose-deep);font-family:var(--ff-fraunces);font-style:italic;font-weight:500;font-size:1.35rem;margin:32px 0 16px">Outras atribuições do setor:</h3>
+
+      <ul class="lp-list">
+        <li><span class="lp-list__bullet">·</span><div><strong>Criar documento geral consolidado</strong><span>Reunindo as informações de cada periódico mapeado</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Avisar a <a href="presidencia.html">Presidência</a></strong><span>Quando um edital relevante estiver aberto</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Propor núcleos de escrita</strong><span>Grupos focados em produzir artigos para submissão</span></div></li>
+      </ul>
+
+      <div class="placeholder-card" style="margin-top:32px">
+        <strong>Modelo de relatório de periódico</strong>
+        <p>Existe um modelo-sugestão disponível no grupo do departamento. Caso não encontre, fale com o <strong>Diretor</strong> ou o <strong>Coordenador Geral</strong>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · DRIVE -->
+  <section class="section section--detalhes" id="drive">
+    <div class="section__inner section--lp">
+      <p class="eyebrow"><span>6</span> · Drive da Pesquisa</p>
+      <h2>O que mora na pasta da Pesquisa.</h2>
+      <p>Diferente do Drive da <a href="secretaria.html">Secretaria</a> (que cuida de presenças, resumos e gravações), o da Pesquisa cuida do material teórico próprio:</p>
+
+      <ul class="lp-list">
+        <li><span class="lp-list__bullet">·</span><div><strong>Pastas de fichamentos</strong><span>Organizados por grupo e por data</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Pasta de revisões teóricas</strong><span>Textos enviados pela Mídia, antes e depois da revisão</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Pasta de artigos &amp; projetos futuros</strong><span>Manuscritos em produção, ideias de núcleos</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Pasta de periódicos &amp; editais</strong><span>Links internos, modelo de relatório, mapeamentos</span></div></li>
+        <li><span class="lp-list__bullet">·</span><div><strong>Acesso às gravações</strong><span>Apontamento para a pasta da Secretaria</span></div></li>
+      </ul>
+
+      <div class="status-callout" style="margin-top:32px;border-left-color:var(--sage-deep)">
+        <strong>Interseção com a Secretaria:</strong> a Secretaria <em>confere</em> se a gravação foi enviada ao Drive. A Pesquisa <em>usa</em> a gravação quando precisa — especialmente quando o membro não pôde participar do encontro. Em caso de atraso ou ausência contínua, a Secretaria assume a cobrança, mas a Pesquisa também pode se posicionar.
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · PRAZOS -->
+  <section class="section section--missao" id="prazos">
+    <div class="section__inner" style="max-width:1100px">
+      <p class="eyebrow eyebrow--light"><span>7</span> · Calendário de prazos</p>
+      <h2>O ritmo da Pesquisa.</h2>
+      <p style="color:#D5DBC0;margin-bottom:32px">Cinco prazos que estruturam o trabalho do departamento:</p>
+
+      <div class="cal-days" style="grid-template-columns:repeat(3, 1fr)">
+        <article class="cal-day cal-day--continuous">
+          <span class="cal-day__num">7d</span>
+          <span class="cal-day__label">após cada encontro</span>
+          <h4>Fichamento teórico</h4>
+          <p>1-3 páginas com referências, ABNT/APA</p>
+        </article>
+        <article class="cal-day cal-day--continuous">
+          <span class="cal-day__num">48h</span>
+          <span class="cal-day__label">ideal: 24h</span>
+          <h4>Revisão de posts</h4>
+          <p>Texto enviado pela Mídia → devolvido validado</p>
+        </article>
+        <article class="cal-day">
+          <span class="cal-day__num">1-2</span>
+          <span class="cal-day__label">por mês</span>
+          <h4>Sugestões de post</h4>
+          <p>Ideias enviadas à Mídia, baseadas em fichamentos</p>
+        </article>
+        <article class="cal-day">
+          <span class="cal-day__num">7d</span>
+          <span class="cal-day__label">cadência semanal</span>
+          <h4>Atualização do Drive</h4>
+          <p>Pasta de fichamentos sempre em dia</p>
+        </article>
+        <article class="cal-day cal-day--continuous" style="grid-column:span 1">
+          <span class="cal-day__num">~3m</span>
+          <span class="cal-day__label">bimestral / trimestral</span>
+          <h4>Sondagem de revistas</h4>
+          <p>Relatório esporádico — definido em discussão com a Diretoria</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · DIREÇÃO -->
+  <section class="section section--detalhes" id="direcao">
+    <div class="section__inner" style="max-width:1200px">
+      <p class="eyebrow"><span>8</span> · Direção do departamento</p>
+      <h2>Nilo Fam &amp; Pedro Emmanuel.</h2>
+
+      <div class="direction-duo">
+        <article class="profile-card profile-card--compact">
+          <div class="profile-card__avatar" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="30" fill="#F4D7DC"/>
+              <circle cx="32" cy="26" r="9" fill="#6B2A38"/>
+              <path d="M14 54c2-8 9-13 18-13s16 5 18 13" fill="#6B2A38"/>
+            </svg>
+          </div>
+          <div class="profile-card__main">
+            <h3>Nilo Fam</h3>
+            <p class="profile-card__role">Diretor do Departamento de Pesquisa</p>
+            <p>Mantém a Pesquisa <em>viva, organizada, acadêmica e produtiva</em>.</p>
+          </div>
+        </article>
+
+        <article class="profile-card profile-card--compact">
+          <div class="profile-card__avatar" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="30" fill="#C7D4B0"/>
+              <circle cx="32" cy="26" r="9" fill="#2F3D22"/>
+              <path d="M14 54c2-8 9-13 18-13s16 5 18 13" fill="#2F3D22"/>
+            </svg>
+          </div>
+          <div class="profile-card__main">
+            <h3>Pedro Emmanuel</h3>
+            <p class="profile-card__role" style="color:var(--sage-deep)">Coordenador Geral</p>
+            <p>Auxilia o Diretor nos processos, melhora o fluxo do departamento.</p>
+          </div>
+        </article>
+      </div>
+
+      <article class="profile-card" style="margin-top:24px">
+        <div class="profile-card__main" style="grid-column:1 / -1">
+          <h3 style="font-family:var(--ff-fraunces);font-style:italic;font-size:1.4rem;color:var(--rose-deep);margin-bottom:18px">Responsabilidades da direção</h3>
+        </div>
+        <ul class="profile-card__duties">
+          <li><strong>Distribuição de fichamentos</strong> · entre os setores e membros</li>
+          <li><strong>Cumprimento de prazos</strong> · acompanhar e cobrar</li>
+          <li><strong>Comunicação com Mídia</strong> · fluxo de revisão teórica</li>
+          <li><strong>Comunicação com Secretaria</strong> · gravações e organização</li>
+          <li><strong>Organização do Drive</strong> · padrão e consistência</li>
+          <li><strong>Núcleos de escrita</strong> · estruturação e mobilização</li>
+          <li><strong>Mobilização da equipe</strong> · manter o time engajado</li>
+          <li><strong>Feedback dos fichamentos</strong> · qualidade teórica</li>
+          <li><strong>Comunicação com a Presidência</strong> · institucional</li>
+          <li><strong>Ativação para editais</strong> · sempre que surgir oportunidade</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- OUTRAS -->
+  <section class="section section--outras">
+    <div class="section__inner">
+      <p class="eyebrow"><span>·</span> Continue explorando</p>
+      <h2>Outros departamentos &amp; cargos.</h2>
+      <div class="outras-grid">
+        <a href="presidencia.html" class="outras-grid__card"><span class="outras-grid__num">·</span><h3>Presidência</h3><p>A liderança que tece o todo.</p><span class="outras-grid__arrow">explorar →</span></a>
+        <a href="midia.html" class="outras-grid__card outras-grid__card--moss"><span class="outras-grid__num">·</span><h3>Mídia</h3><p>A TULIPA tecida em imagens.</p><span class="outras-grid__arrow">explorar →</span></a>
+        <a href="secretaria.html" class="outras-grid__card"><span class="outras-grid__num">·</span><h3>Secretaria</h3><p>A memória organizada do projeto.</p><span class="outras-grid__arrow">explorar →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTATO -->
+  <section class="section section--contato" id="contato">
+    <div class="section__inner section--lp" style="text-align:center">
+      <p class="eyebrow"><span>·</span> Contato</p>
+      <h2>Quer entrar pra Pesquisa?</h2>
+      <p style="margin:0 auto 30px;max-width:580px">Para sugerir leituras, propor núcleos de escrita ou se aproximar do setor, fale pelo Instagram. Pedidos chegam a Nilo e Pedro Emmanuel.</p>
+      <a href="https://instagram.com/tulipa.unicap" target="_blank" rel="noopener" class="btn btn--primary" data-magnetic>@tulipa.unicap →</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer__inner footer__inner--expanded">
+      <div class="footer__brand-col">
+        <div class="footer__brand">
+          <img src="../assets/logo.png" alt="Logo TULIPA — UNICAP" class="nav__mark" />
+          <p><strong>TULIPA</strong><br/>Tessitura Universitária de Linguagens em Psicologia Analítica</p>
+        </div>
+        <p class="footer__about">Projeto de extensão em Psicologia Analítica Junguiana da UNICAP. Recife, Pernambuco.</p>
+        <div class="footer__social">
+          <a href="https://instagram.com/tulipa.unicap" target="_blank" rel="noopener" aria-label="Perfil da TULIPA no Instagram">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/>
+            </svg>
+            @tulipa.unicap
+          </a>
+        </div>
+      </div>
+      <nav class="footer__nav" aria-label="Mapa do site">
+        <div class="footer__col">
+          <h4>O projeto</h4>
+          <ul>
+            <li><a href="../index.html#sobre">Quem somos</a></li>
+            <li><a href="../index.html#missao">Missão</a></li>
+            <li><a href="../index.html#nome">O nome</a></li>
+            <li><a href="../index.html#contato">Contato</a></li>
+            <li><a href="../sitemap.html">Mapa do site</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>Atividades</h4>
+          <ul>
+            <li><a href="grupos-de-estudo.html">Grupos de Estudo</a></li>
+            <li><a href="leitura-conjunta.html">Leitura Conjunta</a></li>
+            <li><a href="arteterapia.html">Arteterapia</a></li>
+            <li><a href="https://allos.org.br" target="_blank" rel="noopener">Allos ↗</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>Departamentos</h4>
+          <ul>
+            <li><a href="presidencia.html">Presidência</a></li>
+            <li><a href="professor-orientador.html">Prof. Orientador</a></li>
+            <li><a href="professor-colaborador.html">Prof. Colaborador</a></li>
+            <li><a href="midia.html">Mídia</a></li>
+            <li><a href="pesquisa.html">Pesquisa</a></li>
+            <li><a href="tesouraria.html">Tesouraria</a></li>
+            <li><a href="secretaria.html">Secretaria</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    <div class="footer__bottom">
+      <p>Projeto de extensão · Universidade Católica de Pernambuco · <span id="year"></span></p>
+      <p><em>Manual da Pesquisa — atualizado em NOV/2025.</em></p>
+    </div>
+  </footer>
+
+  <button class="to-top" id="toTop" aria-label="Voltar ao topo">
+    <svg viewBox="0 0 60 60"><g transform="translate(30 30)"><path class="to-top__petal" d="M0 -18 C -10 -10, -12 0, -8 8 C -4 14, 0 16, 0 16 C 0 16, 4 14, 8 8 C 12 0, 10 -10, 0 -18 Z" fill="currentColor"/><path d="M0 16 L0 26" stroke="currentColor" stroke-width="1.4"/></g></svg>
+  </button>
+
+  <script src="../script.js" defer></script>
+  <script>
+    (function(){
+      const navLinks = Array.from(document.querySelectorAll('.quick-nav a'));
+      const targets = navLinks.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+      if (!targets.length) return;
+      const setActive = (id) => {
+        navLinks.forEach(a => a.classList.toggle('is-active', a.getAttribute('href') === '#' + id));
+      };
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) setActive(e.target.id); });
+      }, { rootMargin: '-40% 0px -55% 0px' });
+      targets.forEach(t => io.observe(t));
+    })();
+  </script>
+</body>
+</html>
