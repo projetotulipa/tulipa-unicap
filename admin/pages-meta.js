@@ -66,10 +66,12 @@ export function pageByScope(scope) {
   return PAGES.find((p) => p.scope === scope);
 }
 
-// Slug pra hash routing (não usamos / dentro do hash, então troca por -)
+// Slug pra hash routing — 'global' vira 'home', 'lp:midia' vira 'midia'
 export function scopeToSlug(scope) {
-  return scope.replace(/:/g, '--');
+  if (scope === 'global') return 'home';
+  return scope.replace(/^lp:/, '');
 }
 export function slugToScope(slug) {
-  return slug.replace(/--/g, ':');
+  if (slug === 'home') return 'global';
+  return `lp:${slug}`;
 }

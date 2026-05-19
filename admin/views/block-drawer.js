@@ -1,12 +1,10 @@
 // Drawer lateral pra editar os campos de um bloco.
 
 import { htmlToMd, mdToHtml } from '../markdown.js';
-import { getOriginalFor } from './home-editor.js';
+import { getOriginalFor } from './page-editor.js';
 import { icon } from '../icons.js';
 
-const SCOPE = 'global';
-
-export function openBlockDrawer(ctx, block, { onChange, notifyPreview } = {}) {
+export function openBlockDrawer(ctx, block, { onChange, notifyPreview, scope = 'global' } = {}) {
   // remove drawer existente
   document.querySelectorAll('.block-drawer-overlay').forEach((el) => el.remove());
 
@@ -38,7 +36,7 @@ export function openBlockDrawer(ctx, block, { onChange, notifyPreview } = {}) {
 
   const body = overlay.querySelector('#drawerBody');
   for (const field of block.fields) {
-    body.appendChild(buildField(ctx, field, { onChange, notifyPreview }));
+    body.appendChild(buildField(ctx, field, { onChange, notifyPreview, scope }));
   }
 
   // fechar
@@ -65,9 +63,9 @@ export function openBlockDrawer(ctx, block, { onChange, notifyPreview } = {}) {
   });
 }
 
-function buildField(ctx, field, { onChange, notifyPreview }) {
+function buildField(ctx, field, { onChange, notifyPreview, scope }) {
   const { api } = ctx;
-  const data = api.getScope(SCOPE);
+  const data = api.getScope(scope);
   const isLinkLabel = field.type === 'link-label';
   const bucket = isLinkLabel ? 'labels' : 'text';
 
@@ -136,11 +134,11 @@ function buildField(ctx, field, { onChange, notifyPreview }) {
     const sameAsOriginal = normalize(newHtml) === normalize(original);
 
     if (sameAsOriginal) {
-      api.patchEdit(SCOPE, bucket, field.id, null);
+      api.patchEdit(scope, bucket, field.id, null);
     } else {
-      api.patchEdit(SCOPE, bucket, field.id, newHtml);
+      api.patchEdit(scope, bucket, field.id, newHtml);
     }
-    api.markDirty(SCOPE);
+    api.markDirty(scope);
     notifyPreview?.();
 
     // atualiza UI do badge/revert

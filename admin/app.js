@@ -9,8 +9,7 @@ import {
 } from '../js/site-data.js';
 
 import { renderPages }      from './views/pages.js';
-import { renderHomeEditor } from './views/home-editor.js';
-import { renderLpPlaceholder } from './views/lp-placeholder.js';
+import { renderPageEditor } from './views/page-editor.js';
 import { renderMembers }    from './views/members.js';
 
 // ---------- estado ----------
@@ -142,8 +141,7 @@ function route() {
   try {
     switch (parts[0]) {
       case 'paginas':
-        if (parts[1] === 'home') return renderHomeEditor(ctx);
-        if (parts[1]) return renderLpPlaceholder(ctx, parts[1]);
+        if (parts[1]) return renderPageEditor(ctx, parts[1]);
         return renderPages(ctx);
       case 'membros':
         if (state.role !== 'admin') {
