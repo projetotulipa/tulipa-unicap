@@ -2,6 +2,7 @@
 
 import { htmlToMd, mdToHtml } from '../markdown.js';
 import { getOriginalFor } from './home-editor.js';
+import { icon } from '../icons.js';
 
 const SCOPE = 'global';
 
@@ -16,10 +17,10 @@ export function openBlockDrawer(ctx, block, { onChange, notifyPreview } = {}) {
       <header class="block-drawer__head">
         <div>
           <p class="block-drawer__crumb">Editando bloco</p>
-          <h2><span class="block-drawer__icon">${block.icon}</span> ${escapeHtml(block.label)}</h2>
+          <h2><span class="block-drawer__icon">${icon(block.iconName, { size: 26 })}</span> ${escapeHtml(block.label)}</h2>
           <p class="block-drawer__desc">${escapeHtml(block.description)}</p>
         </div>
-        <button class="block-drawer__close icon-btn" data-action="close" aria-label="Fechar" title="Fechar (Esc)">✕</button>
+        <button class="block-drawer__close icon-btn" data-action="close" aria-label="Fechar" title="Fechar (Esc)">${icon('x', { size: 16 })}</button>
       </header>
 
       <div class="block-drawer__body" id="drawerBody"></div>
@@ -110,7 +111,7 @@ function buildField(ctx, field, { onChange, notifyPreview }) {
     ` : ''}
     <div class="drawer-field__foot">
       <button type="button" class="drawer-field__revert" data-action="revert" ${!isEdited ? 'disabled' : ''}>
-        ↺ Voltar ao original
+        <span class="drawer-field__revert-ic">${icon('refresh', { size: 12 })}</span> Voltar ao original
       </button>
       <details class="drawer-field__original">
         <summary>ver texto original</summary>

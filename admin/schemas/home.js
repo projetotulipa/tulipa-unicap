@@ -9,12 +9,12 @@
 export const HOME_SCHEMA = {
   scope: 'global',
   label: 'Página inicial',
-  icon: '🌷',
+  iconName: 'brand',
   blocks: [
     {
       id: 'hero',
       sectionId: 'section.hero',
-      icon: '🌷',
+      iconName: 'hero',
       label: 'Capa',
       description: 'O topo da home: logo, título TULIPA, manifesto curto e botões.',
       summaryFields: ['hero.title-line', 'hero.lede'],
@@ -31,7 +31,7 @@ export const HOME_SCHEMA = {
     {
       id: 'marquee',
       sectionId: 'section.marquee',
-      icon: '📜',
+      iconName: 'marquee',
       label: 'Carrossel de conceitos junguianos',
       description: 'A faixa rolante com palavras-chave (Self, Sombra, Anima…). Por enquanto só permite ocultar / reordenar.',
       summaryFields: [],
@@ -40,7 +40,7 @@ export const HOME_SCHEMA = {
     {
       id: 'manifesto',
       sectionId: 'section.manifesto',
-      icon: '❝',
+      iconName: 'manifesto',
       label: 'Manifesto',
       description: 'Citação central em pergaminho, com folhas decorativas.',
       summaryFields: ['manifesto.body'],
@@ -52,7 +52,7 @@ export const HOME_SCHEMA = {
     {
       id: 'sobre',
       sectionId: 'section.sobre',
-      icon: '🌿',
+      iconName: 'sobre',
       label: 'Quem somos',
       description: 'Apresentação do projeto — texto editorial.',
       summaryFields: ['sobre.title', 'sobre.p1'],
@@ -67,7 +67,7 @@ export const HOME_SCHEMA = {
     {
       id: 'missao',
       sectionId: 'section.missao',
-      icon: '🎯',
+      iconName: 'missao',
       label: 'Nossa missão',
       description: 'Citação grande seguida de 3 pilares: Propagar · Aprofundar · Acolher.',
       summaryFields: ['missao.title'],
@@ -85,7 +85,7 @@ export const HOME_SCHEMA = {
     {
       id: 'nome',
       sectionId: 'section.nome',
-      icon: '🏷️',
+      iconName: 'nome',
       label: 'O nome (T·U·LI·P·A)',
       description: 'Acrônimo + frase simbólica explicando o nome do projeto.',
       summaryFields: ['nome.title'],
@@ -104,7 +104,7 @@ export const HOME_SCHEMA = {
     {
       id: 'atividades',
       sectionId: 'section.atividades',
-      icon: '📚',
+      iconName: 'atividades',
       label: 'Atividades',
       description: '4 cards: Grupos de Estudo, Leitura Conjunta, Arteterapia, Allos.',
       summaryFields: ['atividades.title'],
@@ -124,7 +124,7 @@ export const HOME_SCHEMA = {
     {
       id: 'departamentos',
       sectionId: 'section.departamentos',
-      icon: '🏛️',
+      iconName: 'departamentos',
       label: 'Departamentos',
       description: 'Hierarquia em árvore: 3 cargos no topo + 4 departamentos abaixo.',
       summaryFields: ['depts.title', 'depts.intro'],
@@ -144,7 +144,7 @@ export const HOME_SCHEMA = {
     {
       id: 'pullquote',
       sectionId: 'section.pullquote',
-      icon: '✦',
+      iconName: 'pullquote',
       label: 'Citação intermediária',
       description: 'Frase inspirada em Jung entre as seções de departamentos e contato.',
       summaryFields: ['pullquote.body'],
@@ -156,7 +156,7 @@ export const HOME_SCHEMA = {
     {
       id: 'contato',
       sectionId: 'section.contato',
-      icon: '✉️',
+      iconName: 'contato',
       label: 'Contato',
       description: '3 vias de contato: Instagram, endereço UNICAP e e-mail. Mais o selo com citação.',
       summaryFields: ['contato.title', 'contato.body'],

@@ -22,7 +22,7 @@
   <!-- LOGIN -->
   <main class="admin-login" data-show-when="login" hidden>
     <form class="admin-login__form" id="loginForm" autocomplete="off">
-      <span class="admin-login__mark" aria-hidden="true">🌷</span>
+      <span class="admin-login__mark" aria-hidden="true" id="loginBrand"></span>
       <h1>TULIPA · admin</h1>
       <p class="admin-login__sub">Entre para editar o site.</p>
       <label>
@@ -42,7 +42,7 @@
   <div class="admin-app" data-show-when="app" hidden>
     <aside class="admin-sidebar">
       <header class="admin-sidebar__brand">
-        <span class="admin-sidebar__mark" aria-hidden="true">🌷</span>
+        <span class="admin-sidebar__mark" aria-hidden="true" id="sidebarBrand"></span>
         <div>
           <strong>TULIPA</strong>
           <small>painel admin</small>
@@ -51,10 +51,10 @@
 
       <nav class="admin-sidebar__nav" id="sidebarNav">
         <a href="#/paginas" data-view="pages" class="is-active">
-          <span>◻</span> Páginas
+          <span class="admin-sidebar__icon" data-icon="pages"></span> Páginas
         </a>
         <a href="#/membros" data-view="members" data-admin-only hidden>
-          <span>◯</span> Membros
+          <span class="admin-sidebar__icon" data-icon="users"></span> Membros
         </a>
       </nav>
 

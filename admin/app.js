@@ -2,6 +2,7 @@
 import { supabase } from '../js/supabase.js';
 import { SCOPES } from '../js/config.js';
 import { SECTORS, ROLES, sectorByValue, describeProfile } from './sectors.js';
+import { icon } from './icons.js';
 import {
   getData, getScope, patchEdit, setOrder, setBlockOrder, getBlockOrder,
   bootstrap, publish, onChange,
@@ -168,6 +169,16 @@ function canEditScope(scope) {
 }
 
 // ---------- login ----------
+function paintStaticIcons() {
+  const loginBrand = document.getElementById('loginBrand');
+  if (loginBrand) loginBrand.innerHTML = icon('brand', { size: 44 });
+  const sidebarBrand = document.getElementById('sidebarBrand');
+  if (sidebarBrand) sidebarBrand.innerHTML = icon('brand', { size: 32 });
+  for (const el of document.querySelectorAll('[data-icon]')) {
+    el.innerHTML = icon(el.dataset.icon, { size: 18 });
+  }
+}
+
 function setupLogin() {
   const form = $('#loginForm');
   const errBox = $('#loginError');
@@ -218,6 +229,7 @@ export function escapeHtml(s) {
 }
 
 // ---------- start ----------
+paintStaticIcons();
 setupLogin();
 setupLogout();
 setupRouter();

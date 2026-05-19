@@ -3,6 +3,7 @@
 import { HOME_SCHEMA, blockById } from '../schemas/home.js';
 import { openBlockDrawer } from './block-drawer.js';
 import { loadIframe } from './editor-shared.js';
+import { icon } from '../icons.js';
 
 const SCOPE = HOME_SCHEMA.scope; // 'global'
 
@@ -16,12 +17,12 @@ export async function renderHomeEditor(ctx) {
     <div class="view view--home-editor">
       <header class="editor-head">
         <div>
-          <p class="view__crumbs"><a href="#/paginas">← Páginas</a></p>
-          <h1><span class="editor-head__icon">${HOME_SCHEMA.icon}</span> ${escapeHtml(HOME_SCHEMA.label)}</h1>
+          <p class="view__crumbs"><a href="#/paginas">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Páginas</span></a></p>
+          <h1><span class="editor-head__icon">${icon(HOME_SCHEMA.iconName, { size: 30 })}</span> ${escapeHtml(HOME_SCHEMA.label)}</h1>
           <p class="view__lede">Reorganize, oculte ou edite cada seção. As alterações aparecem na hora no preview.</p>
         </div>
         <div class="editor-head__actions">
-          <a class="btn btn--ghost btn--small" href="../index.html" target="_blank" rel="noopener">Ver no site ↗</a>
+          <a class="btn btn--ghost btn--small" href="../index.html" target="_blank" rel="noopener">${icon('external', { size: 14 })}<span style="margin-left:6px;">Ver no site</span></a>
         </div>
       </header>
 
@@ -124,12 +125,10 @@ function buildCard(ctx, block) {
   card.dataset.blockId = block.id;
 
   card.innerHTML = `
-    <div class="block-card__handle" title="Arraste para reordenar" aria-hidden="true">
-      <span></span><span></span><span></span>
-    </div>
+    <div class="block-card__handle" title="Arraste para reordenar" aria-hidden="true">${icon('drag', { size: 18 })}</div>
     <div class="block-card__main">
       <header class="block-card__head">
-        <span class="block-card__icon">${block.icon}</span>
+        <span class="block-card__icon">${icon(block.iconName, { size: 22 })}</span>
         <h3>${escapeHtml(block.label)}</h3>
         <span class="block-card__badge ${isHidden ? 'is-hidden' : 'is-visible'}">${isHidden ? 'oculto' : 'visível'}</span>
       </header>
@@ -138,13 +137,13 @@ function buildCard(ctx, block) {
       <p class="block-card__meta">${fieldCount > 0 ? `${fieldCount} campo${fieldCount === 1 ? '' : 's'} editável${fieldCount === 1 ? '' : 'is'}` : 'sem campos — apenas reordenar ou ocultar'}</p>
     </div>
     <div class="block-card__actions">
-      <button class="icon-btn" data-action="move-up" title="Mover para cima" aria-label="Mover para cima">▲</button>
-      <button class="icon-btn" data-action="move-down" title="Mover para baixo" aria-label="Mover para baixo">▼</button>
+      <button class="icon-btn" data-action="move-up" title="Mover para cima" aria-label="Mover para cima">${icon('arrow-up', { size: 16 })}</button>
+      <button class="icon-btn" data-action="move-down" title="Mover para baixo" aria-label="Mover para baixo">${icon('arrow-down', { size: 16 })}</button>
       <button class="icon-btn ${isHidden ? 'is-active' : ''}" data-action="toggle-hide"
               title="${isHidden ? 'Mostrar no site' : 'Ocultar do site'}"
-              aria-label="${isHidden ? 'Mostrar' : 'Ocultar'}">${isHidden ? '◉' : '◯'}</button>
+              aria-label="${isHidden ? 'Mostrar' : 'Ocultar'}">${icon(isHidden ? 'eye-off' : 'eye', { size: 16 })}</button>
       ${fieldCount > 0
-        ? `<button class="btn btn--ghost btn--small" data-action="edit">Editar textos</button>`
+        ? `<button class="btn btn--ghost btn--small" data-action="edit">${icon('edit', { size: 14 })}<span style="margin-left:6px;">Editar textos</span></button>`
         : ''
       }
     </div>
@@ -293,7 +292,7 @@ function bindPublishBar(ctx) {
     try {
       await ctx.api.publish(SCOPE, 'edição da Home');
       ctx.api.clearDirty(SCOPE);
-      status.textContent = 'Publicado com sucesso ✓';
+      status.textContent = 'Publicado com sucesso';
       status.className = 'publish-bar__status is-success';
       setTimeout(() => syncPublishStatus(ctx), 2500);
     } catch (e) {

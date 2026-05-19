@@ -2,6 +2,7 @@
 
 import { PAGES } from '../pages-meta.js';
 import { HOME_SCHEMA } from '../schemas/home.js';
+import { icon } from '../icons.js';
 
 export function renderPages(ctx) {
   const { root, api } = ctx;
@@ -58,7 +59,9 @@ function renderPageCard(page, api, opts = {}) {
   // preview: para home, mostra os blocos; para LP, descrição
   let blocksPreview = '';
   if (isHome) {
-    blocksPreview = HOME_SCHEMA.blocks.map((b) => `<span>${b.icon} ${escapeHtml(b.label)}</span>`).join('');
+    blocksPreview = HOME_SCHEMA.blocks.map((b) =>
+      `<span class="page-card__block-chip">${icon(b.iconName, { size: 14 })} ${escapeHtml(b.label)}</span>`
+    ).join('');
   }
 
   return `
@@ -67,7 +70,7 @@ function renderPageCard(page, api, opts = {}) {
              data-hidden-key="${escapeHtml(hiddenKey)}">
       <div class="page-card__head">
         <div class="page-card__title">
-          <span class="page-card__icon">${isHome ? '🌷' : '◇'}</span>
+          <span class="page-card__icon">${icon(isHome ? 'brand' : 'page', { size: isHome ? 36 : 26 })}</span>
           <div>
             <h3>${escapeHtml(page.label)}</h3>
             <p class="page-card__path">${escapeHtml(page.path.replace('../', '/'))}</p>
@@ -91,7 +94,7 @@ function renderPageCard(page, api, opts = {}) {
 
       <div class="page-card__foot">
         ${hasEditor
-          ? `<a class="btn btn--primary" href="#/paginas/${escapeHtml(slug)}">Editar página ›</a>`
+          ? `<a class="btn btn--primary" href="#/paginas/${escapeHtml(slug)}"><span>Editar página</span> ${icon('arrow-right', { size: 14 })}</a>`
           : `<a class="btn btn--ghost" href="#/paginas/${escapeHtml(slug)}">Em breve</a>`
         }
         <span class="page-card__publish-status" data-publish-status></span>
@@ -126,8 +129,8 @@ function bindToggles(ctx) {
       statusEl.textContent = 'salvando…';
       statusEl.dataset.state = 'saving';
       try {
-        await api.publish('global', `toggle ${hiddenKey} → ${shouldHide ? 'oculta' : 'no ar'}`);
-        statusEl.textContent = shouldHide ? 'oculta ✓' : 'no ar ✓';
+        await api.publish('global', `toggle ${hiddenKey} -> ${shouldHide ? 'oculta' : 'no ar'}`);
+        statusEl.innerHTML = `${icon('check', { size: 12 })} ${shouldHide ? 'oculta' : 'no ar'}`;
         statusEl.dataset.state = 'success';
         setTimeout(() => { statusEl.textContent = ''; statusEl.dataset.state = ''; }, 2500);
       } catch (e) {

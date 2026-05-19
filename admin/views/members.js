@@ -1,4 +1,5 @@
 import { SECTORS, ROLES, describeProfile } from '../sectors.js';
+import { icon } from '../icons.js';
 
 export async function renderMembers(ctx) {
   const { root, api } = ctx;
@@ -8,7 +9,7 @@ export async function renderMembers(ctx) {
       <h1>Membros da equipe</h1>
       <p class="view__lede">
         Aprova novos cadastros (status “pendente”) e atribui cargos.
-        <br/>Hierarquia: <strong>Admin</strong> → <strong>Coordenador</strong> (1 por setor) → <strong>Membro</strong> (em um setor, opcionalmente numa equipe).
+        <br/>Hierarquia: <strong>Admin</strong> &middot; <strong>Coordenador</strong> (1 por setor) &middot; <strong>Membro</strong> (em um setor, opcionalmente numa equipe).
       </p>
       <div id="membersBox" class="empty-state">carregando…</div>
     </div>
@@ -174,7 +175,7 @@ function bindRows(api) {
         new_team: team,
       });
       if (error) throw error;
-      status.textContent = 'salvo ✓';
+      status.innerHTML = `${icon('check', { size: 12 })} salvo`;
       status.style.color = 'var(--success)';
       setTimeout(() => { status.textContent = ''; }, 2500);
     } catch (e) {

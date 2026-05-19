@@ -1,5 +1,12 @@
 /* ===== TULIPA · ADMIN · EDITOR — visual ===== */
 
+/* ícones SVG inline — alinhamento padrão */
+svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.btn svg { display: inline-block; vertical-align: middle; }
+.icon-btn svg { display: block; }
+.view__crumbs a { display: inline-flex; align-items: center; }
+.view__crumbs a svg { color: var(--rose-soft); }
+
 /* ---------- view header ---------- */
 .view__header { margin-bottom: 28px; }
 .view__header h1 { margin-bottom: 8px; }
@@ -76,10 +83,13 @@
   gap: 14px;
 }
 .page-card__icon {
-  font-size: 28px;
+  color: var(--rose-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
 }
-.page-card--featured .page-card__icon { font-size: 40px; }
+.page-card--featured .page-card__icon { color: var(--cream); }
 
 .page-card__title h3 {
   margin: 0;
@@ -121,7 +131,11 @@
   font-size: 12px;
   color: var(--text-dim);
   letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
+.page-card__block-chip svg { color: var(--rose-soft); }
 
 .page-card__foot {
   display: flex;
@@ -201,7 +215,12 @@
   align-items: center;
   gap: 12px;
 }
-.editor-head__icon { font-size: 32px; }
+.editor-head__icon {
+  color: var(--rose-soft);
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
 .editor-head__actions { display: flex; gap: 8px; }
 
 .block-list {
@@ -239,24 +258,16 @@
 .block-card--hidden .block-card__head h3 { text-decoration: line-through; text-decoration-color: var(--text-dimer); }
 
 .block-card__handle {
-  width: 16px;
+  width: 18px;
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 4px;
   color: var(--text-dimer);
-}
-.block-card__handle > span {
-  display: block;
-  width: 16px;
-  height: 2px;
-  background: currentColor;
-  border-radius: 2px;
-  opacity: 0.6;
+  cursor: grab;
 }
 .block-card:hover .block-card__handle { color: var(--rose-soft); }
-.block-card:hover .block-card__handle > span { opacity: 1; }
+.block-card.is-dragging .block-card__handle { cursor: grabbing; }
 
 .block-card__main {
   flex: 1;
@@ -272,7 +283,9 @@
   gap: 12px;
 }
 .block-card__icon {
-  font-size: 22px;
+  color: var(--rose-soft);
+  display: inline-flex;
+  align-items: center;
   line-height: 1;
 }
 .block-card__head h3 {
@@ -400,7 +413,11 @@
   align-items: center;
   gap: 10px;
 }
-.block-drawer__icon { font-size: 26px; }
+.block-drawer__icon {
+  color: var(--rose-soft);
+  display: inline-flex;
+  align-items: center;
+}
 .block-drawer__desc {
   margin: 6px 0 0;
   color: var(--text-dim);
@@ -513,7 +530,11 @@ textarea.drawer-field__input { min-height: 80px; }
   border-radius: 6px;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
+.drawer-field__revert-ic { display: inline-flex; align-items: center; opacity: 0.7; }
 .drawer-field__revert:hover:not(:disabled) {
   border-color: var(--rose-soft);
   color: var(--cream);

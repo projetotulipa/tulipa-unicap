@@ -92,7 +92,7 @@ export function renderEditPanel({ title, id, original, current, isLabelType, onS
           <h3>${escapeHtml(title)}</h3>
           <span class="edit-panel__id">${escapeHtml(id)} · ${isLabelType ? 'rótulo (texto puro)' : 'texto/HTML'}</span>
         </div>
-        <button class="icon-btn" data-action="close" title="Fechar">✕</button>
+        <button class="icon-btn" data-action="close" title="Fechar" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18"/></svg></button>
       </header>
       <div class="edit-panel__body">
         <textarea id="editTextarea" rows="8">${escapeHtml(current)}</textarea>

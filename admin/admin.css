@@ -80,10 +80,16 @@ body[data-state="app"]     [data-show-when="app"]     { display: flex; }
   box-shadow: 0 24px 60px rgba(0,0,0,0.5);
 }
 .admin-login__mark {
-  font-size: 40px;
-  text-align: center;
-  display: block;
-  margin-bottom: 4px;
+  color: var(--rose-soft);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 4px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(159, 90, 107, 0.08);
+  border: 1px solid rgba(159, 90, 107, 0.22);
 }
 .admin-login__form h1 {
   font-family: 'Cormorant Garamond', serif;
@@ -191,7 +197,13 @@ body[data-state="app"]     [data-show-when="app"]     { display: flex; }
   padding: 22px 20px;
   border-bottom: 1px solid var(--border);
 }
-.admin-sidebar__mark { font-size: 28px; }
+.admin-sidebar__mark {
+  color: var(--rose-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 .admin-sidebar__brand strong {
   display: block;
   font-family: 'Cormorant Garamond', serif;
@@ -220,9 +232,12 @@ body[data-state="app"]     [data-show-when="app"]     { display: flex; }
   transition: background 0.15s, color 0.15s;
 }
 .admin-sidebar__nav a span {
-  font-size: 14px;
-  width: 18px; text-align: center;
+  width: 18px; height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--rose-soft);
+  flex-shrink: 0;
 }
 .admin-sidebar__nav a:hover { color: var(--text); background: var(--bg-elev-2); }
 .admin-sidebar__nav a.is-active {

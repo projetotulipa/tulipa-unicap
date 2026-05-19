@@ -1,4 +1,5 @@
 import { PAGES } from '../pages-meta.js';
+import { icon } from '../icons.js';
 
 export function renderLpPlaceholder(ctx, slug) {
   const { root } = ctx;
@@ -7,7 +8,7 @@ export function renderLpPlaceholder(ctx, slug) {
   if (!page) {
     root.innerHTML = `
       <div class="view">
-        <p class="view__crumbs"><a href="#/paginas">← Páginas</a></p>
+        <p class="view__crumbs"><a href="#/paginas">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Páginas</span></a></p>
         <h1>Página não encontrada</h1>
       </div>
     `;
@@ -16,7 +17,7 @@ export function renderLpPlaceholder(ctx, slug) {
 
   root.innerHTML = `
     <div class="view">
-      <p class="view__crumbs"><a href="#/paginas">← Páginas</a></p>
+      <p class="view__crumbs"><a href="#/paginas">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Páginas</span></a></p>
       <h1>${escapeHtml(page.label)}</h1>
       <div class="empty-state empty-state--soft">
         <p style="font-size:18px;">Editor visual desta página ainda não foi criado.</p>
