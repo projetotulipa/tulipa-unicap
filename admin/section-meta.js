@@ -40,7 +40,20 @@ export const SECTION_META = {
 
 // fallback genérico — pode ser usado se um slug novo aparecer
 export function sectionMeta(slug) {
-  return SECTION_META[slug] || {
+  if (SECTION_META[slug]) return SECTION_META[slug];
+
+  // se for um slug sufixado tipo "sobre-2", usa o base com indicação
+  const m = slug.match(/^(.+)-(\d+)$/);
+  if (m && SECTION_META[m[1]]) {
+    const base = SECTION_META[m[1]];
+    return {
+      iconName: base.iconName,
+      label: `${base.label} — bloco ${m[2]}`,
+      description: base.description,
+    };
+  }
+
+  return {
     iconName: 'page',
     label: capitalize(slug.replace(/-/g, ' ')),
     description: 'Seção interna desta página.',

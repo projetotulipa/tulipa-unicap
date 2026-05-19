@@ -90,9 +90,14 @@ SECTION_RE = re.compile(
 )
 
 def process_sections(text):
+    used_slugs = {}
     def fix(m):
         opening, body, closing = m.group(1), m.group(2), m.group(3)
-        slug = section_slug_from_opening(opening)
+        raw_slug = section_slug_from_opening(opening)
+        # sufixa se for duplicado dentro do mesmo arquivo
+        count = used_slugs.get(raw_slug, 0)
+        used_slugs[raw_slug] = count + 1
+        slug = raw_slug if count == 0 else f"{raw_slug}-{count + 1}"
         opening = add_attr(opening, f"section.{slug}", "section")
         body = process_section_body(body, slug)
         return opening + body + closing

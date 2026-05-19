@@ -48,16 +48,19 @@ export const PAGES = [
     scope: 'lp:grupos-de-estudo',
     label: 'Grupos de Estudo',
     path: '../atividades/grupos-de-estudo.html',
+    description: 'Leituras de Jung, von Franz, Hillman e Nise da Silveira em grupo.',
   },
   {
     scope: 'lp:leitura-conjunta',
-    label: 'Leitura Conjunta',
+    label: 'Grupo de Leitura Conjunta',
     path: '../atividades/leitura-conjunta.html',
+    description: 'Mitos, contos, arte e literatura junguiana lidos em conjunto.',
   },
   {
     scope: 'lp:arteterapia',
-    label: 'Arteterapia',
+    label: 'Oficina de Arteterapia',
     path: '../atividades/arteterapia.html',
+    description: 'Pintura, colagem, modelagem e mandala como caminho de expressão.',
   },
 ];
 
