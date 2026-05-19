@@ -3,14 +3,13 @@ import { supabase } from '../js/supabase.js';
 import { SCOPES } from '../js/config.js';
 import { SECTORS, ROLES, sectorByValue, describeProfile } from './sectors.js';
 import {
-  getData, getScope, patchEdit, setOrder,
+  getData, getScope, patchEdit, setOrder, setBlockOrder, getBlockOrder,
   bootstrap, publish, onChange,
 } from '../js/site-data.js';
 
-import { renderOverview }   from './views/overview.js';
-import { renderNavbar }     from './views/navbar.js';
 import { renderPages }      from './views/pages.js';
-import { renderPageEditor } from './views/page-editor.js';
+import { renderHomeEditor } from './views/home-editor.js';
+import { renderLpPlaceholder } from './views/lp-placeholder.js';
 import { renderMembers }    from './views/members.js';
 
 // ---------- estado ----------
@@ -104,7 +103,9 @@ function enterApp() {
   }
 
   setBodyState('app');
-  if (!location.hash) location.hash = '#/visao-geral';
+  if (!location.hash || location.hash === '#/' || location.hash === '#/visao-geral' || location.hash === '#/navbar') {
+    location.hash = '#/paginas';
+  }
   route();
 }
 
@@ -126,7 +127,9 @@ function route() {
     root: main,
     state,
     api: {
-      supabase, getData, getScope, patchEdit, setOrder, publish, onChange,
+      supabase, getData, getScope, patchEdit, setOrder,
+      setBlockOrder, getBlockOrder,
+      publish, onChange,
       SCOPES,
       navigate: (h) => { location.hash = h; },
       markDirty: (scope) => { state.dirty.add(scope); },
@@ -137,18 +140,17 @@ function route() {
 
   try {
     switch (parts[0]) {
-      case 'visao-geral': return renderOverview(ctx);
-      case 'navbar':      return renderNavbar(ctx);
       case 'paginas':
-        if (parts[1]) return renderPageEditor(ctx, parts[1]);
+        if (parts[1] === 'home') return renderHomeEditor(ctx);
+        if (parts[1]) return renderLpPlaceholder(ctx, parts[1]);
         return renderPages(ctx);
       case 'membros':
         if (state.role !== 'admin') {
-          location.hash = '#/visao-geral'; return;
+          location.hash = '#/paginas'; return;
         }
         return renderMembers(ctx);
       default:
-        location.hash = '#/visao-geral';
+        location.hash = '#/paginas';
     }
   } catch (e) {
     console.error(e);

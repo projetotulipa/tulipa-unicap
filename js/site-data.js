@@ -26,7 +26,7 @@ function writeLS(key, value) {
 //   labels:  { 'edit-id': 'novo label', ... },     // override de labels (links de nav)
 // }
 
-const EMPTY_SCOPE = () => ({ text: {}, hidden: {}, order: [], labels: {} });
+const EMPTY_SCOPE = () => ({ text: {}, hidden: {}, order: [], blockOrder: [], labels: {} });
 
 function ensureShape(data) {
   data ||= {};
@@ -73,6 +73,18 @@ export function setOrder(scope, order) {
   currentData[scope] = s;
   writeLS(LS_DATA, currentData);
   emit();
+}
+
+export function setBlockOrder(scope, blockOrder) {
+  const s = { ...EMPTY_SCOPE(), ...currentData[scope] };
+  s.blockOrder = Array.isArray(blockOrder) ? [...blockOrder] : [];
+  currentData[scope] = s;
+  writeLS(LS_DATA, currentData);
+  emit();
+}
+
+export function getBlockOrder(scope) {
+  return currentData[scope]?.blockOrder || [];
 }
 
 export function onChange(fn) {

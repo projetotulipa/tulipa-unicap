@@ -104,6 +104,104 @@ function applyOrder() {
   }
 }
 
+// ---------- aplicar block order (reordena seções top-level de uma página) ----------
+// data[scope].blockOrder = ['section.hero', 'section.manifesto', ...]
+// Move cada seção (+ seu wave-divider data-edit-bound-to apontando pra ela)
+// pra ordem desejada, mantendo elementos não-bloco no lugar.
+function applyBlockOrder() {
+  const data = getData();
+  const scope = getDefaultScope();
+  const order = data[scope]?.blockOrder;
+  if (!Array.isArray(order) || order.length === 0) return;
+
+  const body = document.body;
+  if (!body) return;
+
+  // Acha o range de elementos "reorderáveis" no body — entre o primeiro
+  // section.* e a última section.* (não inclui nav, footer, loader, etc.).
+  const children = Array.from(body.children);
+  const sectionIndexes = [];
+  children.forEach((el, idx) => {
+    const id = el.dataset?.editId;
+    if (id && id.startsWith('section.') && el.tagName !== 'NAV' && el.tagName !== 'FOOTER') {
+      sectionIndexes.push(idx);
+    }
+  });
+  if (sectionIndexes.length === 0) return;
+  const startIdx = sectionIndexes[0];
+  const endIdx = sectionIndexes[sectionIndexes.length - 1];
+
+  // Constrói "unidades": cada seção (+ divider que aponta pra ela) é uma unidade.
+  // Divider aparece ANTES da sua seção alvo.
+  const range = children.slice(startIdx, endIdx + 1);
+  const units = []; // { section, divider, sectionId }
+  const consumed = new Set();
+
+  for (const el of range) {
+    if (consumed.has(el)) continue;
+    const id = el.dataset?.editId;
+    if (id && id.startsWith('section.')) {
+      // procura divider imediatamente antes que aponte pra essa seção
+      let divider = null;
+      const prevIdx = range.indexOf(el) - 1;
+      if (prevIdx >= 0) {
+        const prev = range[prevIdx];
+        if (prev.dataset?.editBoundTo === id && !consumed.has(prev)) {
+          divider = prev;
+        }
+      }
+      units.push({ section: el, divider, sectionId: id });
+      consumed.add(el);
+      if (divider) consumed.add(divider);
+    }
+  }
+
+  // Reordena unidades conforme `order`. Unidades não citadas vão pro fim na ordem original.
+  const byId = new Map(units.map((u) => [u.sectionId, u]));
+  const ordered = [];
+  for (const id of order) {
+    if (byId.has(id)) {
+      ordered.push(byId.get(id));
+      byId.delete(id);
+    }
+  }
+  for (const u of byId.values()) ordered.push(u);
+
+  // Determina elementos "fixos" (não-unidades) dentro do range — preserva posição relativa
+  const fixedBefore = []; // antes do primeiro bloco
+  const fixedAfter  = []; // depois do último bloco
+  // simples: tudo que não foi consumido (não é section nem divider associado) fica no fim da nova lista
+  const stragglers = range.filter((el) => !consumed.has(el));
+
+  // Insere na ordem: [unidades ordenadas (cada uma divider+section), stragglers]
+  const insertBefore = children[endIdx + 1] || null; // âncora pra reinserir antes
+  const frag = document.createDocumentFragment();
+  for (const u of ordered) {
+    if (u.divider) frag.appendChild(u.divider);
+    frag.appendChild(u.section);
+  }
+  for (const s of stragglers) frag.appendChild(s);
+  body.insertBefore(frag, insertBefore);
+}
+
+// ---------- bound visibility (dividers seguem a visibilidade da seção alvo) ----------
+function applyBoundVisibility() {
+  const data = getData();
+  const scope = getDefaultScope();
+  const hidden = data[scope]?.hidden || {};
+  for (const el of document.querySelectorAll('[data-edit-bound-to]')) {
+    const targetId = el.dataset.editBoundTo;
+    const isTargetHidden = !!hidden[targetId];
+    if (isTargetHidden) {
+      el.setAttribute('hidden', '');
+      el.dataset.boundHidden = '1';
+    } else if (el.dataset.boundHidden) {
+      el.removeAttribute('hidden');
+      delete el.dataset.boundHidden;
+    }
+  }
+}
+
 // ---------- esconder referências a páginas marcadas como hidden ----------
 // global.hidden['page.<slug>'] = true → esconde <a href*="<slug>.html"> nos menus
 function applyPageVisibility() {
@@ -133,6 +231,8 @@ function applyAll() {
   applyVisibility();
   applyTextOverrides();
   applyOrder();
+  applyBlockOrder();
+  applyBoundVisibility();
   applyPageVisibility();
 }
 
