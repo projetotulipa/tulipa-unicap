@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TULIPA · Admin</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 20 C 35 30, 30 50, 35 65 C 40 78, 50 80, 50 80 C 50 80, 60 78, 65 65 C 70 50, 65 30, 50 20 Z' fill='%235C2230'/%3E%3Cpath d='M50 78 L50 95' stroke='%234A5C36' stroke-width='2' fill='none'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body data-state="loading">
+  <!-- LOADING -->
+  <div class="admin-splash" data-show-when="loading">
+    <span class="admin-splash__petal"></span>
+    <p>Abrindo o jardim…</p>
+  </div>
+
+  <!-- LOGIN -->
+  <main class="admin-login" data-show-when="login" hidden>
+    <form class="admin-login__form" id="loginForm" autocomplete="off">
+      <span class="admin-login__mark" aria-hidden="true">🌷</span>
+      <h1>TULIPA · admin</h1>
+      <p class="admin-login__sub">Entre para editar o site.</p>
+      <label>
+        <span>Email</span>
+        <input type="email" name="email" required autocomplete="email" />
+      </label>
+      <label>
+        <span>Senha</span>
+        <input type="password" name="password" required autocomplete="current-password" />
+      </label>
+      <button type="submit" class="btn btn--primary">Entrar</button>
+      <p class="admin-login__error" id="loginError" hidden></p>
+    </form>
+  </main>
+
+  <!-- APP -->
+  <div class="admin-app" data-show-when="app" hidden>
+    <aside class="admin-sidebar">
+      <header class="admin-sidebar__brand">
+        <span class="admin-sidebar__mark" aria-hidden="true">🌷</span>
+        <div>
+          <strong>TULIPA</strong>
+          <small>painel admin</small>
+        </div>
+      </header>
+
+      <nav class="admin-sidebar__nav" id="sidebarNav">
+        <a href="#/visao-geral" data-view="overview" class="is-active">
+          <span>◇</span> Visão geral
+        </a>
+        <a href="#/navbar" data-view="navbar">
+          <span>≡</span> Navbar &amp; rodapé
+        </a>
+        <a href="#/paginas" data-view="pages">
+          <span>◻</span> Páginas
+        </a>
+        <a href="#/membros" data-view="members" data-admin-only hidden>
+          <span>◯</span> Membros
+        </a>
+      </nav>
+
+      <footer class="admin-sidebar__user">
+        <small id="currentUserEmail">…</small>
+        <small id="currentUserRole" class="admin-pill">…</small>
+        <button id="logoutBtn" class="admin-link-btn">Sair</button>
+      </footer>
+    </aside>
+
+    <main class="admin-main" id="adminMain">
+      <!-- views renderizadas aqui -->
+    </main>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

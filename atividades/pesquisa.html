@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=Cormorant+SC:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../style.css" />
 </head>
-<body>
+<body data-scope="lp:pesquisa">
   <a class="skip-link" href="#tldr">Pular para o conteúdo</a>
 
   <div class="loader" id="loader" aria-hidden="true">
@@ -19,19 +19,19 @@
     <span class="loader__word">TULIPA</span>
   </div>
 
-  <nav class="nav on-dark" id="nav">
+  <nav class="nav on-dark" id="nav" data-edit-id="nav" data-edit-type="section" data-edit-scope="global">
     <div class="nav__inner">
-      <a href="../index.html" class="nav__brand" data-magnetic>
+      <a href="../index.html" class="nav__brand" data-magnetic data-edit-id="nav.brand" data-edit-type="link" data-edit-scope="global">
         <img src="../assets/logo.png" alt="Logo TULIPA" class="nav__mark" />
-        <span>TULIPA</span>
+        <span data-edit-id="nav.brand-text" data-edit-type="text" data-edit-scope="global">TULIPA</span>
       </a>
-      <ul class="nav__menu">
-        <li><a href="../index.html#sobre">Quem somos</a></li>
-        <li><a href="../index.html#missao">Missão</a></li>
-        <li><a href="../index.html#nome">O nome</a></li>
-        <li><a href="../index.html#atividades">Atividades</a></li>
-        <li><a href="../index.html#departamentos">Departamentos</a></li>
-        <li><a href="../index.html#contato" class="nav__cta" data-magnetic>Contato</a></li>
+      <ul class="nav__menu" data-edit-container="nav.menu" data-edit-scope="global">
+        <li data-edit-id="nav.link.sobre" data-edit-type="section" data-edit-scope="global"><a href="../index.html#sobre" data-edit-id="nav.link.sobre.label" data-edit-type="link" data-edit-scope="global">Quem somos</a></li>
+        <li data-edit-id="nav.link.missao" data-edit-type="section" data-edit-scope="global"><a href="../index.html#missao" data-edit-id="nav.link.missao.label" data-edit-type="link" data-edit-scope="global">Missão</a></li>
+        <li data-edit-id="nav.link.nome" data-edit-type="section" data-edit-scope="global"><a href="../index.html#nome" data-edit-id="nav.link.nome.label" data-edit-type="link" data-edit-scope="global">O nome</a></li>
+        <li data-edit-id="nav.link.atividades" data-edit-type="section" data-edit-scope="global"><a href="../index.html#atividades" data-edit-id="nav.link.atividades.label" data-edit-type="link" data-edit-scope="global">Atividades</a></li>
+        <li data-edit-id="nav.link.departamentos" data-edit-type="section" data-edit-scope="global"><a href="../index.html#departamentos" data-edit-id="nav.link.departamentos.label" data-edit-type="link" data-edit-scope="global">Departamentos</a></li>
+        <li data-edit-id="nav.link.contato" data-edit-type="section" data-edit-scope="global"><a href="../index.html#contato" class="nav__cta" data-magnetic data-edit-id="nav.link.contato.label" data-edit-type="link" data-edit-scope="global">Contato</a></li>
       </ul>
       <button class="nav__burger" aria-label="Abrir menu" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
@@ -516,14 +516,14 @@
   </section>
 
   <!-- FOOTER -->
-  <footer class="footer">
+  <footer class="footer" data-edit-id="section.footer" data-edit-type="section" data-edit-scope="global">
     <div class="footer__inner footer__inner--expanded">
       <div class="footer__brand-col">
         <div class="footer__brand">
           <img src="../assets/logo.png" alt="Logo TULIPA — UNICAP" class="nav__mark" />
-          <p><strong>TULIPA</strong><br/>Tessitura Universitária de Linguagens em Psicologia Analítica</p>
+          <p data-edit-id="footer.brand-text" data-edit-type="text" data-edit-scope="global"><strong>TULIPA</strong><br/>Tessitura Universitária de Linguagens em Psicologia Analítica</p>
         </div>
-        <p class="footer__about">Projeto de extensão em Psicologia Analítica Junguiana da UNICAP. Recife, Pernambuco.</p>
+        <p class="footer__about" data-edit-id="footer.about" data-edit-type="text" data-edit-scope="global">Projeto de extensão em Psicologia Analítica Junguiana da UNICAP. Recife, Pernambuco.</p>
         <div class="footer__social">
           <a href="https://instagram.com/tulipa.unicap" target="_blank" rel="noopener" aria-label="Perfil da TULIPA no Instagram">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -536,35 +536,35 @@
         </div>
       </div>
       <nav class="footer__nav" aria-label="Mapa do site">
-        <div class="footer__col">
-          <h4>O projeto</h4>
+        <div class="footer__col" data-edit-id="footer.col.projeto" data-edit-type="section" data-edit-scope="global">
+          <h4 data-edit-id="footer.col.projeto.title" data-edit-type="text" data-edit-scope="global">O projeto</h4>
           <ul>
-            <li><a href="../index.html#sobre">Quem somos</a></li>
-            <li><a href="../index.html#missao">Missão</a></li>
-            <li><a href="../index.html#nome">O nome</a></li>
-            <li><a href="../index.html#contato">Contato</a></li>
-            <li><a href="../sitemap.html">Mapa do site</a></li>
+            <li data-edit-id="footer.col.projeto.li.sobre" data-edit-type="section" data-edit-scope="global"><a href="../index.html#sobre" data-edit-id="footer.col.projeto.li.sobre.label" data-edit-type="link" data-edit-scope="global">Quem somos</a></li>
+            <li data-edit-id="footer.col.projeto.li.missao" data-edit-type="section" data-edit-scope="global"><a href="../index.html#missao" data-edit-id="footer.col.projeto.li.missao.label" data-edit-type="link" data-edit-scope="global">Missão</a></li>
+            <li data-edit-id="footer.col.projeto.li.nome" data-edit-type="section" data-edit-scope="global"><a href="../index.html#nome" data-edit-id="footer.col.projeto.li.nome.label" data-edit-type="link" data-edit-scope="global">O nome</a></li>
+            <li data-edit-id="footer.col.projeto.li.contato" data-edit-type="section" data-edit-scope="global"><a href="../index.html#contato" data-edit-id="footer.col.projeto.li.contato.label" data-edit-type="link" data-edit-scope="global">Contato</a></li>
+            <li data-edit-id="footer.col.projeto.li.sitemap" data-edit-type="section" data-edit-scope="global"><a href="../sitemap.html" data-edit-id="footer.col.projeto.li.sitemap.label" data-edit-type="link" data-edit-scope="global">Mapa do site</a></li>
           </ul>
         </div>
-        <div class="footer__col">
-          <h4>Atividades</h4>
+        <div class="footer__col" data-edit-id="footer.col.atividades" data-edit-type="section" data-edit-scope="global">
+          <h4 data-edit-id="footer.col.atividades.title" data-edit-type="text" data-edit-scope="global">Atividades</h4>
           <ul>
-            <li><a href="grupos-de-estudo.html">Grupos de Estudo</a></li>
-            <li><a href="leitura-conjunta.html">Leitura Conjunta</a></li>
-            <li><a href="arteterapia.html">Arteterapia</a></li>
-            <li><a href="https://allos.org.br" target="_blank" rel="noopener">Allos ↗</a></li>
+            <li data-edit-id="footer.col.atividades.li.grupos" data-edit-type="section" data-edit-scope="global"><a href="grupos-de-estudo.html" data-edit-id="footer.col.atividades.li.grupos.label" data-edit-type="link" data-edit-scope="global">Grupos de Estudo</a></li>
+            <li data-edit-id="footer.col.atividades.li.leitura" data-edit-type="section" data-edit-scope="global"><a href="leitura-conjunta.html" data-edit-id="footer.col.atividades.li.leitura.label" data-edit-type="link" data-edit-scope="global">Leitura Conjunta</a></li>
+            <li data-edit-id="footer.col.atividades.li.arte" data-edit-type="section" data-edit-scope="global"><a href="arteterapia.html" data-edit-id="footer.col.atividades.li.arte.label" data-edit-type="link" data-edit-scope="global">Arteterapia</a></li>
+            <li data-edit-id="footer.col.atividades.li.allos" data-edit-type="section" data-edit-scope="global"><a href="https://allos.org.br" target="_blank" rel="noopener" data-edit-id="footer.col.atividades.li.allos.label" data-edit-type="link" data-edit-scope="global">Allos ↗</a></li>
           </ul>
         </div>
-        <div class="footer__col">
-          <h4>Departamentos</h4>
+        <div class="footer__col" data-edit-id="footer.col.depts" data-edit-type="section" data-edit-scope="global">
+          <h4 data-edit-id="footer.col.depts.title" data-edit-type="text" data-edit-scope="global">Departamentos</h4>
           <ul>
-            <li><a href="presidencia.html">Presidência</a></li>
-            <li><a href="professor-orientador.html">Prof. Orientador</a></li>
-            <li><a href="professor-colaborador.html">Prof. Colaborador</a></li>
-            <li><a href="midia.html">Mídia</a></li>
-            <li><a href="pesquisa.html">Pesquisa</a></li>
-            <li><a href="tesouraria.html">Tesouraria</a></li>
-            <li><a href="secretaria.html">Secretaria</a></li>
+            <li data-edit-id="footer.col.depts.li.presidencia" data-edit-type="section" data-edit-scope="global"><a href="presidencia.html" data-edit-id="footer.col.depts.li.presidencia.label" data-edit-type="link" data-edit-scope="global">Presidência</a></li>
+            <li data-edit-id="footer.col.depts.li.prof-orientador" data-edit-type="section" data-edit-scope="global"><a href="professor-orientador.html" data-edit-id="footer.col.depts.li.prof-orientador.label" data-edit-type="link" data-edit-scope="global">Prof. Orientador</a></li>
+            <li data-edit-id="footer.col.depts.li.prof-colaborador" data-edit-type="section" data-edit-scope="global"><a href="professor-colaborador.html" data-edit-id="footer.col.depts.li.prof-colaborador.label" data-edit-type="link" data-edit-scope="global">Prof. Colaborador</a></li>
+            <li data-edit-id="footer.col.depts.li.midia" data-edit-type="section" data-edit-scope="global"><a href="midia.html" data-edit-id="footer.col.depts.li.midia.label" data-edit-type="link" data-edit-scope="global">Mídia</a></li>
+            <li data-edit-id="footer.col.depts.li.pesquisa" data-edit-type="section" data-edit-scope="global"><a href="pesquisa.html" data-edit-id="footer.col.depts.li.pesquisa.label" data-edit-type="link" data-edit-scope="global">Pesquisa</a></li>
+            <li data-edit-id="footer.col.depts.li.tesouraria" data-edit-type="section" data-edit-scope="global"><a href="tesouraria.html" data-edit-id="footer.col.depts.li.tesouraria.label" data-edit-type="link" data-edit-scope="global">Tesouraria</a></li>
+            <li data-edit-id="footer.col.depts.li.secretaria" data-edit-type="section" data-edit-scope="global"><a href="secretaria.html" data-edit-id="footer.col.depts.li.secretaria.label" data-edit-type="link" data-edit-scope="global">Secretaria</a></li>
           </ul>
         </div>
       </nav>
@@ -594,5 +594,6 @@
       targets.forEach(t => io.observe(t));
     })();
   </script>
+  <script type="module" src="../js/render.js"></script>
 </body>
 </html>
