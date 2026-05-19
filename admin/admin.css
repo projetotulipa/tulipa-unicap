@@ -478,13 +478,25 @@ body[data-state="app"]     [data-show-when="app"]     { display: flex; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.table td select {
+.table td select,
+.table td .member-input {
   background: var(--bg);
   border: 1px solid var(--border);
   color: var(--text);
   padding: 6px 10px;
   border-radius: 6px;
   font: inherit;
+  outline: none;
+  transition: border-color 0.15s, opacity 0.15s;
+  width: 100%;
+}
+.table td select:focus,
+.table td .member-input:focus { border-color: var(--rose-soft); }
+.table td select:disabled,
+.table td .member-input:disabled {
+  cursor: not-allowed;
+  background: transparent;
+  color: var(--text-dimer);
 }
 
 /* toggle */

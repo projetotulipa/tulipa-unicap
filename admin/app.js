@@ -1,6 +1,7 @@
 // TULIPA · admin · entry point
 import { supabase } from '../js/supabase.js';
 import { SCOPES } from '../js/config.js';
+import { SECTORS, ROLES, sectorByValue, describeProfile } from './sectors.js';
 import {
   getData, getScope, patchEdit, setOrder,
   bootstrap, publish, onChange,
@@ -16,6 +17,8 @@ import { renderMembers }    from './views/members.js';
 const state = {
   user: null,
   role: null,
+  sector: null,
+  team: null,
   displayName: null,
   // tracking de edits pendentes por scope (dirty flag)
   dirty: new Set(),
@@ -45,7 +48,7 @@ function clearError(target) {
 async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('role, display_name')
+    .select('role, display_name, sector, team')
     .eq('user_id', userId)
     .maybeSingle();
   if (error) throw error;
@@ -76,6 +79,8 @@ async function loadUser(user) {
       throw new Error('Seu acesso ainda está pendente. Aguarde aprovação do admin.');
     }
     state.role = profile.role;
+    state.sector = profile.sector || null;
+    state.team = profile.team || null;
     state.displayName = profile.display_name || user.email;
   } catch (e) {
     await supabase.auth.signOut();
@@ -89,7 +94,9 @@ async function loadUser(user) {
 function enterApp() {
   // popula sidebar
   $('#currentUserEmail').textContent = state.user.email;
-  $('#currentUserRole').textContent = labelForRole(state.role);
+  $('#currentUserRole').textContent = describeProfile({
+    role: state.role, sector: state.sector, team: state.team,
+  });
 
   // mostra "Membros" só pra admin
   for (const el of $$('[data-admin-only]')) {
@@ -99,12 +106,6 @@ function enterApp() {
   setBodyState('app');
   if (!location.hash) location.hash = '#/visao-geral';
   route();
-}
-
-function labelForRole(role) {
-  if (role === 'admin') return 'Admin';
-  if (role?.startsWith('dept:')) return role.replace('dept:', '');
-  return role;
 }
 
 // ---------- routing ----------
@@ -157,11 +158,11 @@ function route() {
 
 function canEditScope(scope) {
   if (state.role === 'admin') return true;
-  const cfg = SCOPES[scope];
-  if (!cfg) return false;
-  if (cfg.adminOnly) return false;
-  if (cfg.role && cfg.role === state.role) return true;
-  return false;
+  // só coordenador edita LPs por enquanto (member acessa features próprias, sem CMS)
+  if (state.role !== 'coordinator' || !state.sector) return false;
+  const sector = sectorByValue(state.sector);
+  if (!sector) return false;
+  return sector.lpScopes.includes(scope);
 }
 
 // ---------- login ----------

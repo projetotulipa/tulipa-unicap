@@ -1,4 +1,5 @@
 import { PAGES } from '../pages-meta.js';
+import { describeProfile } from '../sectors.js';
 
 export function renderOverview(ctx) {
   const { root, state, api } = ctx;
@@ -7,8 +8,9 @@ export function renderOverview(ctx) {
     <div class="view">
       <h1>Bem-vinde, ${escapeHtml(state.displayName || state.user.email)}</h1>
       <p class="view__lede">
-        Você tem permissão de
-        <strong>${escapeHtml(roleLabel(state.role))}</strong>.
+        Você é <strong>${escapeHtml(describeProfile({
+          role: state.role, sector: state.sector, team: state.team,
+        }))}</strong>.
         Use a barra lateral para escolher o que editar.
       </p>
 
@@ -74,12 +76,6 @@ async function loadRecentPublishes(ctx) {
   } catch (e) {
     box.innerHTML = `<span class="muted">Não foi possível carregar (${escapeHtml(e.message)})</span>`;
   }
-}
-
-function roleLabel(role) {
-  if (role === 'admin') return 'Admin (acesso total)';
-  if (role?.startsWith('dept:')) return role.replace('dept:', '');
-  return role;
 }
 
 function escapeHtml(s) {
