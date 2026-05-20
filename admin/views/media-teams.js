@@ -7,6 +7,13 @@ import { renderMediaNav } from './media-nav.js';
 import { avatarHtml } from '../avatar.js';
 import { toastSuccess, toastError } from '../toast.js';
 
+const PETAL_MINI = `
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M50 18 C 32 28, 26 50, 32 66 C 38 80, 50 82, 50 82 C 50 82, 62 80, 68 66 C 74 50, 68 28, 50 18 Z" fill="currentColor"/>
+    <path d="M50 78 L50 96" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  </svg>
+`;
+
 // carga das equipes (tarefas pendentes), preenchido em loadTeams()
 let cachedTaskLoad = new Map(); // team_id → { pending, total }
 
@@ -18,6 +25,7 @@ export async function renderMediaTeams(ctx) {
       ${renderMediaNav('teams')}
 
       <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
+        <div class="media-section-petal">${PETAL_MINI}</div>
         <div>
           <h1>Equipes de Mídia</h1>
           <p class="view__lede">Divida o setor em sub-equipes (Design, Filmagem, Redes...). Vincule as pessoas a cada uma.</p>

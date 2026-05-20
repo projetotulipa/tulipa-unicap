@@ -14,6 +14,13 @@ const STATUS_COLUMNS = [
   { id: 'done',         label: 'Concluído' },
 ];
 
+const PETAL_MINI = `
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M50 18 C 32 28, 26 50, 32 66 C 38 80, 50 82, 50 82 C 50 82, 62 80, 68 66 C 74 50, 68 28, 50 18 Z" fill="currentColor"/>
+    <path d="M50 78 L50 96" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  </svg>
+`;
+
 let cachedTasks = [];
 let cachedTeams = [];
 let cachedPeople = [];
@@ -36,9 +43,10 @@ export async function renderMediaTasks(ctx) {
       ${renderMediaNav('tasks')}
 
       <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
+        <div class="media-section-petal">${PETAL_MINI}</div>
         <div>
           <h1>Tarefas</h1>
-          <p class="view__lede">Acompanhe o que cada equipe precisa entregar. Mude o status arrastando o select.</p>
+          <p class="view__lede">Acompanhe o que cada equipe precisa entregar. Arraste o card pra mover entre colunas.</p>
         </div>
         <button class="btn btn--primary" id="newTaskBtn">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Nova tarefa</span></button>
       </header>
@@ -163,6 +171,14 @@ function bindKanbanDnD() {
       const original = task.status;
       task.status = targetStatus;
       renderColumns();
+      // dispara animação drop-flash no card recém-movido
+      requestAnimationFrame(() => {
+        const movedCard = document.querySelector(`.media-task-card[data-id="${cssEscape(taskId)}"]`);
+        if (movedCard) {
+          movedCard.classList.add('is-dropped');
+          setTimeout(() => movedCard.classList.remove('is-dropped'), 600);
+        }
+      });
       const { error } = await data.updateTask(taskId, { status: targetStatus });
       if (error) {
         task.status = original;
@@ -242,6 +258,11 @@ function renderTaskToolbar() {
     renderTaskToolbar();
     renderColumns();
   });
+}
+
+function cssEscape(s) {
+  if (window.CSS?.escape) return window.CSS.escape(s);
+  return String(s).replace(/"/g, '\\"');
 }
 
 function hasAnyFilter() {

@@ -5,6 +5,13 @@ import * as data from '../media/data.js';
 import { renderMediaNav } from './media-nav.js';
 import { avatarHtml } from '../avatar.js';
 
+const PETAL_MINI = `
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M50 18 C 32 28, 26 50, 32 66 C 38 80, 50 82, 50 82 C 50 82, 62 80, 68 66 C 74 50, 68 28, 50 18 Z" fill="currentColor"/>
+    <path d="M50 78 L50 96" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  </svg>
+`;
+
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTHS = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -25,6 +32,7 @@ export async function renderMediaCalendar(ctx) {
       ${renderMediaNav('calendar')}
 
       <header class="view__header">
+        <div class="media-section-petal">${PETAL_MINI}</div>
         <div>
           <h1>Calendário de tarefas</h1>
           <p class="view__lede">Veja o ritmo das entregas no mês ou na semana. Click num dia abre as tarefas daquela data.</p>
@@ -33,7 +41,7 @@ export async function renderMediaCalendar(ctx) {
 
       <div id="calNav"></div>
 
-      <div id="calBody"><div class="skel skel--block" style="height:300px;"></div></div>
+      <div id="calBody"><div class="media-loading-wrap"><div class="media-bloom"><span class="media-bloom__petal" aria-hidden="true"></span></div><span>carregando calendário…</span></div></div>
     </div>
   `;
 

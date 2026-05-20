@@ -59,7 +59,7 @@ export async function renderMediaDashboard(ctx) {
             <h2>Posts aguardando produção</h2>
             <p class="media-pane__hint">enviados pela Pesquisa</p>
           </header>
-          <div id="incomingPostsBox"><div class="skel skel--block"></div></div>
+          <div id="incomingPostsBox">${bloomLoading('carregando…')}</div>
         </div>
         <div class="media-pane">
           <header class="media-pane__head">
@@ -67,8 +67,17 @@ export async function renderMediaDashboard(ctx) {
             <h2>Tarefas com prazo próximo</h2>
             <p class="media-pane__hint">próximos 14 dias</p>
           </header>
-          <div id="dueTasksBox"><div class="skel skel--block"></div></div>
+          <div id="dueTasksBox">${bloomLoading('carregando…')}</div>
         </div>
+      </section>
+
+      <section class="media-pane" id="moodboardPane" style="display:none; margin-top:14px;">
+        <header class="media-pane__head">
+          <span class="media-pane__icon">${icon('star', { size: 18 })}</span>
+          <h2>Mural dos publicados</h2>
+          <p class="media-pane__hint">o que já foi ao ar</p>
+        </header>
+        <div class="media-moodboard" id="moodboardGrid"></div>
       </section>
     </div>
   `;
@@ -78,6 +87,15 @@ export async function renderMediaDashboard(ctx) {
 
 function skel() {
   return `<div class="media-stat media-stat--skel"><div class="skel"></div></div>`;
+}
+
+function bloomLoading(label = '') {
+  return `
+    <div class="media-loading-wrap">
+      <div class="media-bloom"><span class="media-bloom__petal" aria-hidden="true"></span></div>
+      ${label ? `<span>${escapeHtml(label)}</span>` : ''}
+    </div>
+  `;
 }
 
 async function loadAll() {
@@ -131,6 +149,17 @@ async function loadAll() {
       pane.style.display = '';
       row.innerHTML = skylineBars(todayStr, 28, tasksWithDate);
     }
+  }
+
+  // mural de publicados (últimos 6)
+  const published = incomingArr
+    .filter((p) => p.status === 'published')
+    .slice(0, 6);
+  if (published.length > 0) {
+    const pane = document.getElementById('moodboardPane');
+    const grid = document.getElementById('moodboardGrid');
+    pane.style.display = '';
+    grid.innerHTML = published.map(moodCard).join('');
   }
 
   // posts aguardando
@@ -197,6 +226,28 @@ function statCard(iconHtml, value, label, tone = null) {
     </div>
     <span class="media-stat__icon">${iconHtml}</span>
   </div>`;
+}
+
+function moodCard(post) {
+  const date = post.created_at ? formatMoodDate(post.created_at) : '';
+  const origin = post.research_note?.title || 'recebido';
+  return `
+    <a class="media-moodboard__card" href="#/midia/posts" title="${escapeAttr(post.title)}">
+      <div class="media-moodboard__petal">${PETAL_SVG}</div>
+      <p class="media-moodboard__eyebrow">publicado</p>
+      <h3 class="media-moodboard__title">${escapeHtml(post.title)}</h3>
+      <div class="media-moodboard__foot">
+        <span class="media-moodboard__date">${escapeHtml(date)}</span>
+        <span class="media-moodboard__seal">— ${escapeHtml(origin)}</span>
+      </div>
+    </a>
+  `;
+}
+
+function formatMoodDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
 }
 
 function pipelineRow(nodes) {

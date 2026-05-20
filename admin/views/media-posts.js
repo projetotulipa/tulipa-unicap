@@ -31,9 +31,10 @@ export async function renderMediaPosts(ctx) {
       ${renderMediaNav('posts')}
 
       <header class="view__header">
+        <div class="media-section-petal">${POST_WATERMARK}</div>
         <div>
           <h1>Posts recebidos</h1>
-          <p class="view__lede">Conteúdo escrito pela Pesquisa, pronto pra virar arte. Crie tarefa pra atribuir a uma equipe ou pessoa.</p>
+          <p class="view__lede">Conteúdo escrito pela Pesquisa, pronto pra virar arte. Arraste pra uma zona de status pra criar tarefa direto.</p>
         </div>
       </header>
 
