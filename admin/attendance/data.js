@@ -143,6 +143,48 @@ export async function generateMonthlyMeetings(group_id, year, month) {
   });
 }
 
+export async function generateMeetingsInRange(group_id, start_date, end_date) {
+  return supabase.rpc('generate_meetings_in_range', {
+    p_group_id: group_id,
+    p_start_date: start_date,
+    p_end_date: end_date,
+  });
+}
+
+// ---------- semesters ----------
+export async function listSemesters() {
+  return supabase.from('semesters').select('*').order('start_date', { ascending: false });
+}
+
+export async function getSemester(id) {
+  return supabase.from('semesters').select('*').eq('id', id).maybeSingle();
+}
+
+export async function getCurrentSemester() {
+  const { data, error } = await supabase
+    .from('semesters')
+    .select('*')
+    .eq('is_current', true)
+    .maybeSingle();
+  return { data, error };
+}
+
+export async function createSemester(fields) {
+  return supabase.from('semesters').insert(fields).select().single();
+}
+
+export async function updateSemester(id, fields) {
+  return supabase.from('semesters').update(fields).eq('id', id).select().single();
+}
+
+export async function deleteSemester(id) {
+  return supabase.from('semesters').delete().eq('id', id);
+}
+
+export async function setCurrentSemester(id) {
+  return supabase.rpc('set_current_semester', { p_id: id });
+}
+
 // ---------- attendance ----------
 export async function listAttendance(meeting_id) {
   return supabase

@@ -16,6 +16,7 @@ import { renderAttendanceGroups }    from './views/attendance-groups.js';
 import { renderAttendancePeople }    from './views/attendance-people.js';
 import { renderAttendanceGroupDetail } from './views/attendance-group.js';
 import { renderAttendanceMeeting }   from './views/attendance-meeting.js';
+import { renderAttendanceSemesters } from './views/attendance-semesters.js';
 
 // ---------- estado ----------
 const state = {
@@ -158,6 +159,7 @@ function route() {
         if (parts[1] === 'grupos' && parts[2]) return renderAttendanceGroupDetail(ctx, parts[2]);
         if (parts[1] === 'grupos')             return renderAttendanceGroups(ctx);
         if (parts[1] === 'pessoas')            return renderAttendancePeople(ctx);
+        if (parts[1] === 'semestres')          return renderAttendanceSemesters(ctx);
         if (parts[1] === 'encontros' && parts[2]) return renderAttendanceMeeting(ctx, parts[2]);
         return renderAttendanceDashboard(ctx);
       case 'membros':

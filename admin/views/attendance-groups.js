@@ -18,7 +18,7 @@ export async function renderAttendanceGroups(ctx) {
 
   root.innerHTML = `
     <div class="view">
-      ${renderSubNav('grupos')}
+      ${renderSubNav('grupos', { isAdmin })}
 
       <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
         <div>
@@ -112,15 +112,39 @@ async function loadGroups(ctx) {
   }));
 
   box.className = '';
-  box.innerHTML = `<div class="att-group-list">${perGroup.map(groupCard).join('')}</div>`;
+  const isAdmin = ctx.state.role === 'admin';
+  box.innerHTML = `<div class="att-group-list">${perGroup.map((d) => groupCard(d, isAdmin)).join('')}</div>`;
 
   allCards = Array.from(box.querySelectorAll('.att-group-card')).map((el) => ({
     el,
     name: el.dataset.name || '',
   }));
+
+  // bind dos botões de ação (admin only)
+  if (isAdmin) {
+    for (const card of box.querySelectorAll('.att-group-card')) {
+      const gid = card.dataset.groupId;
+      card.querySelector('[data-action="edit-group"]')?.addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const { data: row } = await data.getGroup(gid);
+        if (row) openGroupForm(ctx, row);
+      });
+      card.querySelector('[data-action="delete-group"]')?.addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const name = card.dataset.name;
+        if (!confirm(`Excluir o grupo "${name}"? Isso apaga encontros e marcações associadas. Não desfaz.`)) return;
+        const { error } = await data.deleteGroup(gid);
+        if (error) { toastError(error.message); return; }
+        toastSuccess('Grupo excluído.');
+        await loadGroups(ctx);
+      });
+    }
+  }
 }
 
-function groupCard(d) {
+function groupCard(d, isAdmin = false) {
   const { group: g, memberCount, happenedCount, upcoming, alertsCount, pct } = d;
   const schedule = SCHEDULE_LABELS[g.schedule_kind] || g.schedule_kind;
   const weekday = g.weekday !== null && g.weekday !== undefined ? WEEKDAY_LABELS[g.weekday] : null;
@@ -134,7 +158,9 @@ function groupCard(d) {
     :             `<span class="pill" style="color:var(--warning); border-color: rgba(199,127,61,0.4);">${pct}% presença</span>`;
 
   return `
-    <article class="att-group-card ${g.is_archived ? 'is-archived' : ''}" data-name="${escapeAttr(g.name)}">
+    <article class="att-group-card ${g.is_archived ? 'is-archived' : ''}"
+             data-group-id="${escapeAttr(g.id)}"
+             data-name="${escapeAttr(g.name)}">
       <a class="att-group-card__main" href="#/presenca/grupos/${escapeAttr(g.id)}">
         <span class="att-group-card__icon">${icon('group', { size: 22 })}</span>
         <div class="att-group-card__body">
@@ -143,7 +169,7 @@ function groupCard(d) {
           ${g.description ? `<span class="att-group-card__desc">${escapeHtml(g.description)}</span>` : ''}
           <div class="att-group-card__stats">
             <span class="pill">${icon('users', { size: 11 })}<span style="margin-left:4px;">${memberCount} ${memberCount === 1 ? 'membro' : 'membros'}</span></span>
-            ${happenedCount > 0 ? `<span class="pill">${icon('calendar', { size: 11 })}<span style="margin-left:4px;">${happenedCount} encontro${happenedCount === 1 ? '' : 's'} no mês</span></span>` : ''}
+            ${happenedCount > 0 ? `<span class="pill">${icon('calendar', { size: 11 })}<span style="margin-left:4px;">${happenedCount} encontro${happenedCount === 1 ? '' : 's'}</span></span>` : ''}
             ${pctBadge || ''}
             ${alertsCount > 0 ? `<span class="pill" style="color: var(--warning); border-color: rgba(199, 127, 61, 0.4);">${icon('alert', { size: 11 })}<span style="margin-left:4px;">${alertsCount} alerta${alertsCount === 1 ? '' : 's'}</span></span>` : ''}
           </div>
@@ -151,6 +177,12 @@ function groupCard(d) {
           ${g.is_archived ? '<span class="att-group-card__badge">arquivado</span>' : ''}
         </div>
       </a>
+      ${isAdmin ? `
+        <div class="att-group-card__menu">
+          <button class="icon-btn icon-btn--xs" data-action="edit-group" title="Editar grupo">${icon('edit', { size: 12 })}</button>
+          <button class="icon-btn icon-btn--xs" data-action="delete-group" title="Excluir grupo">${icon('trash', { size: 12 })}</button>
+        </div>
+      ` : ''}
     </article>
   `;
 }

@@ -2,7 +2,7 @@
 
 import { icon } from '../icons.js';
 import * as data from '../attendance/data.js';
-import { calcMonthlyStatus, STATUS_COLORS, severityOf, currentMonthRange, monthLabel } from '../attendance/status.js';
+import { calcMonthlyStatus, STATUS_COLORS, severityOf, currentMonthRange, monthLabel, shortRangeLabel } from '../attendance/status.js';
 import { renderSubNav } from './attendance-nav.js';
 import { avatarHtml } from '../avatar.js';
 
@@ -10,19 +10,28 @@ const WEEKDAY_LABELS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','
 
 export async function renderAttendanceDashboard(ctx) {
   const { root, state } = ctx;
-  const { year, month, from, to } = currentMonthRange();
   const today = new Date();
+
+  const { data: currentSem } = await data.getCurrentSemester();
+  const monthRange = currentMonthRange();
+  const range = currentSem
+    ? { from: currentSem.start_date, to: currentSem.end_date, semester: currentSem }
+    : { from: monthRange.from, to: monthRange.to, year: monthRange.year, month: monthRange.month };
+  const { year, month, from, to } = { ...monthRange, ...range };
+  const periodLabel = range.semester
+    ? `${range.semester.name} · ${shortRangeLabel(range.semester.start_date, range.semester.end_date)}`
+    : monthLabel(year, month);
 
   root.innerHTML = `
     <div class="view">
-      ${renderSubNav('dashboard')}
+      ${renderSubNav('dashboard', { isAdmin: state.role === 'admin' })}
 
       <header class="att-hero">
         <div>
           <p class="att-hero__eyebrow">${escapeHtml(greeting(today))} · ${escapeHtml(formatDate(today, 'long'))}</p>
           <h1>Presença</h1>
           <p class="view__lede">
-            Acompanhe quem está em dia e quem precisa de atenção em <strong>${escapeHtml(monthLabel(year, month))}</strong>.
+            Acompanhe quem está em dia e quem precisa de atenção em <strong>${escapeHtml(periodLabel)}</strong>.
           </p>
         </div>
         <div class="att-hero__cta">
@@ -144,7 +153,7 @@ async function loadEverything({ year, month, from, to, today }) {
   document.getElementById('attStats').innerHTML = `
     ${statCard(icon('group', { size: 20 }), groups.length, groups.length === 1 ? 'grupo ativo' : 'grupos ativos')}
     ${statCard(icon('users', { size: 20 }), people?.length || 0, (people?.length === 1) ? 'pessoa cadastrada' : 'pessoas cadastradas')}
-    ${statCard(icon('calendar', { size: 20 }), perGroupData.reduce((acc, x) => acc + x.meetings.filter(m => m.status === 'happened').length, 0), 'encontros este mês')}
+    ${statCard(icon('calendar', { size: 20 }), perGroupData.reduce((acc, x) => acc + x.meetings.filter(m => m.status === 'happened').length, 0), range.semester ? 'encontros no semestre' : 'encontros no mês')}
     ${statCard(icon('check-circle', { size: 20 }), pct === null ? '—' : `${pct}%`, 'presença média', pct !== null ? (pct >= 70 ? 'success' : pct >= 50 ? 'warning' : 'danger') : null)}
   `;
 
@@ -174,7 +183,7 @@ async function loadEverything({ year, month, from, to, today }) {
     alertsBox.innerHTML = `
       <div class="att-empty att-empty--ok">
         <div class="att-empty__art">${icon('check-circle', { size: 56 })}</div>
-        <p>Ninguém em laranja ou vermelho este mês.</p>
+        <p>Ninguém em laranja ou vermelho ${range.semester ? 'no semestre atual' : 'este mês'}.</p>
       </div>
     `;
   } else {

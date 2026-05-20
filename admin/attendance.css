@@ -273,6 +273,24 @@
 }
 .att-group-card:hover::before { opacity: 1; }
 .att-group-card.is-archived { opacity: 0.55; }
+.att-group-card__menu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.att-group-card:hover .att-group-card__menu { opacity: 1; }
+.att-group-card__menu .icon-btn {
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+}
+@media (hover: none) {
+  .att-group-card__menu { opacity: 1; }
+}
 
 .att-group-card__main {
   display: flex;
@@ -486,6 +504,57 @@
 .icon-btn--xs {
   width: 24px; height: 24px;
   border-radius: 5px;
+}
+
+/* ---------- semestres lista ---------- */
+.att-sem-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.att-sem-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px 20px;
+  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.att-sem-card:hover { border-color: var(--border-rose); transform: translateY(-1px); }
+.att-sem-card.is-current {
+  border-color: rgba(193, 158, 90, 0.5);
+  background: linear-gradient(90deg, rgba(193, 158, 90, 0.06), var(--bg-card) 30%);
+}
+.att-sem-card__icon {
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(193, 158, 90, 0.3), rgba(193, 158, 90, 0.08));
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.att-sem-card.is-current .att-sem-card__icon {
+  background: radial-gradient(circle at 30% 30%, rgba(193, 158, 90, 0.5), rgba(193, 158, 90, 0.2));
+  box-shadow: 0 0 0 3px rgba(193, 158, 90, 0.15);
+}
+.att-sem-card__main { flex: 1; min-width: 0; }
+.att-sem-card__main strong {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--cream);
+  line-height: 1.1;
+}
+.att-sem-card__main .muted { font-size: 13px; margin-top: 2px; display: block; }
+.att-sem-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 /* ---------- tabelas attendance ---------- */

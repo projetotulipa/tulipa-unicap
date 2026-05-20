@@ -2,7 +2,7 @@
 
 import { icon } from '../icons.js';
 import * as data from '../attendance/data.js';
-import { calcMonthlyStatus, STATUS_COLORS, currentMonthRange, monthLabel } from '../attendance/status.js';
+import { calcMonthlyStatus, STATUS_COLORS, currentMonthRange, monthLabel, shortRangeLabel } from '../attendance/status.js';
 import { categoryLabel } from '../attendance/categories.js';
 import { avatarHtml } from '../avatar.js';
 import { renderSubNav } from './attendance-nav.js';
@@ -14,9 +14,17 @@ const SCHEDULE_LABELS = { weekly: 'Toda semana', biweekly: 'Quinzenal', monthly:
 export async function renderAttendanceGroupDetail(ctx, groupId) {
   const { root, state } = ctx;
   const isAdmin = state.role === 'admin';
-  const { year, month, from, to } = currentMonthRange();
 
   root.innerHTML = `<div class="view"><div class="skel skel--title"></div><div class="skel skel--block"></div></div>`;
+
+  // determina range: semestre atual OU mês corrente como fallback
+  const { data: currentSem } = await data.getCurrentSemester();
+  const monthRange = currentMonthRange();
+  const range = currentSem
+    ? { from: currentSem.start_date, to: currentSem.end_date, semester: currentSem }
+    : { from: monthRange.from, to: monthRange.to, year: monthRange.year, month: monthRange.month };
+
+  const { year, month, from, to } = { ...monthRange, ...range };
 
   const [{ data: group, error: gErr }] = await Promise.all([data.getGroup(groupId)]);
   if (gErr || !group) {
@@ -36,7 +44,7 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
 
   root.innerHTML = `
     <div class="view">
-      ${renderSubNav('grupos')}
+      ${renderSubNav('grupos', { isAdmin })}
       <p class="view__crumbs"><a href="#/presenca/grupos">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Grupos</span></a></p>
       <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
         <div>
@@ -50,9 +58,12 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
 
       <section class="att-section">
         <header class="att-section__head">
-          <h2>Encontros · ${escapeHtml(monthLabel(year, month))}</h2>
+          <h2>Encontros · ${escapeHtml(range.semester ? `${range.semester.name} (${shortRangeLabel(range.semester.start_date, range.semester.end_date)})` : monthLabel(year, month))}</h2>
           ${(group.schedule_kind === 'weekly' || group.schedule_kind === 'biweekly') ? `
-            <button id="generateMeetingsBtn" class="btn btn--ghost btn--small">${icon('calendar', { size: 14 })}<span style="margin-left:6px;">Gerar encontros do mês</span></button>
+            <div style="display:flex; gap:6px;">
+              ${range.semester ? `<button id="generateSemesterBtn" class="btn btn--ghost btn--small">${icon('calendar', { size: 14 })}<span style="margin-left:6px;">Gerar todo o semestre</span></button>` : ''}
+              <button id="generateMeetingsBtn" class="btn btn--ghost btn--small">${icon('calendar', { size: 14 })}<span style="margin-left:6px;">Gerar mês corrente</span></button>
+            </div>
           ` : `
             <button id="newMeetingBtn" class="btn btn--ghost btn--small">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Novo encontro</span></button>
           `}
@@ -70,7 +81,7 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
 
       <section class="att-section">
         <header class="att-section__head">
-          <h2>Faltas justificadas · ${escapeHtml(monthLabel(year, month))}</h2>
+          <h2>Faltas justificadas · ${escapeHtml(range.semester ? range.semester.name : monthLabel(year, month))}</h2>
         </header>
         <div id="justificationsList" class="empty-state">carregando…</div>
       </section>
@@ -88,12 +99,25 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
     const original = btn.innerHTML;
     btn.textContent = 'gerando…';
     const { data: count, error } = await data.generateMonthlyMeetings(groupId, year, month);
-    if (error) {
-      toastError(error.message);
-    } else {
-      toastSuccess(`${count} encontro(s) gerado(s).`);
-      await loadMeetings(groupId, group, from, to);
-    }
+    if (error) toastError(error.message);
+    else { toastSuccess(`${count} encontro(s) gerado(s).`); await loadMeetings(groupId, group, from, to); }
+    btn.disabled = false;
+    btn.innerHTML = original;
+  });
+
+  document.getElementById('generateSemesterBtn')?.addEventListener('click', async () => {
+    if (!range.semester) return;
+    const btn = document.getElementById('generateSemesterBtn');
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.textContent = 'gerando…';
+    const { data: count, error } = await data.generateMeetingsInRange(
+      groupId,
+      range.semester.start_date,
+      range.semester.end_date
+    );
+    if (error) toastError(error.message);
+    else { toastSuccess(`${count} encontro(s) gerado(s) no semestre.`); await loadMeetings(groupId, group, from, to); }
     btn.disabled = false;
     btn.innerHTML = original;
   });

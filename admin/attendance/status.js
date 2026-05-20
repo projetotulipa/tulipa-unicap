@@ -1,4 +1,4 @@
-// Cálculo de status mensal de presença.
+// Cálculo de status de presença num período (semestre OU mês).
 
 export const STATUS_COLORS = {
   gray:   { label: 'sem encontros',   token: 'gray',   hex: '#756855' },
@@ -8,21 +8,29 @@ export const STATUS_COLORS = {
   red:    { label: 'situação crítica',token: 'red',    hex: '#C24A4A' },
 };
 
-/**
- * Calcula o status mensal de uma pessoa em um grupo.
- *
- * @param {Array<{id, date, status, attendance: {person_id, is_present, justified}}>} meetingsWithAttendance
- *        Lista de encontros do mês com suas presenças. Encontros podem ter status 'happened',
- *        'cancelled' ou 'scheduled'. Apenas 'happened' entra no cálculo.
- * @param {string} personId
- * @param {object} [opts]
- * @param {boolean} [opts.isWeekly=true]   — grupo de frequência semanal (afeta limiares)
- * @returns {{ color, label, absences, maxConsecutive, attended, totalHappened, justifiedAbsences }}
- */
-export function calcMonthlyStatus(meetingsWithAttendance, personId, opts = {}) {
-  const { isWeekly = true } = opts;
+/** Thresholds de absenteísmo em fração (0..1). Vermelho ≥ 31% (definido pelo usuário). */
+export const ABSENCE_THRESHOLDS = {
+  red:    0.31,  // 31%+
+  orange: 0.21,  // 21–30%
+  yellow: 0.11,  // 11–20%
+  // < 11% → verde
+};
 
-  // ordena por data ascendente
+/**
+ * Calcula o status de presença de uma pessoa num grupo num período (mês OU semestre).
+ *
+ * Critério principal: % de faltas (sobre encontros que aconteceram).
+ *  - < 11%        → verde
+ *  - 11–20%       → amarelo
+ *  - 21–30%       → laranja
+ *  - ≥ 31%        → vermelho
+ *
+ * Faltas justificadas NÃO contam (nem como falta, nem como presença).
+ * `maxConsecutive` continua sendo retornado como informação extra (não afeta cor).
+ *
+ * @returns {{ color, label, absences, absencePct, maxConsecutive, attended, totalHappened, justifiedAbsences }}
+ */
+export function calcStatusByPercentage(meetingsWithAttendance, personId, opts = {}) {
   const sorted = [...meetingsWithAttendance].sort((a, b) => a.date.localeCompare(b.date));
   const happened = sorted.filter((m) => m.status === 'happened');
 
@@ -31,6 +39,7 @@ export function calcMonthlyStatus(meetingsWithAttendance, personId, opts = {}) {
       color: 'gray',
       label: STATUS_COLORS.gray.label,
       absences: 0,
+      absencePct: 0,
       maxConsecutive: 0,
       attended: 0,
       totalHappened: 0,
@@ -54,7 +63,7 @@ export function calcMonthlyStatus(meetingsWithAttendance, personId, opts = {}) {
       consecutive = 0;
     } else if (isJustified) {
       justifiedAbsences++;
-      consecutive = 0;  // falta justificada não conta como consecutiva
+      consecutive = 0;
     } else {
       absences++;
       consecutive++;
@@ -62,16 +71,21 @@ export function calcMonthlyStatus(meetingsWithAttendance, personId, opts = {}) {
     }
   }
 
+  // base de cálculo: total de encontros que aconteceram menos justificadas
+  // (justificadas saem da base — não viram falta nem viram presença)
+  const base = Math.max(1, happened.length - justifiedAbsences);
+  const absencePct = absences / base;
+
   let color = 'green';
-  if (isWeekly && maxConsecutive >= 3) color = 'red';
-  else if (isWeekly && maxConsecutive >= 2) color = 'orange';
-  else if (absences >= 2) color = 'yellow';
-  else color = 'green'; // 0 ou 1 falta
+  if (absencePct >= ABSENCE_THRESHOLDS.red)         color = 'red';
+  else if (absencePct >= ABSENCE_THRESHOLDS.orange) color = 'orange';
+  else if (absencePct >= ABSENCE_THRESHOLDS.yellow) color = 'yellow';
 
   return {
     color,
     label: STATUS_COLORS[color].label,
     absences,
+    absencePct,
     maxConsecutive,
     attended,
     totalHappened: happened.length,
@@ -79,9 +93,20 @@ export function calcMonthlyStatus(meetingsWithAttendance, personId, opts = {}) {
   };
 }
 
+// Alias retrocompatível (era usado como calcMonthlyStatus por todo lado).
+export const calcMonthlyStatus = calcStatusByPercentage;
+
 /** Severidade numérica pra ordenar alertas (maior = pior). */
 export function severityOf(color) {
   return { red: 3, orange: 2, yellow: 1, green: 0, gray: -1 }[color] ?? 0;
+}
+
+/** Helper: nome curto do range "mar–jul" a partir de start/end date. */
+export function shortRangeLabel(startDate, endDate) {
+  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const s = new Date(startDate + 'T00:00:00');
+  const e = new Date(endDate   + 'T00:00:00');
+  return `${months[s.getMonth()]}–${months[e.getMonth()]}`;
 }
 
 /** Limites do mês corrente como YYYY-MM-DD. */

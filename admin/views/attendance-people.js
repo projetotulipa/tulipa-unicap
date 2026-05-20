@@ -14,7 +14,7 @@ export async function renderAttendancePeople(ctx) {
 
   root.innerHTML = `
     <div class="view">
-      ${renderSubNav('pessoas')}
+      ${renderSubNav('pessoas', { isAdmin: ctx.state.role === 'admin' })}
 
       <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
         <div>
