@@ -90,10 +90,19 @@ function postCard(p) {
   `;
 }
 
-async function openPostForm(existing) {
+export async function openPostForm(existing, opts = {}) {
   document.querySelectorAll('.block-drawer-overlay').forEach((el) => el.remove());
 
   const isEdit = !!existing;
+  const prefilledNote = opts.prefilledNote || null;
+  const prefilledStatus = opts.prefilledStatus || null;
+  const prefilledNoteId = prefilledNote?.id || existing?.research_note_id || null;
+  const initialStatus = existing?.status || prefilledStatus || 'draft';
+  const initialTitle = existing?.title || (prefilledNote ? prefilledNote.title : '');
+  const initialResearchGroupId = existing?.research_group_id
+    || prefilledNote?.research_group_id
+    || null;
+
   const [{ data: notes }, { data: researchTeams }] = await Promise.all([
     data.listNotes({ limit: 80 }),
     data.listGroups(),
@@ -113,35 +122,35 @@ async function openPostForm(existing) {
       <form class="block-drawer__body" id="postForm">
         <label class="drawer-field">
           <span class="drawer-field__label">Título interno</span>
-          <input type="text" name="title" class="drawer-field__input" required value="${escapeAttr(existing?.title || '')}" placeholder="Como identificar este post" />
+          <input type="text" name="title" class="drawer-field__input" required value="${escapeAttr(initialTitle)}" placeholder="Como identificar este post" />
         </label>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
           <label class="drawer-field" style="flex:1; min-width:200px;">
             <span class="drawer-field__label">Fichamento base</span>
             <select name="research_note_id" class="drawer-field__input">
               <option value="">— sem vínculo —</option>
-              ${(notes || []).map((n) => `<option value="${escapeAttr(n.id)}" ${existing?.research_note_id === n.id ? 'selected' : ''}>${escapeHtml(n.title)}</option>`).join('')}
+              ${(notes || []).map((n) => `<option value="${escapeAttr(n.id)}" ${prefilledNoteId === n.id ? 'selected' : ''}>${escapeHtml(n.title)}</option>`).join('')}
             </select>
           </label>
           <label class="drawer-field" style="flex:1; min-width:200px;">
             <span class="drawer-field__label">Equipe responsável</span>
             <select name="research_group_id" class="drawer-field__input">
               <option value="">— nenhuma —</option>
-              ${(researchTeams || []).map((t) => `<option value="${escapeAttr(t.id)}" ${existing?.research_group_id === t.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>`).join('')}
+              ${(researchTeams || []).map((t) => `<option value="${escapeAttr(t.id)}" ${initialResearchGroupId === t.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>`).join('')}
             </select>
           </label>
         </div>
         <label class="drawer-field">
           <span class="drawer-field__label">Texto do post</span>
-          <textarea name="body" class="drawer-field__input drawer-field__input--tall" rows="10" placeholder="Como vai aparecer no feed">${escapeHtml(existing?.body || '')}</textarea>
+          <textarea name="body" class="drawer-field__input drawer-field__input--tall" rows="10" placeholder="Como vai aparecer no feed">${escapeHtml(existing?.body || prefilledNote?.body || '')}</textarea>
         </label>
         <label class="drawer-field">
           <span class="drawer-field__label">Status</span>
           <select name="status" class="drawer-field__input">
-            <option value="draft"         ${existing?.status === 'draft'         || !isEdit ? 'selected' : ''}>Rascunho</option>
-            <option value="sent_to_media" ${existing?.status === 'sent_to_media' ? 'selected' : ''}>Enviar pra Mídia</option>
-            <option value="scheduled"     ${existing?.status === 'scheduled'     ? 'selected' : ''}>Agendado (controle da Mídia)</option>
-            <option value="published"     ${existing?.status === 'published'     ? 'selected' : ''}>Publicado no IG</option>
+            <option value="draft"         ${initialStatus === 'draft'         ? 'selected' : ''}>Rascunho</option>
+            <option value="sent_to_media" ${initialStatus === 'sent_to_media' ? 'selected' : ''}>Enviar pra Mídia</option>
+            <option value="scheduled"     ${initialStatus === 'scheduled'     ? 'selected' : ''}>Agendado (controle da Mídia)</option>
+            <option value="published"     ${initialStatus === 'published'     ? 'selected' : ''}>Publicado no IG</option>
           </select>
           <p class="drawer-field__hint">Mande pra "Enviar pra Mídia" quando o texto estiver pronto pra ser produzido visualmente.</p>
         </label>
@@ -197,7 +206,11 @@ async function openPostForm(existing) {
       const sentNow = !isEdit && fields.status === 'sent_to_media' || (isEdit && existing.status !== 'sent_to_media' && fields.status === 'sent_to_media');
       toastSuccess(sentNow ? 'Post enviado pra Mídia.' : (isEdit ? 'Post atualizado.' : 'Post criado.'));
       close();
-      await loadPosts();
+      opts.onSaved?.();
+      // só recarrega se estivermos na view de posts (loadPosts depende do DOM da view)
+      if (document.getElementById('postsList')) {
+        await loadPosts();
+      }
     }
   });
 }
