@@ -1,19 +1,28 @@
 import { SECTORS, ROLES, describeProfile } from '../sectors.js';
 import { icon } from '../icons.js';
+import { toastSuccess, toastError } from '../toast.js';
+import { supabase } from '../../js/supabase.js';
 
 export async function renderMembers(ctx) {
   const { root, api } = ctx;
 
   root.innerHTML = `
     <div class="view">
-      <h1>Membros da equipe</h1>
-      <p class="view__lede">
-        Aprova novos cadastros (status “pendente”) e atribui cargos.
-        <br/>Hierarquia: <strong>Admin</strong> &middot; <strong>Coordenador</strong> (1 por setor) &middot; <strong>Membro</strong> (em um setor, opcionalmente numa equipe).
-      </p>
+      <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
+        <div>
+          <h1>Membros da equipe</h1>
+          <p class="view__lede">
+            Cria contas, aprova pendentes e atribui cargos.
+            <br/>Hierarquia: <strong>Admin</strong> &middot; <strong>Coordenador</strong> (1 por setor) &middot; <strong>Membro</strong> (em um setor, opcionalmente numa equipe).
+          </p>
+        </div>
+        <button id="newUserBtn" class="btn btn--primary">${icon('user-plus', { size: 14 })}<span style="margin-left:6px;">Criar usuário</span></button>
+      </header>
       <div id="membersBox" class="empty-state">carregando…</div>
     </div>
   `;
+
+  document.getElementById('newUserBtn').addEventListener('click', () => openCreateUserForm(ctx));
 
   const box = document.getElementById('membersBox');
 
