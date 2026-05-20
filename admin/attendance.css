@@ -28,34 +28,42 @@
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  padding: 16px 18px;
+  padding: 18px 20px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  min-height: 84px;
   transition: border-color 0.2s var(--ease), transform 0.2s var(--ease);
 }
 .att-stat:hover { border-color: var(--border-rose); transform: translateY(-1px); }
 .att-stat__icon {
-  width: 38px; height: 38px;
-  border-radius: 10px;
+  width: 48px; height: 48px;
+  border-radius: 12px;
   display: inline-flex; align-items: center; justify-content: center;
   background: rgba(159, 90, 107, 0.12);
   color: var(--rose-soft);
   flex-shrink: 0;
 }
+.att-stat > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+}
 .att-stat strong {
-  display: block;
   font-family: 'Cormorant Garamond', serif;
   font-style: italic;
+  font-weight: 500;
   font-size: 26px;
   color: var(--cream);
-  line-height: 1;
+  line-height: 1.05;
+  letter-spacing: 0.005em;
 }
 .att-stat span {
-  display: block;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-dim);
-  margin-top: 4px;
+  line-height: 1.3;
 }
 .att-stat--success .att-stat__icon { background: rgba(107, 142, 61, 0.14); color: var(--success); }
 .att-stat--warning .att-stat__icon { background: rgba(199, 127, 61, 0.14); color: var(--warning); }
