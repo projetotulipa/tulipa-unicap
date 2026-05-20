@@ -181,29 +181,58 @@ function openPersonForm(ctx, existing = null) {
         </div>
         <button class="icon-btn" data-action="close" aria-label="Fechar">${icon('x', { size: 16 })}</button>
       </header>
-      <form class="block-drawer__body" id="personForm">
-        <label class="drawer-field">
-          <span class="drawer-field__label">Nome completo</span>
-          <input type="text" name="full_name" class="drawer-field__input" required value="${escapeAttr(existing?.full_name || '')}" placeholder="Como aparecerá na lista de presença" />
-        </label>
-        <label class="drawer-field">
-          <span class="drawer-field__label">E-mail (opcional)</span>
-          <input type="email" name="email" class="drawer-field__input" value="${escapeAttr(existing?.email || '')}" placeholder="para contato" />
-        </label>
-        <label class="drawer-field">
-          <span class="drawer-field__label">Notas</span>
-          <textarea name="notes" class="drawer-field__input" rows="2" placeholder="Lembretes sobre essa pessoa (opcional)">${escapeHtml(existing?.notes || '')}</textarea>
-        </label>
-        ${isEdit ? `
+      <div class="block-drawer__body">
+        <form id="personForm">
           <label class="drawer-field">
-            <span class="drawer-field__label">Estado</span>
-            <select name="is_active" class="drawer-field__input">
-              <option value="true"  ${existing.is_active ? 'selected' : ''}>Ativa</option>
-              <option value="false" ${!existing.is_active ? 'selected' : ''}>Inativa (saiu)</option>
-            </select>
+            <span class="drawer-field__label">Nome completo</span>
+            <input type="text" name="full_name" class="drawer-field__input" required value="${escapeAttr(existing?.full_name || '')}" placeholder="Como aparecerá na lista" />
           </label>
+          <label class="drawer-field">
+            <span class="drawer-field__label">E-mail (opcional)</span>
+            <input type="email" name="email" class="drawer-field__input" value="${escapeAttr(existing?.email || '')}" placeholder="para contato" />
+          </label>
+          ${isEdit ? `
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:6px;">
+              <label class="drawer-field" style="flex:1; min-width: 160px;">
+                <span class="drawer-field__label">Estado</span>
+                <select name="is_active" class="drawer-field__input">
+                  <option value="true"  ${existing.is_active ? 'selected' : ''}>Ativa</option>
+                  <option value="false" ${!existing.is_active ? 'selected' : ''}>Inativa (saiu)</option>
+                </select>
+              </label>
+              <label class="drawer-field" style="flex:1; min-width: 160px;">
+                <span class="drawer-field__label">Mensalidade</span>
+                <select name="is_exempt" class="drawer-field__input">
+                  <option value="false" ${!existing.is_exempt ? 'selected' : ''}>Paga normalmente</option>
+                  <option value="true"  ${existing.is_exempt ? 'selected' : ''}>Isenta (não paga)</option>
+                </select>
+              </label>
+            </div>
+            <label class="drawer-field">
+              <span class="drawer-field__label">Valor mensal individual (opcional)</span>
+              <input type="number" step="0.01" min="0" name="custom_dues" class="drawer-field__input"
+                     value="${existing.custom_dues != null ? existing.custom_dues : ''}"
+                     placeholder="usa o valor padrão do mês se vazio" />
+            </label>
+          ` : ''}
+        </form>
+
+        ${isEdit ? `
+          <hr style="margin: 22px 0; border: none; border-top: 1px solid var(--border);">
+          <div class="person-notes">
+            <h3 class="person-notes__head">
+              <span>${icon('attendance', { size: 16 })}<span style="margin-left:8px;">Anotações</span></span>
+            </h3>
+            <form id="personNoteForm" class="person-notes__form">
+              <textarea name="note" class="drawer-field__input" rows="2" placeholder="Adicionar nova anotação… (Ctrl+Enter pra salvar)"></textarea>
+              <button class="btn btn--primary btn--small" type="submit">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Adicionar</span></button>
+            </form>
+            <div id="personNotesList" class="person-notes__list">
+              <p class="muted" style="font-size:13px;">carregando…</p>
+            </div>
+          </div>
         ` : ''}
-      </form>
+      </div>
       <footer class="block-drawer__foot">
         ${isEdit ? `<button class="btn btn--danger btn--small" data-action="delete">${icon('trash', { size: 14 })}<span style="margin-left:6px;">Excluir</span></button>` : '<span class="spacer"></span>'}
         <span class="spacer"></span>
@@ -244,9 +273,13 @@ function openPersonForm(ctx, existing = null) {
       const fields = {
         full_name: String(fd.get('full_name') || '').trim(),
         email: String(fd.get('email') || '').trim() || null,
-        notes: String(fd.get('notes') || '').trim() || null,
       };
-      if (isEdit) fields.is_active = fd.get('is_active') === 'true';
+      if (isEdit) {
+        fields.is_active = fd.get('is_active') === 'true';
+        fields.is_exempt = fd.get('is_exempt') === 'true';
+        const cd = String(fd.get('custom_dues') || '').trim();
+        fields.custom_dues = cd ? Number(cd) : null;
+      }
       if (!fields.full_name) { toastError('Nome é obrigatório.'); return; }
       const { error } = isEdit ? await data.updatePerson(existing.id, fields) : await data.createPerson(fields);
       if (error) { toastError(error.message); return; }
@@ -255,6 +288,65 @@ function openPersonForm(ctx, existing = null) {
       await loadPeople(ctx);
     }
   });
+
+  // ====== anotações (apenas edit) ======
+  if (isEdit) {
+    loadNotes();
+    const noteForm = overlay.querySelector('#personNoteForm');
+    noteForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const ta = noteForm.querySelector('textarea');
+      const body = ta.value.trim();
+      if (!body) return;
+      const { error } = await data.addPersonNote(existing.id, body);
+      if (error) { toastError(error.message); return; }
+      ta.value = '';
+      toastSuccess('Anotação adicionada.');
+      loadNotes();
+    });
+    // Ctrl+Enter atalho
+    noteForm.querySelector('textarea').addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        noteForm.requestSubmit();
+      }
+    });
+
+    async function loadNotes() {
+      const box = overlay.querySelector('#personNotesList');
+      const { data: notes, error } = await data.listPersonNotes(existing.id);
+      if (error) { box.innerHTML = `<p class="muted">${error.message}</p>`; return; }
+      if (!notes?.length) {
+        box.innerHTML = '<p class="muted" style="font-size:13px;">Nenhuma anotação ainda. Use o campo acima.</p>';
+        return;
+      }
+      box.innerHTML = notes.map(noteCard).join('');
+      box.querySelectorAll('[data-action="delete-note"]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Excluir esta anotação?')) return;
+          const { error } = await data.deletePersonNote(btn.dataset.noteId);
+          if (error) { toastError(error.message); return; }
+          toastSuccess('Anotação excluída.');
+          loadNotes();
+        });
+      });
+    }
+  }
+}
+
+function noteCard(n) {
+  const d = new Date(n.created_at);
+  const when = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' }) +
+               ' · ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return `
+    <article class="person-note">
+      <div class="person-note__body">${escapeHtml(n.body).replace(/\n/g, '<br/>')}</div>
+      <footer class="person-note__foot">
+        <span class="muted">${escapeHtml(when)}</span>
+        <button class="icon-btn icon-btn--xs" data-action="delete-note" data-note-id="${escapeAttr(n.id)}" title="Excluir">${icon('trash', { size: 11 })}</button>
+      </footer>
+    </article>
+  `;
 }
 
 function escapeHtml(s) {

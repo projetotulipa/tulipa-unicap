@@ -17,6 +17,10 @@ import { renderAttendancePeople }    from './views/attendance-people.js';
 import { renderAttendanceGroupDetail } from './views/attendance-group.js';
 import { renderAttendanceMeeting }   from './views/attendance-meeting.js';
 import { renderAttendanceSemesters } from './views/attendance-semesters.js';
+import { renderFinanceDashboard }    from './views/finance.js';
+import { renderFinancePayments }     from './views/finance-payments.js';
+import { renderFinanceExpenses }     from './views/finance-expenses.js';
+import { renderFinancePlans }        from './views/finance-plans.js';
 
 // ---------- estado ----------
 const state = {
@@ -111,6 +115,10 @@ function enterApp() {
   for (const el of $$('[data-secretaria-only]')) {
     el.hidden = !canManageAttendance();
   }
+  // mostra "Tesouraria" pra admin OR setor tesouraria
+  for (const el of $$('[data-tesouraria-only]')) {
+    el.hidden = !canManageFinance();
+  }
 
   setBodyState('app');
   if (!location.hash || location.hash === '#/' || location.hash === '#/visao-geral' || location.hash === '#/navbar') {
@@ -146,6 +154,7 @@ function route() {
       clearDirty: (scope) => { state.dirty.delete(scope); },
       canEditScope,
       canManageAttendance,
+      canManageFinance,
     },
   };
 
@@ -162,6 +171,12 @@ function route() {
         if (parts[1] === 'semestres')          return renderAttendanceSemesters(ctx);
         if (parts[1] === 'encontros' && parts[2]) return renderAttendanceMeeting(ctx, parts[2]);
         return renderAttendanceDashboard(ctx);
+      case 'financeiro':
+        if (!canManageFinance()) { location.hash = '#/paginas'; return; }
+        if (parts[1] === 'mensalidades') return renderFinancePayments(ctx);
+        if (parts[1] === 'gastos')       return renderFinanceExpenses(ctx);
+        if (parts[1] === 'planejamento') return renderFinancePlans(ctx);
+        return renderFinanceDashboard(ctx);
       case 'membros':
         if (state.role !== 'admin') {
           location.hash = '#/paginas'; return;
@@ -179,6 +194,11 @@ function route() {
 function canManageAttendance() {
   if (state.role === 'admin') return true;
   return state.sector === 'secretaria';
+}
+
+function canManageFinance() {
+  if (state.role === 'admin') return true;
+  return state.sector === 'tesouraria';
 }
 
 function canEditScope(scope) {

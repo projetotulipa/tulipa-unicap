@@ -64,6 +64,36 @@ export async function deletePerson(id) {
   return supabase.from('people').delete().eq('id', id);
 }
 
+// ---------- person notes (anotações sobre pessoas) ----------
+export async function listPersonNotes(personId) {
+  return supabase
+    .from('person_notes')
+    .select('*')
+    .eq('person_id', personId)
+    .order('created_at', { ascending: false });
+}
+
+export async function addPersonNote(personId, body) {
+  return supabase
+    .from('person_notes')
+    .insert({ person_id: personId, body })
+    .select()
+    .single();
+}
+
+export async function updatePersonNote(id, body) {
+  return supabase
+    .from('person_notes')
+    .update({ body, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+}
+
+export async function deletePersonNote(id) {
+  return supabase.from('person_notes').delete().eq('id', id);
+}
+
 // ---------- memberships ----------
 export async function listMembershipsOfGroup(groupId) {
   return supabase
