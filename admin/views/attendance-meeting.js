@@ -1,10 +1,16 @@
-// Marcar presença de um encontro — visual refeito.
+// Marcação de presença — Sprint 3 ("fólio aberto").
+// Header cerimonial + counter fólio sticky + roster em 3 colunas DnD
+// (presentes / justificadas / ausentes) + drawer de justificativa com cards de ícone
+// + estampa de "registro fechado" quando happened com presentes.
 
 import { icon } from '../icons.js';
 import * as data from '../attendance/data.js';
-import { JUSTIFICATION_CATEGORIES, categoryLabel } from '../attendance/categories.js';
+import { JUSTIFICATION_CATEGORIES, categoryLabel, categoryIcon } from '../attendance/categories.js';
 import { avatarHtml } from '../avatar.js';
+import { codexSeal, codexPage } from '../attendance/codex.js';
 import { toastSuccess, toastError } from '../toast.js';
+
+const WEEKDAY_LABELS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 
 let currentMeetingId = null;
 
@@ -13,14 +19,25 @@ export async function renderAttendanceMeeting(ctx, meetingId) {
   const isAdmin = state.role === 'admin';
   currentMeetingId = meetingId;
 
-  root.innerHTML = `<div class="view"><div class="skel skel--title"></div><div class="skel skel--block"></div></div>`;
+  root.innerHTML = `
+    <div class="view">
+      <div class="att-loading-wrap">
+        <span class="att-bloom"><span class="att-codex-seal">${codexSeal({ size: 24 })}</span></span>
+        <p>Abrindo o fólio…</p>
+      </div>
+    </div>
+  `;
 
   const { data: meeting, error } = await data.getMeeting(meetingId);
   if (error || !meeting) {
     root.innerHTML = `
       <div class="view">
         <p class="view__crumbs"><a href="#/presenca">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Presença</span></a></p>
-        <div class="att-empty"><h3>Encontro não encontrado</h3></div>
+        <div class="att-empty-v2">
+          <div class="att-empty-v2__art">${codexSeal({ size: 52 })}</div>
+          <h3>Encontro não encontrado</h3>
+          <p>Talvez tenha sido excluído ou o link esteja errado.</p>
+        </div>
       </div>
     `;
     return;
@@ -47,29 +64,40 @@ export async function renderAttendanceMeeting(ctx, meetingId) {
   const dateObj = new Date(meeting.date + 'T00:00:00');
   const dayNum = String(dateObj.getDate()).padStart(2, '0');
   const monthLab = dateObj.toLocaleDateString('pt-BR', { month: 'long' });
-  const weekdayLab = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+  const weekdayLab = WEEKDAY_LABELS[dateObj.getDay()];
   const yearLab = dateObj.getFullYear();
 
-  // contadores iniciais
-  const presentCount = people.filter((p) => attByPerson.get(p.id)?.is_present).length;
-  const justifiedCount = people.filter((p) => !attByPerson.get(p.id)?.is_present && attByPerson.get(p.id)?.justified).length;
+  // estado por pessoa
+  function bucketOf(personId) {
+    const a = attByPerson.get(personId);
+    if (!a) return 'absent';
+    if (a.is_present) return 'present';
+    if (a.justified) return 'justified';
+    return 'absent';
+  }
+
+  const totalPeople = people.length;
+  const showSeal = meeting.status === 'happened' && Array.from(attByPerson.values()).some((a) => a.is_present);
 
   root.innerHTML = `
-    <div class="view view--meeting">
+    <div class="view view--folio">
       <p class="view__crumbs"><a href="#/presenca/grupos/${escapeAttr(meeting.group_id)}">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">${escapeHtml(meeting.group?.name || 'Grupo')}</span></a></p>
 
-      <header class="att-meeting-head">
-        <div class="att-meeting-head__date">
-          <strong>${dayNum}</strong>
-          <span>${escapeHtml(monthLab)}</span>
-          <small>${escapeHtml(weekdayLab)} · ${yearLab}</small>
+      <header class="att-fol-head">
+        <div class="att-fol-head__date">
+          <span class="att-fol-head__date-seal">${codexSeal({ size: 18 })}</span>
+          <span class="att-fol-head__day">${dayNum}</span>
+          <span class="att-fol-head__month">${escapeHtml(monthLab)}</span>
+          <span class="att-fol-head__weekday">${escapeHtml(weekdayLab)}</span>
+          <span class="att-fol-head__year">${yearLab}</span>
         </div>
-        <div class="att-meeting-head__main">
+        <div class="att-fol-head__main">
+          <p class="att-fol-head__eyebrow">fólio do encontro · ${escapeHtml(meetingStatusLabel(meeting.status))}</p>
           <h1>${escapeHtml(meeting.group?.name || 'Encontro')}</h1>
-          <p class="view__lede">
-            Marque quem veio com o switch verde. Para faltas justificadas (atestado, viagem), use o botão "justificar".
+          <p class="att-fol-head__lede">
+            Arraste cada pessoa para a coluna correta — ou use os ícones no card. Justificativas escolhem a categoria visual.
           </p>
-          <div class="att-meeting-head__controls">
+          <div class="att-fol-head__controls">
             ${isAdmin ? `
               <label class="att-status-select">
                 <span class="muted">data:</span>
@@ -91,51 +119,70 @@ export async function renderAttendanceMeeting(ctx, meetingId) {
             ` : ''}
           </div>
         </div>
+        ${showSeal ? `
+          <span class="att-fol-head__seal" id="folioSeal" title="Encontro registrado">
+            ${icon('check-circle', { size: 14 })}
+            <span>registro fechado</span>
+          </span>
+        ` : ''}
+        <div class="att-fol-head__page">${codexPage({ size: 200 })}</div>
       </header>
 
       ${meeting.status === 'cancelled' ? `
-        <div class="att-meeting-banner att-meeting-banner--cancelled">
+        <div class="att-fol-banner att-fol-banner--cancelled">
           ${icon('x-circle', { size: 16 })}
           <span>Este encontro foi cancelado. As ausências não entram no cálculo de status.</span>
         </div>
       ` : ''}
 
       ${meeting.status === 'scheduled' ? `
-        <div class="att-meeting-banner att-meeting-banner--scheduled">
+        <div class="att-fol-banner att-fol-banner--scheduled">
           ${icon('clock', { size: 16 })}
           <span>Encontro ainda não confirmado. Quando acontecer, mude o status para "aconteceu" antes de marcar presenças.</span>
         </div>
       ` : ''}
 
-      <div class="att-counter">
-        <div class="att-counter__main">
-          <strong id="presentCount">${presentCount}</strong>
-          <span>de ${people.length} ${people.length === 1 ? 'pessoa' : 'pessoas'} presentes</span>
+      <div class="att-fol-counter" id="folioCounter">
+        <div class="att-fol-counter__pct">
+          <strong id="folPct">${calcPct(attByPerson, totalPeople)}%</strong>
+          <span>presença</span>
         </div>
-        ${justifiedCount > 0 ? `
-          <div class="att-counter__justified">
-            <strong id="justifiedCount">${justifiedCount}</strong>
-            <span>justificada${justifiedCount === 1 ? '' : 's'}</span>
+        <div class="att-fol-counter__main">
+          <div class="att-fol-counter__line">
+            <span class="att-fol-counter__present"><strong id="folPresent">${countBy(attByPerson, 'present')}</strong> ${totalPeople === 1 ? 'presente' : 'presentes'}</span>
+            <span class="att-fol-counter__total">de ${totalPeople} ${totalPeople === 1 ? 'pessoa' : 'pessoas'}</span>
+            <span class="att-fol-counter__just" id="folJustChip" ${countBy(attByPerson, 'justified') === 0 ? 'hidden' : ''}>
+              ${icon('check-circle', { size: 11 })}
+              <span><strong id="folJust">${countBy(attByPerson, 'justified')}</strong> justificada<span id="folJustS">${countBy(attByPerson, 'justified') === 1 ? '' : 's'}</span></span>
+            </span>
           </div>
-        ` : '<div class="att-counter__justified" id="justifiedSlot"></div>'}
-        <div class="att-counter__progress">
-          <div class="att-counter__bar" id="presentBar" style="width: ${people.length > 0 ? (presentCount / people.length * 100) : 0}%"></div>
+          <div class="att-fol-counter__bar"><div class="att-fol-counter__bar-fill" id="folBar" style="width: ${calcPct(attByPerson, totalPeople)}%;"></div></div>
         </div>
-        <div class="att-counter__actions">
+        <span class="att-fol-counter__hint">arraste entre colunas</span>
+        <div class="att-fol-counter__actions">
           <button class="btn btn--ghost btn--small" id="markAllPresent">Todos presentes</button>
           <button class="btn btn--ghost btn--small" id="markAllAbsent">Limpar</button>
         </div>
       </div>
 
-      <div class="att-roster" id="rosterList">
-        ${people.length === 0
-          ? '<p class="muted">Nenhuma pessoa vinculada a este grupo. Vincule pessoas pelo detalhe do grupo.</p>'
-          : people.map((p) => personRow(p, attByPerson.get(p.id))).join('')
-        }
-      </div>
+      ${totalPeople === 0 ? `
+        <div class="att-empty-v2 att-empty-v2--rose">
+          <div class="att-empty-v2__art">${icon('users', { size: 52 })}</div>
+          <h3>Nenhuma pessoa vinculada</h3>
+          <p>Vincule pessoas ao grupo antes de marcar presenças.</p>
+          <a class="btn btn--ghost" href="#/presenca/grupos/${escapeAttr(meeting.group_id)}">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Abrir grupo</span></a>
+        </div>
+      ` : `
+        <div class="att-fol-board" id="folioBoard">
+          ${renderCol('present', 'Presentes', icon('check-circle', { size: 16 }), people, attByPerson)}
+          ${renderCol('justified', 'Justificadas', icon('alert', { size: 14 }), people, attByPerson)}
+          ${renderCol('absent', 'Ausentes', icon('x-circle', { size: 16 }), people, attByPerson)}
+        </div>
+      `}
     </div>
   `;
 
+  // Status / data / delete handlers (mantidos)
   document.getElementById('meetingStatus').addEventListener('change', async (ev) => {
     const newStatus = ev.target.value;
     const { error } = await data.updateMeeting(meetingId, { status: newStatus });
@@ -175,237 +222,427 @@ export async function renderAttendanceMeeting(ctx, meetingId) {
     });
   }
 
-  for (const li of document.querySelectorAll('.att-row')) wireRow(li, people.length);
+  if (totalPeople > 0) {
+    wireBoard(people, attByPerson, totalPeople);
 
-  document.getElementById('markAllPresent').addEventListener('click', async () => {
-    for (const li of document.querySelectorAll('.att-row')) {
-      const sw = li.querySelector('[data-action="toggle-present"]');
-      if (!sw.checked) {
-        sw.checked = true;
-        await saveRow(li, { isPresent: true, justified: false, category: null, notes: null });
+    document.getElementById('markAllPresent').addEventListener('click', async () => {
+      const cards = document.querySelectorAll('.att-fol-card');
+      for (const card of cards) {
+        const pid = card.dataset.personId;
+        await moveCard(pid, 'present', { silent: true });
       }
-    }
-    refreshCounters(people.length);
-  });
+      toastSuccess('Todos marcados como presentes.');
+    });
 
-  document.getElementById('markAllAbsent').addEventListener('click', async () => {
-    for (const li of document.querySelectorAll('.att-row')) {
-      const sw = li.querySelector('[data-action="toggle-present"]');
-      if (sw.checked || li.classList.contains('is-justified')) {
-        sw.checked = false;
-        await saveRow(li, { isPresent: false, justified: false, category: null, notes: null });
+    document.getElementById('markAllAbsent').addEventListener('click', async () => {
+      const cards = document.querySelectorAll('.att-fol-card');
+      for (const card of cards) {
+        const pid = card.dataset.personId;
+        await moveCard(pid, 'absent', { silent: true });
       }
-    }
-    refreshCounters(people.length);
-  });
+      toastSuccess('Marcações limpas.');
+    });
+  }
+
+  // closure scope: cache pra movimentação eficiente
+  window.__folio = { attByPerson, peopleMap: new Map(people.map((p) => [p.id, p])), totalPeople, meeting };
 }
 
-function personRow(person, att) {
-  const isPresent = !!att?.is_present;
-  const isJustified = !!att?.justified;
-  const category = att?.justification_category || '';
-  const notes = att?.notes || '';
-  const showJustChip = !isPresent;
-
+function renderCol(bucket, title, iconHtml, people, attByPerson) {
+  const labelMap = { present: 'Presentes', justified: 'Justificadas', absent: 'Ausentes' };
+  const emptyMap = {
+    present: 'arraste pessoas pra cá quando elas chegarem',
+    justified: 'arraste e escolha a categoria',
+    absent: 'quem ainda não foi marcado fica aqui',
+  };
+  const filtered = people.filter((p) => bucketByAtt(attByPerson.get(p.id)) === bucket);
+  const count = filtered.length;
   return `
-    <article class="att-row ${isPresent ? 'is-present' : ''} ${isJustified ? 'is-justified' : ''}"
-             data-person-id="${escapeAttr(person.id)}"
-             data-category="${escapeAttr(category)}"
-             data-notes="${escapeAttr(notes)}">
-      <div class="att-row__person">
-        ${avatarHtml(person.full_name, { size: 'md' })}
-        <div class="att-row__person-info">
-          <strong>${escapeHtml(person.full_name)}</strong>
-          <span class="muted">${person.email ? escapeHtml(person.email) : (person.is_primary ? 'vínculo prioritário' : '')}</span>
-        </div>
-        ${person.is_primary ? `<span class="pill pill--gold" style="margin-left: 4px;">${icon('star', { size: 11 })}<span style="margin-left:4px;">primário</span></span>` : ''}
+    <div class="att-fol-col" data-bucket="${bucket}">
+      <header class="att-fol-col__head">
+        <h3>${iconHtml}${escapeHtml(labelMap[bucket] || title)}</h3>
+        <span class="att-fol-col__count" id="folCount-${bucket}">${count}</span>
+      </header>
+      <div class="att-fol-col__body" data-bucket="${bucket}">
+        ${filtered.length === 0
+          ? `<div class="att-fol-col__empty">${escapeHtml(emptyMap[bucket])}</div>`
+          : filtered.map((p) => personCard(p, attByPerson.get(p.id), bucket)).join('')}
       </div>
+    </div>
+  `;
+}
 
-      <div class="att-row__actions">
-        <label class="att-switch" title="${isPresent ? 'Presente' : 'Ausente'}">
-          <input type="checkbox" data-action="toggle-present" ${isPresent ? 'checked' : ''} />
-          <span class="att-switch__track">
-            <span class="att-switch__thumb">
-              <span class="att-switch__icon-check">${icon('check', { size: 12 })}</span>
-            </span>
-          </span>
-          <span class="att-switch__label">${isPresent ? 'presente' : 'ausente'}</span>
-        </label>
-
-        <div class="att-row__just-area" ${isPresent ? 'hidden' : ''}>
-          ${isJustified
-            ? `<button class="att-just-chip att-just-chip--filled" data-action="open-just-drawer">
-                ${icon('check-circle', { size: 12 })}
-                <span style="margin-left:6px;">justificada${category ? ' · ' + escapeHtml(categoryLabel(category)) : ''}</span>
-              </button>`
-            : `<button class="att-just-chip" data-action="open-just-drawer">
-                ${icon('plus', { size: 12 })}
-                <span style="margin-left:6px;">justificar falta</span>
-              </button>`
-          }
+function personCard(person, att, bucket) {
+  const isJust = bucket === 'justified';
+  const cat = att?.justification_category;
+  return `
+    <article class="att-fol-card"
+             data-person-id="${escapeAttr(person.id)}"
+             data-bucket="${bucket}"
+             draggable="true"
+             aria-grabbed="false">
+      ${avatarHtml(person.full_name, { size: 'sm' })}
+      <div class="att-fol-card__main">
+        <div class="att-fol-card__name">
+          <strong>${escapeHtml(person.full_name || '—')}</strong>
+          ${person.is_primary ? `<span class="att-fol-card__primary" title="Vínculo primário">${icon('star', { size: 11 })}</span>` : ''}
         </div>
+        ${isJust && cat ? `
+          <div class="att-fol-card__meta att-fol-card__meta--just">
+            ${categoryIcon(cat, { size: 12 })}
+            <span>${escapeHtml(categoryLabel(cat))}${att?.notes ? ' · ' + escapeHtml(truncate(att.notes, 28)) : ''}</span>
+          </div>
+        ` : (person.email ? `<div class="att-fol-card__meta">${escapeHtml(person.email)}</div>` : '')}
+      </div>
+      <div class="att-fol-card__actions">
+        ${bucket !== 'present'   ? `<button class="icon-btn icon-btn--xs" data-act="to-present"   title="Marcar presente" aria-label="Marcar presente">${icon('check', { size: 12 })}</button>` : ''}
+        ${bucket !== 'justified' ? `<button class="icon-btn icon-btn--xs" data-act="to-justified" title="Justificar"        aria-label="Justificar">${icon('alert', { size: 12 })}</button>` : ''}
+        ${bucket !== 'absent'    ? `<button class="icon-btn icon-btn--xs" data-act="to-absent"    title="Marcar ausente"   aria-label="Marcar ausente">${icon('x', { size: 12 })}</button>` : ''}
       </div>
     </article>
   `;
 }
 
-function wireRow(row, totalPeople) {
-  const personId = row.dataset.personId;
-  const presentSw = row.querySelector('[data-action="toggle-present"]');
-  const justArea  = row.querySelector('.att-row__just-area');
-  const justBtn   = row.querySelector('[data-action="open-just-drawer"]');
+function wireBoard(people, attByPerson, totalPeople) {
+  const board = document.getElementById('folioBoard');
+  if (!board) return;
 
-  presentSw.addEventListener('change', async () => {
-    if (presentSw.checked) {
-      row.classList.add('is-marking');
-      setTimeout(() => row.classList.remove('is-marking'), 450);
-      if (justArea) justArea.hidden = true;
-      await saveRow(row, { isPresent: true, justified: false, category: null, notes: null });
-    } else {
-      if (justArea) justArea.hidden = false;
-      await saveRow(row, { isPresent: false, justified: false, category: null, notes: null });
-    }
-    refreshCounters(totalPeople);
+  // delegate dragstart/dragend/dragover/drop
+  let draggingId = null;
+
+  board.addEventListener('dragstart', (ev) => {
+    const card = ev.target.closest('.att-fol-card');
+    if (!card) return;
+    draggingId = card.dataset.personId;
+    card.classList.add('is-dragging');
+    ev.dataTransfer.effectAllowed = 'move';
+    try { ev.dataTransfer.setData('text/plain', draggingId); } catch (e) { /* iOS workaround */ }
+  });
+  board.addEventListener('dragend', (ev) => {
+    const card = ev.target.closest('.att-fol-card');
+    if (card) card.classList.remove('is-dragging');
+    board.querySelectorAll('.att-fol-col__body.is-drop-target').forEach((el) => el.classList.remove('is-drop-target'));
+    board.querySelectorAll('.att-fol-col.is-drop-active').forEach((el) => el.classList.remove('is-drop-active'));
+    draggingId = null;
   });
 
-  justBtn?.addEventListener('click', () => openJustificationDrawer(row, totalPeople));
+  board.querySelectorAll('.att-fol-col__body').forEach((zone) => {
+    zone.addEventListener('dragover', (ev) => {
+      if (!draggingId) return;
+      ev.preventDefault();
+      ev.dataTransfer.dropEffect = 'move';
+      zone.classList.add('is-drop-target');
+      zone.closest('.att-fol-col').classList.add('is-drop-active');
+    });
+    zone.addEventListener('dragleave', (ev) => {
+      if (zone.contains(ev.relatedTarget)) return;
+      zone.classList.remove('is-drop-target');
+      zone.closest('.att-fol-col').classList.remove('is-drop-active');
+    });
+    zone.addEventListener('drop', async (ev) => {
+      ev.preventDefault();
+      const targetBucket = zone.dataset.bucket;
+      const pid = draggingId;
+      zone.classList.remove('is-drop-target');
+      zone.closest('.att-fol-col').classList.remove('is-drop-active');
+      if (!pid || !targetBucket) return;
+      await moveCard(pid, targetBucket);
+    });
+  });
+
+  // click handlers nos botões de ação (fallback mobile + atalho desktop)
+  board.addEventListener('click', async (ev) => {
+    const btn = ev.target.closest('[data-act]');
+    if (!btn) return;
+    const card = btn.closest('.att-fol-card');
+    if (!card) return;
+    ev.stopPropagation();
+    const action = btn.dataset.act;
+    const target = action === 'to-present' ? 'present'
+                 : action === 'to-justified' ? 'justified'
+                 : 'absent';
+    await moveCard(card.dataset.personId, target);
+  });
 }
 
-function openJustificationDrawer(row, totalPeople) {
-  document.querySelectorAll('.block-drawer-overlay').forEach((el) => el.remove());
+async function moveCard(personId, targetBucket, opts = {}) {
+  const { silent = false } = opts;
+  const board = document.getElementById('folioBoard');
+  if (!board) return;
+  const card = board.querySelector(`.att-fol-card[data-person-id="${cssEscape(personId)}"]`);
+  if (!card) return;
+  const currentBucket = card.dataset.bucket;
+  if (currentBucket === targetBucket && targetBucket !== 'justified') return;
 
-  const personName = row.querySelector('.att-row__person strong')?.textContent || '';
-  const currentCategory = row.dataset.category || '';
-  const currentNotes = row.dataset.notes || '';
-  const isJustified = row.classList.contains('is-justified');
-
-  const overlay = document.createElement('div');
-  overlay.className = 'block-drawer-overlay';
-  overlay.innerHTML = `
-    <div class="block-drawer">
-      <header class="block-drawer__head">
-        <div>
-          <p class="block-drawer__crumb">Justificar falta</p>
-          <h2>${avatarHtml(personName, { size: 'sm' })}<span style="margin-left:10px;">${escapeHtml(personName)}</span></h2>
-          <p class="block-drawer__desc">Use uma categoria pra organizar. Motivo é opcional mas ajuda no histórico.</p>
-        </div>
-        <button class="icon-btn" data-action="close" aria-label="Fechar">${icon('x', { size: 16 })}</button>
-      </header>
-      <form class="block-drawer__body" id="justForm">
-        <label class="drawer-field">
-          <span class="drawer-field__label">Categoria</span>
-          <select name="category" class="drawer-field__input" required>
-            <option value="">— escolha —</option>
-            ${JUSTIFICATION_CATEGORIES.map((c) => `<option value="${escapeAttr(c.value)}" ${currentCategory === c.value ? 'selected' : ''}>${escapeHtml(c.label)} — ${escapeHtml(c.description)}</option>`).join('')}
-          </select>
-        </label>
-        <label class="drawer-field">
-          <span class="drawer-field__label">Motivo (opcional)</span>
-          <textarea name="notes" class="drawer-field__input" rows="3" placeholder="Ex.: atestado médico de 3 dias, viagem de trabalho…">${escapeHtml(currentNotes)}</textarea>
-        </label>
-      </form>
-      <footer class="block-drawer__foot">
-        ${isJustified ? `<button class="btn btn--danger btn--small" data-action="remove-just">${icon('trash', { size: 14 })}<span style="margin-left:6px;">Remover justificativa</span></button>` : '<span class="spacer"></span>'}
-        <span class="spacer"></span>
-        <button class="btn btn--ghost" data-action="close">Cancelar</button>
-        <button class="btn btn--primary" data-action="save-just">Confirmar</button>
-      </footer>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  requestAnimationFrame(() => overlay.classList.add('is-open'));
-
-  function close() {
-    overlay.classList.remove('is-open');
-    setTimeout(() => overlay.remove(), 220);
-    document.removeEventListener('keydown', onKey);
-  }
-  function onKey(e) { if (e.key === 'Escape') close(); }
-  document.addEventListener('keydown', onKey);
-
-  overlay.addEventListener('click', async (ev) => {
-    if (ev.target === overlay) return close();
-    const action = ev.target.closest('[data-action]')?.dataset?.action;
-    if (action === 'close') return close();
-    if (action === 'remove-just') {
-      await saveRow(row, { isPresent: false, justified: false, category: null, notes: null });
-      row.querySelector('[data-action="toggle-present"]').checked = false;
-      refreshCounters(totalPeople);
-      reflowRowJustChip(row);
-      toastSuccess('Justificativa removida.');
-      close();
+  // se vai pra justified, abre drawer; se confirmar, persiste; se cancelar, fica.
+  if (targetBucket === 'justified') {
+    const personName = card.querySelector('.att-fol-card__name strong')?.textContent || '';
+    const existing = window.__folio?.attByPerson.get(personId);
+    const result = await openJustificationDrawer({
+      personName,
+      currentCategory: existing?.justification_category || '',
+      currentNotes: existing?.notes || '',
+      hasExisting: !!existing?.justified,
+    });
+    if (!result) return; // cancelado
+    if (result.action === 'remove') {
+      await persistAndMove(personId, card, 'absent', { silent });
       return;
     }
-    if (action === 'save-just') {
-      const form = overlay.querySelector('#justForm');
-      const fd = new FormData(form);
-      const category = String(fd.get('category') || '');
-      const notes = String(fd.get('notes') || '').trim() || null;
-      if (!category) { toastError('Escolha uma categoria.'); return; }
-      await saveRow(row, { isPresent: false, justified: true, category, notes });
-      row.querySelector('[data-action="toggle-present"]').checked = false;
-      row.dataset.category = category;
-      row.dataset.notes = notes || '';
-      refreshCounters(totalPeople);
-      reflowRowJustChip(row);
-      toastSuccess('Justificativa registrada.');
-      close();
+    if (result.action === 'save') {
+      await persistAndMove(personId, card, 'justified', {
+        category: result.category,
+        notes: result.notes,
+        silent,
+      });
+      return;
+    }
+    return;
+  }
+
+  await persistAndMove(personId, card, targetBucket, { silent });
+}
+
+async function persistAndMove(personId, card, targetBucket, opts = {}) {
+  const { silent = false, category = null, notes = null } = opts;
+
+  const payload = targetBucket === 'present'   ? { is_present: true,  justified: false, category: null,     notes: null }
+                : targetBucket === 'justified' ? { is_present: false, justified: true,  category,           notes }
+                                               : { is_present: false, justified: false, category: null,     notes: null };
+
+  // otimista: atualiza UI primeiro
+  const prevBucket = card.dataset.bucket;
+  moveCardDom(card, targetBucket, { category, notes, personId });
+  refreshAllCounters();
+
+  const { error } = await data.markPresent(currentMeetingId, personId, payload.is_present, {
+    justified: payload.justified, notes: payload.notes, justification_category: payload.category,
+  });
+
+  if (error) {
+    toastError(`Erro: ${error.message}`);
+    // reverter
+    moveCardDom(card, prevBucket, { personId });
+    refreshAllCounters();
+    return;
+  }
+
+  // atualizar cache local
+  if (window.__folio) {
+    window.__folio.attByPerson.set(personId, {
+      person_id: personId,
+      meeting_id: currentMeetingId,
+      is_present: payload.is_present,
+      justified: payload.justified,
+      justification_category: payload.category,
+      notes: payload.notes,
+    });
+  }
+
+  if (!silent) {
+    card.classList.add('is-dropped');
+    setTimeout(() => card.classList.remove('is-dropped'), 600);
+  }
+}
+
+function moveCardDom(card, targetBucket, opts = {}) {
+  const { category = null, notes = null, personId } = opts;
+  const targetCol = document.querySelector(`.att-fol-col[data-bucket="${targetBucket}"] .att-fol-col__body`);
+  if (!targetCol) return;
+  // se a coluna está com placeholder empty, remove
+  const empty = targetCol.querySelector('.att-fol-col__empty');
+  if (empty) empty.remove();
+
+  // reconstruir card com bucket novo (pra metadata e ações corretas)
+  const personIdFinal = personId || card.dataset.personId;
+  const person = window.__folio?.peopleMap.get(personIdFinal);
+  if (!person) return;
+
+  const att = {
+    is_present: targetBucket === 'present',
+    justified: targetBucket === 'justified',
+    justification_category: category,
+    notes,
+  };
+
+  const newCardHtml = personCard(person, att, targetBucket);
+  const tpl = document.createElement('template');
+  tpl.innerHTML = newCardHtml.trim();
+  const newCard = tpl.content.firstChild;
+  targetCol.appendChild(newCard);
+
+  // remove o antigo
+  card.remove();
+
+  // se a coluna de origem agora está vazia, recolocar placeholder
+  document.querySelectorAll('.att-fol-col').forEach((col) => {
+    const body = col.querySelector('.att-fol-col__body');
+    const bucket = col.dataset.bucket;
+    if (body && !body.children.length) {
+      const emptyMap = {
+        present: 'arraste pessoas pra cá quando elas chegarem',
+        justified: 'arraste e escolha a categoria',
+        absent: 'quem ainda não foi marcado fica aqui',
+      };
+      body.innerHTML = `<div class="att-fol-col__empty">${escapeHtml(emptyMap[bucket])}</div>`;
     }
   });
 }
 
-function reflowRowJustChip(row) {
-  const justArea = row.querySelector('.att-row__just-area');
-  if (!justArea) return;
-  const isJustified = row.classList.contains('is-justified');
-  const category = row.dataset.category || '';
-  justArea.innerHTML = isJustified
-    ? `<button class="att-just-chip att-just-chip--filled" data-action="open-just-drawer">
-        ${icon('check-circle', { size: 12 })}
-        <span style="margin-left:6px;">justificada${category ? ' · ' + escapeHtml(categoryLabel(category)) : ''}</span>
-      </button>`
-    : `<button class="att-just-chip" data-action="open-just-drawer">
-        ${icon('plus', { size: 12 })}
-        <span style="margin-left:6px;">justificar falta</span>
-      </button>`;
-  justArea.hidden = false;
-  // rebind
-  justArea.querySelector('[data-action="open-just-drawer"]')?.addEventListener('click', () =>
-    openJustificationDrawer(row, document.querySelectorAll('.att-row').length)
-  );
-}
-
-async function saveRow(row, st) {
-  const personId = row.dataset.personId;
-  const lab = row.querySelector('.att-switch__label');
-
-  row.classList.toggle('is-present', st.isPresent);
-  row.classList.toggle('is-justified', st.justified);
-  if (lab) lab.textContent = st.isPresent ? 'presente' : 'ausente';
-
-  const { error } = await data.markPresent(currentMeetingId, personId, st.isPresent, {
-    justified: st.justified, notes: st.notes, justification_category: st.category,
+function refreshAllCounters() {
+  const total = window.__folio?.totalPeople || 0;
+  const cards = document.querySelectorAll('.att-fol-card');
+  let p = 0, j = 0, a = 0;
+  cards.forEach((c) => {
+    const b = c.dataset.bucket;
+    if (b === 'present') p++;
+    else if (b === 'justified') j++;
+    else a++;
   });
-  if (error) {
-    toastError(`erro: ${error.message}`);
-    // reverter visual
-    row.classList.toggle('is-present', !st.isPresent);
+  document.getElementById('folCount-present').textContent = p;
+  document.getElementById('folCount-justified').textContent = j;
+  document.getElementById('folCount-absent').textContent = a;
+  document.getElementById('folPresent').textContent = p;
+  document.getElementById('folJust').textContent = j;
+  document.getElementById('folJustS').textContent = j === 1 ? '' : 's';
+  const justChip = document.getElementById('folJustChip');
+  if (justChip) justChip.hidden = j === 0;
+  const pct = total > 0 ? Math.round(p / total * 100) : 0;
+  document.getElementById('folPct').textContent = `${pct}%`;
+  const bar = document.getElementById('folBar');
+  if (bar) {
+    bar.style.width = `${pct}%`;
+    bar.classList.toggle('att-fol-counter__bar-fill--low', pct > 0 && pct < 50);
+    bar.classList.toggle('att-fol-counter__bar-fill--critical', pct > 0 && pct < 30);
   }
 }
 
-function refreshCounters(total) {
-  const present = document.querySelectorAll('.att-row.is-present').length;
-  const justified = document.querySelectorAll('.att-row.is-justified').length;
-  const pc = document.getElementById('presentCount');
-  const jc = document.getElementById('justifiedCount');
-  const slot = document.getElementById('justifiedSlot');
-  const bar = document.getElementById('presentBar');
-  if (pc) pc.textContent = present;
-  if (jc) jc.textContent = justified;
-  if (slot && justified > 0) {
-    slot.outerHTML = `<div class="att-counter__justified"><strong id="justifiedCount">${justified}</strong><span>justificada${justified === 1 ? '' : 's'}</span></div>`;
-  }
-  if (bar) bar.style.width = total > 0 ? `${(present / total) * 100}%` : '0%';
+function openJustificationDrawer({ personName, currentCategory, currentNotes, hasExisting }) {
+  return new Promise((resolve) => {
+    document.querySelectorAll('.block-drawer-overlay').forEach((el) => el.remove());
+
+    let selectedCategory = currentCategory || '';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'block-drawer-overlay';
+    overlay.innerHTML = `
+      <div class="block-drawer">
+        <header class="block-drawer__head">
+          <div>
+            <p class="block-drawer__crumb">Justificar falta</p>
+            <h2><span class="block-drawer__icon">${icon('alert', { size: 24 })}</span> Categoria & motivo</h2>
+            <p class="block-drawer__desc">Toque numa categoria pra registrar. Motivo é opcional mas ajuda no histórico.</p>
+          </div>
+          <button class="icon-btn" data-action="close" aria-label="Fechar">${icon('x', { size: 16 })}</button>
+        </header>
+        <form class="block-drawer__body" id="justForm">
+          <div class="att-just-target">
+            ${avatarHtml(personName, { size: 'sm' })}
+            <strong>${escapeHtml(personName)}</strong>
+          </div>
+          <div class="att-just-cards" role="radiogroup" aria-label="Categoria de justificativa">
+            ${JUSTIFICATION_CATEGORIES.map((c) => `
+              <label class="att-just-card ${selectedCategory === c.value ? 'is-selected' : ''}" data-cat="${escapeAttr(c.value)}">
+                <input type="radio" name="category" value="${escapeAttr(c.value)}" ${selectedCategory === c.value ? 'checked' : ''} />
+                <span class="att-just-card__icon">${categoryIcon(c.value, { size: 22 })}</span>
+                <span class="att-just-card__label">${escapeHtml(c.label)}</span>
+                <span class="att-just-card__desc">${escapeHtml(c.description)}</span>
+              </label>
+            `).join('')}
+          </div>
+          <label class="drawer-field" style="margin-top: 14px;">
+            <span class="drawer-field__label">Motivo (opcional)</span>
+            <textarea name="notes" class="drawer-field__input" rows="3" placeholder="Ex.: atestado médico de 3 dias, viagem de trabalho…">${escapeHtml(currentNotes)}</textarea>
+          </label>
+        </form>
+        <footer class="block-drawer__foot">
+          ${hasExisting ? `<button class="btn btn--danger btn--small" data-action="remove-just">${icon('trash', { size: 14 })}<span style="margin-left:6px;">Remover justificativa</span></button>` : '<span class="spacer"></span>'}
+          <span class="spacer"></span>
+          <button class="btn btn--ghost" data-action="close">Cancelar</button>
+          <button class="btn btn--primary" data-action="save-just">Confirmar</button>
+        </footer>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('is-open'));
+
+    let closed = false;
+    function close(result = null) {
+      if (closed) return;
+      closed = true;
+      overlay.classList.remove('is-open');
+      setTimeout(() => overlay.remove(), 220);
+      document.removeEventListener('keydown', onKey);
+      resolve(result);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') close(null);
+      if ((e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        doSave();
+      }
+    }
+    document.addEventListener('keydown', onKey);
+
+    // seleção visual de categoria
+    overlay.querySelectorAll('.att-just-card').forEach((cardEl) => {
+      cardEl.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        selectedCategory = cardEl.dataset.cat;
+        overlay.querySelectorAll('.att-just-card').forEach((c) => c.classList.toggle('is-selected', c.dataset.cat === selectedCategory));
+        const radio = cardEl.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+      });
+    });
+
+    function doSave() {
+      if (!selectedCategory) { toastError('Escolha uma categoria.'); return; }
+      const form = overlay.querySelector('#justForm');
+      const fd = new FormData(form);
+      const notes = String(fd.get('notes') || '').trim() || null;
+      close({ action: 'save', category: selectedCategory, notes });
+    }
+
+    overlay.addEventListener('click', async (ev) => {
+      if (ev.target === overlay) return close(null);
+      const action = ev.target.closest('[data-action]')?.dataset?.action;
+      if (action === 'close') return close(null);
+      if (action === 'remove-just') return close({ action: 'remove' });
+      if (action === 'save-just') return doSave();
+    });
+  });
+}
+
+function bucketByAtt(att) {
+  if (!att) return 'absent';
+  if (att.is_present) return 'present';
+  if (att.justified) return 'justified';
+  return 'absent';
+}
+
+function countBy(attByPerson, bucket) {
+  let n = 0;
+  for (const a of attByPerson.values()) if (bucketByAtt(a) === bucket) n++;
+  return n;
+}
+
+function calcPct(attByPerson, total) {
+  if (!total) return 0;
+  return Math.round(countBy(attByPerson, 'present') / total * 100);
+}
+
+function meetingStatusLabel(s) {
+  return { scheduled: 'agendado', happened: 'aconteceu', cancelled: 'cancelado' }[s] || s;
+}
+
+function truncate(s, n) {
+  if (!s) return '';
+  return s.length > n ? s.slice(0, n - 1) + '…' : s;
+}
+
+// CSS.escape pra IDs com caracteres não-ASCII (UUID já é safe, mas garantia)
+function cssEscape(s) {
+  return (window.CSS && window.CSS.escape) ? window.CSS.escape(s) : String(s).replace(/"/g, '\\"');
 }
 
 function escapeHtml(s) {
