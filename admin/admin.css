@@ -311,7 +311,7 @@ body[data-state="app"] .admin-app { display: flex; }
   gap: 2px;
 }
 .admin-sidebar__nav a {
-  display: flex; align-items: center; gap: 14px;
+  align-items: center; gap: 14px;
   padding: 11px 14px;
   border-radius: 10px;
   color: var(--text-dim);
@@ -321,6 +321,9 @@ body[data-state="app"] .admin-app { display: flex; }
   overflow: hidden;
   font-size: 14.5px;
 }
+/* display gerenciado separadamente pra não sobrescrever [hidden]
+   (caso contrário JS marca el.hidden=true mas o link continua visível). */
+.admin-sidebar__nav a:not([hidden]) { display: flex; }
 .admin-sidebar__nav a span {
   width: 20px; height: 20px;
   display: inline-flex;
