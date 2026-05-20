@@ -1,96 +1,169 @@
-// CRUD de pessoas + visualização rápida dos grupos em que está vinculada.
+// CRUD de pessoas + busca + filtros. Admin e secretaria têm acesso completo.
 
 import { icon } from '../icons.js';
 import * as data from '../attendance/data.js';
+import { renderSubNav } from './attendance-nav.js';
+import { avatarHtml } from '../avatar.js';
+import { toastSuccess, toastError } from '../toast.js';
+
+let cachedRows = null;
+let cachedGroups = null;
 
 export async function renderAttendancePeople(ctx) {
   const { root } = ctx;
 
   root.innerHTML = `
     <div class="view">
-      <p class="view__crumbs"><a href="#/presenca">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Presença</span></a></p>
+      ${renderSubNav('pessoas')}
+
       <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
         <div>
           <h1>Pessoas</h1>
-          <p class="view__lede">Quem participa dos grupos. Use o vínculo primário (estrela) para definir o grupo em que a pessoa é cobrada.</p>
+          <p class="view__lede">Quem participa dos grupos. A estrela marca o grupo prioritário em que a pessoa é cobrada.</p>
         </div>
         <button id="newPersonBtn" class="btn btn--primary">${icon('user-plus', { size: 14 })}<span style="margin-left:6px;">Nova pessoa</span></button>
       </header>
 
-      <div id="peopleList" class="empty-state">carregando…</div>
+      <div class="att-people-toolbar">
+        <div class="search-bar">
+          <span class="search-bar__icon">${icon('search', { size: 16 })}</span>
+          <input type="text" id="personSearch" placeholder="Buscar pessoa por nome ou e-mail…" />
+        </div>
+        <label class="att-people-toolbar__filter">
+          <span>${icon('filter', { size: 14 })}<span style="margin-left:6px;">Grupo</span></span>
+          <select id="groupFilter">
+            <option value="">Todos os grupos</option>
+          </select>
+        </label>
+        <label class="att-people-toolbar__filter">
+          <span>${icon('users', { size: 14 })}</span>
+          <select id="activeFilter">
+            <option value="active">Ativas</option>
+            <option value="inactive">Inativas</option>
+            <option value="all">Todas</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="peopleList" class="empty-state">
+        <div class="skel skel--title"></div>
+        <div class="skel skel--block"></div>
+      </div>
     </div>
   `;
 
-  document.getElementById('newPersonBtn').addEventListener('click', () => openPersonForm());
-  await loadPeople();
+  document.getElementById('newPersonBtn').addEventListener('click', () => openPersonForm(ctx));
+  document.getElementById('personSearch').addEventListener('input', applyFilters);
+  document.getElementById('groupFilter').addEventListener('change', applyFilters);
+  document.getElementById('activeFilter').addEventListener('change', applyFilters);
+
+  await loadPeople(ctx);
 }
 
-async function loadPeople() {
+async function loadPeople(ctx) {
   const box = document.getElementById('peopleList');
   const [{ data: people, error }, { data: groups }] = await Promise.all([
     data.listPeople({ includeInactive: true }),
-    data.listGroups({ includeArchived: false }),
+    data.listGroups(),
   ]);
 
-  if (error) {
-    box.innerHTML = `<p class="muted">${error.message}</p>`;
-    return;
-  }
+  if (error) { box.innerHTML = `<p class="muted">${error.message}</p>`; return; }
   if (!people?.length) {
-    box.innerHTML = `<p class="muted">Ninguém cadastrado ainda. Clique em "Nova pessoa".</p>`;
+    box.innerHTML = `
+      <div class="att-empty">
+        <div class="att-empty__art">${icon('user-plus', { size: 60 })}</div>
+        <h3>Nenhuma pessoa cadastrada</h3>
+        <p>Adicione as pessoas que participam dos grupos para começar a marcar presença.</p>
+        <button class="btn btn--primary" id="emptyNewPersonBtn">${icon('user-plus', { size: 14 })}<span style="margin-left:6px;">Cadastrar primeira pessoa</span></button>
+      </div>
+    `;
+    document.getElementById('emptyNewPersonBtn').addEventListener('click', () => openPersonForm(ctx));
     return;
   }
 
-  // pra cada pessoa, busca memberships (poderia ser join, mas mais simples 1 query por pessoa pra começar)
+  // popula filtro de grupos
+  const groupFilter = document.getElementById('groupFilter');
+  for (const g of (groups || [])) {
+    const opt = document.createElement('option');
+    opt.value = g.id;
+    opt.textContent = g.name;
+    groupFilter.appendChild(opt);
+  }
+
+  // busca memberships de cada pessoa em paralelo
   const memberships = await Promise.all(people.map((p) => data.listMembershipsOfPerson(p.id)));
 
-  box.className = '';
-  box.innerHTML = `
-    <table class="table att-people-table">
-      <thead>
-        <tr><th>Nome</th><th>E-mail</th><th>Grupo prioritário</th><th>Outros grupos</th><th></th></tr>
-      </thead>
-      <tbody>
-        ${people.map((p, idx) => personRow(p, memberships[idx]?.data || [])).join('')}
-      </tbody>
-    </table>
-  `;
+  cachedRows = people.map((p, idx) => ({ person: p, memberships: memberships[idx].data || [] }));
+  cachedGroups = groups || [];
 
-  // bind row clicks (abrir editor)
-  box.querySelectorAll('tr[data-person-id]').forEach((tr) => {
-    tr.querySelector('[data-action="edit"]')?.addEventListener('click', async () => {
-      const id = tr.dataset.personId;
+  box.className = '';
+  box.innerHTML = `<div class="att-people-grid">${cachedRows.map(personCard).join('')}</div>`;
+
+  wirePersonCards(ctx);
+  applyFilters();
+}
+
+function personCard({ person, memberships }) {
+  const primary = memberships.find((m) => m.is_primary);
+  const others = memberships.filter((m) => !m.is_primary);
+  return `
+    <article class="att-person-card ${person.is_active ? '' : 'is-inactive'}"
+             data-person-id="${escapeAttr(person.id)}"
+             data-name="${escapeAttr(person.full_name)}"
+             data-email="${escapeAttr(person.email || '')}"
+             data-groups="${escapeAttr(memberships.map(m => m.group_id).join('|'))}"
+             data-active="${person.is_active ? '1' : '0'}">
+      <div class="att-person-card__head">
+        ${avatarHtml(person.full_name, { size: 'lg' })}
+        <div class="att-person-card__title">
+          <strong>${escapeHtml(person.full_name)}</strong>
+          ${person.email ? `<span class="muted">${escapeHtml(person.email)}</span>` : '<span class="muted">sem e-mail</span>'}
+        </div>
+        <button class="icon-btn" data-action="edit" title="Editar">${icon('edit', { size: 14 })}</button>
+      </div>
+      <div class="att-person-card__groups">
+        ${primary ? `<span class="pill pill--gold">${icon('star', { size: 11 })}<span style="margin-left:4px;">${escapeHtml(primary.group?.name || '—')}</span></span>` : ''}
+        ${others.map((m) => `<span class="pill">${escapeHtml(m.group?.name || '—')}</span>`).join('')}
+        ${memberships.length === 0 ? '<span class="muted" style="font-size:12px;">sem grupos</span>' : ''}
+      </div>
+      ${!person.is_active ? '<span class="att-person-card__inactive">inativa</span>' : ''}
+    </article>
+  `;
+}
+
+function wirePersonCards(ctx) {
+  document.querySelectorAll('.att-person-card').forEach((card) => {
+    card.querySelector('[data-action="edit"]')?.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      const id = card.dataset.personId;
       const { data: row } = await data.getPerson(id);
-      if (row) openPersonForm(row);
+      if (row) openPersonForm(ctx, row);
     });
   });
 }
 
-function personRow(p, memberships) {
-  const primary = memberships.find((m) => m.is_primary);
-  const others  = memberships.filter((m) => !m.is_primary);
-  return `
-    <tr data-person-id="${escapeAttr(p.id)}" class="${p.is_active ? '' : 'is-inactive'}">
-      <td><strong>${escapeHtml(p.full_name)}</strong>${!p.is_active ? ' <span class="muted">(inativa)</span>' : ''}</td>
-      <td class="muted">${escapeHtml(p.email || '—')}</td>
-      <td>
-        ${primary
-          ? `<span class="att-pill att-pill--primary">${icon('star', { size: 11 })}<span style="margin-left:4px;">${escapeHtml(primary.group?.name || '—')}</span></span>`
-          : '<span class="muted">—</span>'
-        }
-      </td>
-      <td>
-        ${others.length
-          ? others.map((m) => `<span class="att-pill">${escapeHtml(m.group?.name || '—')}</span>`).join(' ')
-          : '<span class="muted">—</span>'
-        }
-      </td>
-      <td><button class="btn btn--ghost btn--small" data-action="edit">${icon('edit', { size: 12 })}<span style="margin-left:6px;">Editar</span></button></td>
-    </tr>
-  `;
+function applyFilters() {
+  const q = (document.getElementById('personSearch')?.value || '').toLowerCase().trim();
+  const groupId = document.getElementById('groupFilter')?.value || '';
+  const active = document.getElementById('activeFilter')?.value || 'active';
+
+  for (const card of document.querySelectorAll('.att-person-card')) {
+    const name = (card.dataset.name || '').toLowerCase();
+    const email = (card.dataset.email || '').toLowerCase();
+    const groups = card.dataset.groups || '';
+    const isActive = card.dataset.active === '1';
+
+    let show = true;
+    if (q && !name.includes(q) && !email.includes(q)) show = false;
+    if (groupId && !groups.split('|').includes(groupId)) show = false;
+    if (active === 'active' && !isActive) show = false;
+    if (active === 'inactive' && isActive) show = false;
+
+    card.hidden = !show;
+  }
 }
 
-function openPersonForm(existing = null) {
+function openPersonForm(ctx, existing = null) {
   document.querySelectorAll('.block-drawer-overlay').forEach((el) => el.remove());
 
   const isEdit = !!existing;
@@ -101,7 +174,10 @@ function openPersonForm(existing = null) {
       <header class="block-drawer__head">
         <div>
           <p class="block-drawer__crumb">${isEdit ? 'Editando pessoa' : 'Nova pessoa'}</p>
-          <h2><span class="block-drawer__icon">${icon('user-plus', { size: 26 })}</span> ${isEdit ? escapeHtml(existing.full_name) : 'Cadastro'}</h2>
+          <h2>
+            ${isEdit ? avatarHtml(existing.full_name, { size: 'sm' }) : `<span class="block-drawer__icon">${icon('user-plus', { size: 26 })}</span>`}
+            <span style="margin-left:10px;">${isEdit ? escapeHtml(existing.full_name) : 'Cadastro'}</span>
+          </h2>
         </div>
         <button class="icon-btn" data-action="close" aria-label="Fechar">${icon('x', { size: 16 })}</button>
       </header>
@@ -127,7 +203,6 @@ function openPersonForm(existing = null) {
             </select>
           </label>
         ` : ''}
-        <p id="personFormError" class="muted" style="color:var(--danger); display:none;"></p>
       </form>
       <footer class="block-drawer__foot">
         ${isEdit ? `<button class="btn btn--danger btn--small" data-action="delete">${icon('trash', { size: 14 })}<span style="margin-left:6px;">Excluir</span></button>` : '<span class="spacer"></span>'}
@@ -154,11 +229,12 @@ function openPersonForm(existing = null) {
     if (action === 'close') return close();
 
     if (action === 'delete') {
-      if (!confirm(`Excluir "${existing.full_name}" definitivamente? Histórico de presença também será removido. Para preservar histórico, use "Inativa" em vez de excluir.`)) return;
+      if (!confirm(`Excluir "${existing.full_name}" definitivamente? Use "Inativa" pra preservar histórico.`)) return;
       const { error } = await data.deletePerson(existing.id);
-      if (error) { showErr(error.message); return; }
+      if (error) { toastError(error.message); return; }
+      toastSuccess('Pessoa excluída.');
       close();
-      await loadPeople();
+      await loadPeople(ctx);
       return;
     }
 
@@ -171,22 +247,14 @@ function openPersonForm(existing = null) {
         notes: String(fd.get('notes') || '').trim() || null,
       };
       if (isEdit) fields.is_active = fd.get('is_active') === 'true';
-      if (!fields.full_name) { showErr('Nome é obrigatório.'); return; }
-      const promise = isEdit
-        ? data.updatePerson(existing.id, fields)
-        : data.createPerson(fields);
-      const { error } = await promise;
-      if (error) { showErr(error.message); return; }
+      if (!fields.full_name) { toastError('Nome é obrigatório.'); return; }
+      const { error } = isEdit ? await data.updatePerson(existing.id, fields) : await data.createPerson(fields);
+      if (error) { toastError(error.message); return; }
+      toastSuccess(isEdit ? 'Pessoa atualizada.' : 'Pessoa cadastrada.');
       close();
-      await loadPeople();
+      await loadPeople(ctx);
     }
   });
-
-  function showErr(msg) {
-    const el = overlay.querySelector('#personFormError');
-    el.textContent = msg;
-    el.style.display = '';
-  }
 }
 
 function escapeHtml(s) {

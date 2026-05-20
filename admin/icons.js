@@ -202,6 +202,24 @@ const ICONS = {
     <path d="M12 3 L14.5 9 L21 9.5 L16 14 L17.5 20.5 L12 17 L6.5 20.5 L8 14 L3 9.5 L9.5 9 Z"/>
   </svg>`,
 
+  search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"/>
+    <path d="M16 16 L21 21"/>
+  </svg>`,
+
+  filter: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 5 L21 5 L14 13 L14 20 L10 18 L10 13 Z"/>
+  </svg>`,
+
+  clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9"/>
+    <path d="M12 7 L12 12 L15.5 14"/>
+  </svg>`,
+
+  spark: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 4 L13 10 L19 11 L13 12 L12 18 L11 12 L5 11 L11 10 Z"/>
+  </svg>`,
+
   // marca brand do TULIPA (uso no login/sidebar)
   brand: `<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M16 5 C 11.5 9, 10.4 15, 12.5 20 C 14.2 23.4, 16 24.5, 16 24.5 C 16 24.5, 17.8 23.4, 19.5 20 C 21.6 15, 20.5 9, 16 5 Z" fill="currentColor" fill-opacity="0.12"/>

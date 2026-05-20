@@ -4,15 +4,19 @@ import { icon } from '../icons.js';
 import * as data from '../attendance/data.js';
 import { calcMonthlyStatus, STATUS_COLORS, currentMonthRange, monthLabel } from '../attendance/status.js';
 import { categoryLabel } from '../attendance/categories.js';
+import { avatarHtml } from '../avatar.js';
+import { renderSubNav } from './attendance-nav.js';
+import { toastSuccess, toastError } from '../toast.js';
 
 const WEEKDAY_LABELS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const SCHEDULE_LABELS = { weekly: 'Toda semana', biweekly: 'Quinzenal', monthly: 'Mensal', manual: 'Sob demanda' };
 
 export async function renderAttendanceGroupDetail(ctx, groupId) {
-  const { root } = ctx;
+  const { root, state } = ctx;
+  const isAdmin = state.role === 'admin';
   const { year, month, from, to } = currentMonthRange();
 
-  root.innerHTML = `<div class="view"><p class="empty-state">carregando grupo…</p></div>`;
+  root.innerHTML = `<div class="view"><div class="skel skel--title"></div><div class="skel skel--block"></div></div>`;
 
   const [{ data: group, error: gErr }] = await Promise.all([data.getGroup(groupId)]);
   if (gErr || !group) {
@@ -32,15 +36,16 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
 
   root.innerHTML = `
     <div class="view">
+      ${renderSubNav('grupos')}
       <p class="view__crumbs"><a href="#/presenca/grupos">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Grupos</span></a></p>
       <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
         <div>
           <h1>${escapeHtml(group.name)}</h1>
           <p class="view__lede">${escapeHtml(subtitle)}${group.description ? ' · ' + escapeHtml(group.description) : ''}</p>
         </div>
-        <div style="display:flex; gap:8px;">
+        ${isAdmin ? `<div style="display:flex; gap:8px;">
           <button id="editGroupBtn" class="btn btn--ghost btn--small">${icon('edit', { size: 14 })}<span style="margin-left:6px;">Editar grupo</span></button>
-        </div>
+        </div>` : ''}
       </header>
 
       <section class="att-section">
@@ -72,12 +77,8 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
     </div>
   `;
 
-  document.getElementById('editGroupBtn').addEventListener('click', async () => {
-    const { openGroupForm } = await import('./attendance-groups.js').then(() => ({}));
-    // Reusa o form via navegação simples
-    location.hash = `#/presenca/grupos#edit:${groupId}`;
-    // Como o openGroupForm não tá exposto, vou só navegar de volta pra lista
-    // (alternativa: expor openGroupForm)
+  document.getElementById('editGroupBtn')?.addEventListener('click', () => {
+    // navega pra lista de grupos onde o admin pode editar
     location.hash = '#/presenca/grupos';
   });
 
@@ -88,9 +89,9 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
     btn.textContent = 'gerando…';
     const { data: count, error } = await data.generateMonthlyMeetings(groupId, year, month);
     if (error) {
-      alert(error.message);
+      toastError(error.message);
     } else {
-      alert(`${count} encontro(s) gerado(s).`);
+      toastSuccess(`${count} encontro(s) gerado(s).`);
       await loadMeetings(groupId, group, from, to);
     }
     btn.disabled = false;
@@ -200,13 +201,15 @@ async function loadMembers(groupId, group, from, to) {
       const { error } = isPrimary
         ? await data.setMembership({ group_id: groupId, person_id: personId, is_primary: false })
         : await data.setPrimaryGroup(personId, groupId);
-      if (error) alert(error.message);
+      if (error) toastError(error.message);
+      else toastSuccess(isPrimary ? 'Vínculo agora secundário.' : 'Vínculo agora primário.');
       await loadMembers(groupId, group, from, to);
     });
     tr.querySelector('[data-action="remove"]')?.addEventListener('click', async () => {
       if (!confirm('Remover esta pessoa do grupo? Histórico de presença é mantido.')) return;
       const { error } = await data.removeMembership(groupId, personId);
-      if (error) alert(error.message);
+      if (error) toastError(error.message);
+      else toastSuccess('Pessoa removida do grupo.');
       await loadMembers(groupId, group, from, to);
     });
   });
@@ -220,12 +223,17 @@ function memberRow(groupId, m, status) {
   return `
     <tr data-person-id="${escapeAttr(m.person_id)}" class="${m.is_primary ? 'is-primary' : ''}">
       <td>
-        <strong>${escapeHtml(m.person?.full_name || '—')}</strong>
-        ${m.person?.email ? `<span class="muted" style="display:block;font-size:12px;">${escapeHtml(m.person.email)}</span>` : ''}
+        <div style="display:flex; align-items:center; gap:12px;">
+          ${avatarHtml(m.person?.full_name, { size: 'sm' })}
+          <div>
+            <strong>${escapeHtml(m.person?.full_name || '—')}</strong>
+            ${m.person?.email ? `<span class="muted" style="display:block;font-size:12px;">${escapeHtml(m.person.email)}</span>` : ''}
+          </div>
+        </div>
       </td>
       <td>
         ${m.is_primary
-          ? `<span class="att-pill att-pill--primary" title="Vínculo primário">${icon('star', { size: 11 })}<span style="margin-left:4px;">primário</span></span>`
+          ? `<span class="pill pill--gold" title="Vínculo primário">${icon('star', { size: 11 })}<span style="margin-left:4px;">primário</span></span>`
           : '<span class="muted">secundário</span>'
         }
       </td>
