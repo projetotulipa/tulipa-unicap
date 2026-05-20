@@ -362,7 +362,123 @@
   align-self: flex-start;
 }
 
-/* ---------- pessoas (grid de cards) ---------- */
+/* ---------- pessoas — LISTA DENSA (sem avatares grandes) ---------- */
+.people-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.people-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(180px, 2fr) minmax(120px, 1.5fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+  cursor: pointer;
+}
+.people-row:hover {
+  border-color: var(--border-rose);
+  background: var(--bg-card-hi);
+}
+.people-row.is-inactive { opacity: 0.5; }
+
+.people-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.people-row__name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.people-row__name strong {
+  color: var(--cream);
+  font-size: 15px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.people-row__primary {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+}
+
+.people-row__contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.people-row__contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: var(--text-dim);
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  width: max-content;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.people-row__contact:hover {
+  background: var(--bg);
+  color: var(--cream);
+}
+.people-row__contact--wa {
+  color: #5ECF80;
+}
+.people-row__contact--wa:hover {
+  background: rgba(94, 207, 128, 0.1);
+  color: #7FE39E;
+}
+.people-row__contact span {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.people-row__groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.people-row__actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.people-row:hover .people-row__actions { opacity: 1; }
+.people-row__actions .icon-btn[data-action="delete"]:hover {
+  background: rgba(194, 74, 74, 0.15);
+  border-color: rgba(194, 74, 74, 0.4);
+  color: var(--danger-soft);
+}
+
+@media (max-width: 720px) {
+  .people-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .people-row__actions { justify-self: end; }
+}
+
+/* ---------- pessoas (grid de cards) — mantido pra compat ---------- */
 .att-people-toolbar {
   display: flex;
   flex-wrap: wrap;

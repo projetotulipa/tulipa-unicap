@@ -220,6 +220,14 @@ const ICONS = {
     <path d="M12 4 L13 10 L19 11 L13 12 L12 18 L11 12 L5 11 L11 10 Z"/>
   </svg>`,
 
+  whatsapp: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M19.05 4.91A10 10 0 0 0 4.93 19.06l-1.4 5.13 5.26-1.38a10 10 0 0 0 10.26-17.9zM12 21.45a8.4 8.4 0 0 1-4.28-1.17l-.31-.18-3.12.82.83-3.04-.2-.32a8.4 8.4 0 1 1 7.08 3.89zm4.6-6.3c-.25-.13-1.49-.74-1.72-.82-.23-.08-.4-.13-.57.13s-.65.82-.8.99c-.15.17-.3.19-.55.06s-1.06-.39-2.02-1.24c-.74-.66-1.25-1.48-1.4-1.73s-.02-.39.1-.51c.1-.1.25-.27.38-.4s.17-.22.25-.39c.08-.16.04-.3-.02-.43s-.57-1.36-.78-1.87c-.21-.5-.42-.43-.57-.43h-.49c-.17 0-.43.06-.66.3s-.86.84-.86 2.06.88 2.39 1 2.56 1.74 2.65 4.22 3.72c.59.25 1.05.4 1.41.51.59.19 1.13.16 1.55.1.47-.07 1.49-.61 1.7-1.2.21-.59.21-1.09.15-1.2-.06-.1-.23-.16-.48-.29z"/>
+  </svg>`,
+
+  phone: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M5 4 L9 4 L11 9 L8.5 10.5 C 10 13 11 14 13.5 15.5 L 15 13 L 20 15 L 20 19 C 20 19.6 19.6 20 19 20 C 11 20 4 13 4 5 C 4 4.4 4.4 4 5 4 Z"/>
+  </svg>`,
+
   // marca brand do TULIPA (uso no login/sidebar)
   brand: `<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M16 5 C 11.5 9, 10.4 15, 12.5 20 C 14.2 23.4, 16 24.5, 16 24.5 C 16 24.5, 17.8 23.4, 19.5 20 C 21.6 15, 20.5 9, 16 5 Z" fill="currentColor" fill-opacity="0.12"/>

@@ -1,13 +1,13 @@
-// CRUD de pessoas + busca + filtros. Admin e secretaria têm acesso completo.
+// Pessoas — lista densa (sem cards/avatares grandes). Busca + filtros + edit/delete inline.
 
 import { icon } from '../icons.js';
 import * as data from '../attendance/data.js';
 import { renderSubNav } from './attendance-nav.js';
-import { avatarHtml } from '../avatar.js';
 import { toastSuccess, toastError } from '../toast.js';
+import { whatsappUrl, formatPhone } from '../phone.js';
+import { avatarHtml } from '../avatar.js';
 
 let cachedRows = null;
-let cachedGroups = null;
 
 export async function renderAttendancePeople(ctx) {
   const { root } = ctx;
@@ -19,7 +19,7 @@ export async function renderAttendancePeople(ctx) {
       <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
         <div>
           <h1>Pessoas</h1>
-          <p class="view__lede">Quem participa dos grupos. A estrela marca o grupo prioritário em que a pessoa é cobrada.</p>
+          <p class="view__lede">Quem participa dos grupos. A estrela marca o grupo prioritário em que a pessoa é cobrada. Telefone vira link de WhatsApp.</p>
         </div>
         <button id="newPersonBtn" class="btn btn--primary">${icon('user-plus', { size: 14 })}<span style="margin-left:6px;">Nova pessoa</span></button>
       </header>
@@ -27,12 +27,12 @@ export async function renderAttendancePeople(ctx) {
       <div class="att-people-toolbar">
         <div class="search-bar">
           <span class="search-bar__icon">${icon('search', { size: 16 })}</span>
-          <input type="text" id="personSearch" placeholder="Buscar pessoa por nome ou e-mail…" />
+          <input type="text" id="personSearch" placeholder="Buscar por nome, e-mail ou telefone…" />
         </div>
         <label class="att-people-toolbar__filter">
           <span>${icon('filter', { size: 14 })}<span style="margin-left:6px;">Grupo</span></span>
           <select id="groupFilter">
-            <option value="">Todos os grupos</option>
+            <option value="">Todos</option>
           </select>
         </label>
         <label class="att-people-toolbar__filter">
@@ -73,7 +73,7 @@ async function loadPeople(ctx) {
       <div class="att-empty">
         <div class="att-empty__art">${icon('user-plus', { size: 60 })}</div>
         <h3>Nenhuma pessoa cadastrada</h3>
-        <p>Adicione as pessoas que participam dos grupos para começar a marcar presença.</p>
+        <p>Adicione as pessoas que participam dos grupos pra começar a marcar presença.</p>
         <button class="btn btn--primary" id="emptyNewPersonBtn">${icon('user-plus', { size: 14 })}<span style="margin-left:6px;">Cadastrar primeira pessoa</span></button>
       </div>
     `;
@@ -81,63 +81,101 @@ async function loadPeople(ctx) {
     return;
   }
 
-  // popula filtro de grupos
   const groupFilter = document.getElementById('groupFilter');
   for (const g of (groups || [])) {
     const opt = document.createElement('option');
-    opt.value = g.id;
-    opt.textContent = g.name;
+    opt.value = g.id; opt.textContent = g.name;
     groupFilter.appendChild(opt);
   }
 
-  // busca memberships de cada pessoa em paralelo
   const memberships = await Promise.all(people.map((p) => data.listMembershipsOfPerson(p.id)));
-
   cachedRows = people.map((p, idx) => ({ person: p, memberships: memberships[idx].data || [] }));
-  cachedGroups = groups || [];
 
   box.className = '';
-  box.innerHTML = `<div class="att-people-grid">${cachedRows.map(personCard).join('')}</div>`;
-
-  wirePersonCards(ctx);
+  box.innerHTML = `
+    <ul class="people-list">
+      ${cachedRows.map((r) => personRow(r)).join('')}
+    </ul>
+  `;
+  wireRows(ctx);
   applyFilters();
 }
 
-function personCard({ person, memberships }) {
+function personRow({ person, memberships }) {
   const primary = memberships.find((m) => m.is_primary);
-  const others = memberships.filter((m) => !m.is_primary);
+  const others  = memberships.filter((m) => !m.is_primary);
+  const phoneLink = whatsappUrl(person.phone);
+  const phoneText = formatPhone(person.phone);
   return `
-    <article class="att-person-card ${person.is_active ? '' : 'is-inactive'}"
-             data-person-id="${escapeAttr(person.id)}"
-             data-name="${escapeAttr(person.full_name)}"
-             data-email="${escapeAttr(person.email || '')}"
-             data-groups="${escapeAttr(memberships.map(m => m.group_id).join('|'))}"
-             data-active="${person.is_active ? '1' : '0'}">
-      <div class="att-person-card__head">
-        ${avatarHtml(person.full_name, { size: 'lg' })}
-        <div class="att-person-card__title">
+    <li class="people-row ${person.is_active ? '' : 'is-inactive'}"
+        data-person-id="${escapeAttr(person.id)}"
+        data-name="${escapeAttr(person.full_name)}"
+        data-email="${escapeAttr(person.email || '')}"
+        data-phone="${escapeAttr(person.phone || '')}"
+        data-groups="${escapeAttr(memberships.map((m) => m.group_id).join('|'))}"
+        data-active="${person.is_active ? '1' : '0'}">
+      <div class="people-row__main">
+        <span class="people-row__name">
           <strong>${escapeHtml(person.full_name)}</strong>
-          ${person.email ? `<span class="muted">${escapeHtml(person.email)}</span>` : '<span class="muted">sem e-mail</span>'}
-        </div>
-        <button class="icon-btn" data-action="edit" title="Editar">${icon('edit', { size: 14 })}</button>
+          ${person.is_exempt ? '<span class="pill" style="margin-left:8px; font-size:10px;">isenta</span>' : ''}
+          ${!person.is_active ? '<span class="pill" style="margin-left:8px; font-size:10px;">inativa</span>' : ''}
+        </span>
+        ${primary ? `<span class="people-row__primary">${icon('star', { size: 11 })}<span style="margin-left:4px;">${escapeHtml(primary.group?.name || '—')}</span></span>` : ''}
       </div>
-      <div class="att-person-card__groups">
-        ${primary ? `<span class="pill pill--gold">${icon('star', { size: 11 })}<span style="margin-left:4px;">${escapeHtml(primary.group?.name || '—')}</span></span>` : ''}
-        ${others.map((m) => `<span class="pill">${escapeHtml(m.group?.name || '—')}</span>`).join('')}
-        ${memberships.length === 0 ? '<span class="muted" style="font-size:12px;">sem grupos</span>' : ''}
+      <div class="people-row__contacts">
+        ${phoneLink ? `
+          <a class="people-row__contact people-row__contact--wa" href="${escapeAttr(phoneLink)}" target="_blank" rel="noopener" title="Abrir no WhatsApp">
+            ${icon('whatsapp', { size: 14 })}<span>${escapeHtml(phoneText)}</span>
+          </a>
+        ` : '<span class="muted" style="font-size:12px;">sem telefone</span>'}
+        ${person.email ? `
+          <a class="people-row__contact" href="mailto:${escapeAttr(person.email)}" title="${escapeAttr(person.email)}">
+            ${icon('contato', { size: 12 })}<span>${escapeHtml(person.email)}</span>
+          </a>
+        ` : ''}
       </div>
-      ${!person.is_active ? '<span class="att-person-card__inactive">inativa</span>' : ''}
-    </article>
+      <div class="people-row__groups">
+        ${others.length
+          ? others.map((m) => `<span class="pill">${escapeHtml(m.group?.name || '—')}</span>`).join('')
+          : '<span class="muted" style="font-size:12px;">só prioritário</span>'
+        }
+      </div>
+      <div class="people-row__actions">
+        <button class="icon-btn icon-btn--xs" data-action="edit" title="Editar">${icon('edit', { size: 12 })}</button>
+        <button class="icon-btn icon-btn--xs" data-action="delete" title="Excluir">${icon('trash', { size: 12 })}</button>
+      </div>
+    </li>
   `;
 }
 
-function wirePersonCards(ctx) {
-  document.querySelectorAll('.att-person-card').forEach((card) => {
-    card.querySelector('[data-action="edit"]')?.addEventListener('click', async (ev) => {
+function wireRows(ctx) {
+  document.querySelectorAll('.people-row').forEach((row) => {
+    const id = row.dataset.personId;
+    row.querySelector('[data-action="edit"]')?.addEventListener('click', async (ev) => {
       ev.stopPropagation();
-      const id = card.dataset.personId;
-      const { data: row } = await data.getPerson(id);
-      if (row) openPersonForm(ctx, row);
+      const { data: full } = await data.getPerson(id);
+      if (full) openPersonForm(ctx, full);
+    });
+    row.querySelector('[data-action="delete"]')?.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      const name = row.dataset.name;
+      const choice = confirm(`Excluir "${name}" definitivamente?\n\nCancelar = apenas desativar (mantém histórico).\nOK = apagar tudo (sem desfazer).`);
+      if (choice) {
+        const { error } = await data.deletePerson(id);
+        if (error) { toastError(error.message); return; }
+        toastSuccess('Pessoa excluída.');
+      } else {
+        const { error } = await data.deactivatePerson(id);
+        if (error) { toastError(error.message); return; }
+        toastSuccess('Pessoa marcada como inativa.');
+      }
+      await loadPeople(ctx);
+    });
+    // clica na linha (não em ação) → abrir editor
+    row.addEventListener('click', async (ev) => {
+      if (ev.target.closest('button, a')) return;
+      const { data: full } = await data.getPerson(id);
+      if (full) openPersonForm(ctx, full);
     });
   });
 }
@@ -147,19 +185,20 @@ function applyFilters() {
   const groupId = document.getElementById('groupFilter')?.value || '';
   const active = document.getElementById('activeFilter')?.value || 'active';
 
-  for (const card of document.querySelectorAll('.att-person-card')) {
-    const name = (card.dataset.name || '').toLowerCase();
-    const email = (card.dataset.email || '').toLowerCase();
-    const groups = card.dataset.groups || '';
-    const isActive = card.dataset.active === '1';
+  for (const row of document.querySelectorAll('.people-row')) {
+    const name = (row.dataset.name || '').toLowerCase();
+    const email = (row.dataset.email || '').toLowerCase();
+    const phone = (row.dataset.phone || '').toLowerCase();
+    const groups = row.dataset.groups || '';
+    const isActive = row.dataset.active === '1';
 
     let show = true;
-    if (q && !name.includes(q) && !email.includes(q)) show = false;
+    if (q && !name.includes(q) && !email.includes(q) && !phone.includes(q)) show = false;
     if (groupId && !groups.split('|').includes(groupId)) show = false;
     if (active === 'active' && !isActive) show = false;
     if (active === 'inactive' && isActive) show = false;
 
-    card.hidden = !show;
+    row.hidden = !show;
   }
 }
 
@@ -187,10 +226,17 @@ function openPersonForm(ctx, existing = null) {
             <span class="drawer-field__label">Nome completo</span>
             <input type="text" name="full_name" class="drawer-field__input" required value="${escapeAttr(existing?.full_name || '')}" placeholder="Como aparecerá na lista" />
           </label>
-          <label class="drawer-field">
-            <span class="drawer-field__label">E-mail (opcional)</span>
-            <input type="email" name="email" class="drawer-field__input" value="${escapeAttr(existing?.email || '')}" placeholder="para contato" />
-          </label>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <label class="drawer-field" style="flex:1; min-width:200px;">
+              <span class="drawer-field__label">Telefone (WhatsApp)</span>
+              <input type="tel" name="phone" class="drawer-field__input" value="${escapeAttr(existing?.phone || '')}" placeholder="(81) 99999-9999" />
+              <p class="drawer-field__hint">Vira link clicável que abre o WhatsApp. Aceita com ou sem DDI.</p>
+            </label>
+            <label class="drawer-field" style="flex:1; min-width:200px;">
+              <span class="drawer-field__label">E-mail (opcional)</span>
+              <input type="email" name="email" class="drawer-field__input" value="${escapeAttr(existing?.email || '')}" placeholder="para contato" />
+            </label>
+          </div>
           ${isEdit ? `
             <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:6px;">
               <label class="drawer-field" style="flex:1; min-width: 160px;">
@@ -244,6 +290,9 @@ function openPersonForm(ctx, existing = null) {
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.classList.add('is-open'));
 
+  const form = overlay.querySelector('#personForm');
+  form?.addEventListener('submit', (e) => e.preventDefault());
+
   function close() {
     overlay.classList.remove('is-open');
     setTimeout(() => overlay.remove(), 220);
@@ -258,21 +307,27 @@ function openPersonForm(ctx, existing = null) {
     if (action === 'close') return close();
 
     if (action === 'delete') {
-      if (!confirm(`Excluir "${existing.full_name}" definitivamente? Use "Inativa" pra preservar histórico.`)) return;
-      const { error } = await data.deletePerson(existing.id);
-      if (error) { toastError(error.message); return; }
-      toastSuccess('Pessoa excluída.');
+      const choice = confirm(`Excluir "${existing.full_name}" definitivamente?\n\nCancelar = apenas desativar (mantém histórico).\nOK = apagar tudo (sem desfazer).`);
+      if (choice) {
+        const { error } = await data.deletePerson(existing.id);
+        if (error) { toastError(error.message); return; }
+        toastSuccess('Pessoa excluída.');
+      } else {
+        const { error } = await data.deactivatePerson(existing.id);
+        if (error) { toastError(error.message); return; }
+        toastSuccess('Pessoa marcada como inativa.');
+      }
       close();
       await loadPeople(ctx);
       return;
     }
 
     if (action === 'save') {
-      const form = overlay.querySelector('#personForm');
       const fd = new FormData(form);
       const fields = {
         full_name: String(fd.get('full_name') || '').trim(),
         email: String(fd.get('email') || '').trim() || null,
+        phone: String(fd.get('phone') || '').trim() || null,
       };
       if (isEdit) {
         fields.is_active = fd.get('is_active') === 'true';
@@ -304,12 +359,8 @@ function openPersonForm(ctx, existing = null) {
       toastSuccess('Anotação adicionada.');
       loadNotes();
     });
-    // Ctrl+Enter atalho
     noteForm.querySelector('textarea').addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        noteForm.requestSubmit();
-      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); noteForm.requestSubmit(); }
     });
 
     async function loadNotes() {
