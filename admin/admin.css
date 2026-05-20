@@ -241,8 +241,10 @@ body[data-state="app"]     [data-show-when="app"]     { display: flex; }
 /* ===== APP SHELL ===== */
 .admin-app {
   height: 100vh;
-  display: flex;
 }
+/* display gerenciado pela regra [data-show-when="app"] no topo do arquivo
+   (linhas 73-76). Setar display:flex aqui vazaria a sidebar no login. */
+body[data-state="app"] .admin-app { display: flex; }
 
 /* sidebar */
 .admin-sidebar {
