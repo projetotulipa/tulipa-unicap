@@ -1,4 +1,5 @@
-// Detalhe de um grupo — membros + encontros + status mensal.
+// Detalhe de um grupo — Sprint 2 (hero editorial + section v2 + meeting chip v2).
+// Mantém formulários e tabelas existentes (membros, justificativas).
 
 import { icon } from '../icons.js';
 import * as data from '../attendance/data.js';
@@ -6,6 +7,7 @@ import { calcMonthlyStatus, STATUS_COLORS, currentMonthRange, monthLabel, shortR
 import { categoryLabel } from '../attendance/categories.js';
 import { avatarHtml } from '../avatar.js';
 import { renderSubNav } from './attendance-nav.js';
+import { codexSeal, codexPage } from '../attendance/codex.js';
 import { toastSuccess, toastError } from '../toast.js';
 
 const WEEKDAY_LABELS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
@@ -15,9 +17,15 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
   const { root, state } = ctx;
   const isAdmin = state.role === 'admin';
 
-  root.innerHTML = `<div class="view"><div class="skel skel--title"></div><div class="skel skel--block"></div></div>`;
+  root.innerHTML = `
+    <div class="view">
+      <div class="att-loading-wrap">
+        <span class="att-bloom"><span class="att-codex-seal">${codexSeal({ size: 24 })}</span></span>
+        <p>Abrindo o livro…</p>
+      </div>
+    </div>
+  `;
 
-  // determina range: semestre atual OU mês corrente como fallback
   const { data: currentSem } = await data.getCurrentSemester();
   const monthRange = currentMonthRange();
   const range = currentSem
@@ -31,66 +39,130 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
     root.innerHTML = `
       <div class="view">
         <p class="view__crumbs"><a href="#/presenca/grupos">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Grupos</span></a></p>
-        <div class="empty-state">Grupo não encontrado.</div>
+        <div class="att-empty-v2">
+          <div class="att-empty-v2__art">${codexSeal({ size: 52 })}</div>
+          <h3>Grupo não encontrado</h3>
+          <p>Talvez ele tenha sido removido ou o endereço esteja errado.</p>
+          <a class="btn btn--ghost" href="#/presenca/grupos">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Voltar à lista</span></a>
+        </div>
       </div>
     `;
     return;
   }
 
+  // pré-carrega membros/encontros pra preencher stats no hero
+  const [memRes, meetRes] = await Promise.all([
+    data.listMembershipsOfGroup(groupId),
+    data.listAttendanceByGroupInRange(groupId, from, to),
+  ]);
+  const allMembers = memRes.data || [];
+  const allMeetings = meetRes.data || [];
+  const happenedCount = allMeetings.filter((m) => m.status === 'happened').length;
+  let totalSlots = 0, totalPresent = 0;
+  let alertsCount = 0;
+  for (const m of allMeetings) {
+    if (m.status === 'happened') {
+      totalSlots += allMembers.length;
+      totalPresent += (m.attendance || []).filter((a) => a.is_present).length;
+    }
+  }
+  for (const mem of allMembers) {
+    const st = calcMonthlyStatus(allMeetings, mem.person_id, { isWeekly: group.schedule_kind === 'weekly' });
+    if (st.color === 'orange' || st.color === 'red') alertsCount++;
+  }
+  const pct = totalSlots > 0 ? Math.round(totalPresent / totalSlots * 100) : null;
+
   const scheduleLabel = SCHEDULE_LABELS[group.schedule_kind] || group.schedule_kind;
   const weekdayLabel = group.weekday !== null && group.weekday !== undefined ? WEEKDAY_LABELS[group.weekday] : null;
   const timeLabel = group.start_time ? group.start_time.slice(0, 5) : null;
-  const subtitle = [scheduleLabel, weekdayLabel, timeLabel].filter(Boolean).join(' · ');
+  const eyebrow = [scheduleLabel, weekdayLabel, timeLabel].filter(Boolean).join(' · ');
+
+  const periodLabel = range.semester
+    ? `${range.semester.name} · ${shortRangeLabel(range.semester.start_date, range.semester.end_date)}`
+    : monthLabel(year, month);
+
+  const monogram = monogramOf(group.name);
+  const pctTone = pct === null ? 'muted'
+    : pct >= 70 ? 'success'
+    : pct >= 50 ? 'gold'
+    : 'warning';
 
   root.innerHTML = `
     <div class="view">
       ${renderSubNav('grupos', { isAdmin })}
       <p class="view__crumbs"><a href="#/presenca/grupos">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Grupos</span></a></p>
-      <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
-        <div>
+
+      <header class="att-group-hero">
+        <span class="att-group-hero__mono" aria-hidden="true">${escapeHtml(monogram)}</span>
+        <div class="att-group-hero__inner">
+          <p class="att-group-hero__eyebrow">${escapeHtml(eyebrow || '—')}</p>
           <h1>${escapeHtml(group.name)}</h1>
-          <p class="view__lede">${escapeHtml(subtitle)}${group.description ? ' · ' + escapeHtml(group.description) : ''}</p>
+          ${group.description ? `<p class="att-group-hero__lede">${escapeHtml(group.description)}</p>` : `<p class="att-group-hero__lede">livro de presenças — ${escapeHtml(periodLabel)}</p>`}
         </div>
-        ${isAdmin ? `<div style="display:flex; gap:8px;">
-          <button id="editGroupBtn" class="btn btn--ghost btn--small">${icon('edit', { size: 14 })}<span style="margin-left:6px;">Editar grupo</span></button>
-          <button id="deleteGroupBtn" class="btn btn--danger btn--small">${icon('trash', { size: 14 })}<span style="margin-left:6px;">Excluir grupo</span></button>
-        </div>` : ''}
+        ${isAdmin ? `
+          <div class="att-group-hero__actions">
+            <button id="editGroupBtn" class="btn btn--ghost btn--small">${icon('edit', { size: 14 })}<span style="margin-left:6px;">Editar grupo</span></button>
+            <button id="deleteGroupBtn" class="btn btn--danger btn--small">${icon('trash', { size: 14 })}<span style="margin-left:6px;">Excluir</span></button>
+          </div>
+        ` : ''}
+        <div class="att-group-hero__page">${codexPage({ size: 200 })}</div>
       </header>
 
-      <section class="att-section">
-        <header class="att-section__head">
-          <h2>Encontros · ${escapeHtml(range.semester ? `${range.semester.name} (${shortRangeLabel(range.semester.start_date, range.semester.end_date)})` : monthLabel(year, month))}</h2>
-          ${(group.schedule_kind === 'weekly' || group.schedule_kind === 'biweekly') ? `
-            <div style="display:flex; gap:6px;">
+      <div class="att-group-stats">
+        <div class="att-group-stats__cell att-group-stats__cell--rose">
+          <strong>${allMembers.length}</strong>
+          <span>${allMembers.length === 1 ? 'membro' : 'membros'}</span>
+        </div>
+        <div class="att-group-stats__cell att-group-stats__cell--gold">
+          <strong>${happenedCount}</strong>
+          <span>${range.semester ? 'no semestre' : 'no mês'}</span>
+        </div>
+        <div class="att-group-stats__cell att-group-stats__cell--${pctTone === 'muted' ? '' : pctTone}">
+          <strong>${pct === null ? '—' : pct + '%'}</strong>
+          <span>presença média</span>
+        </div>
+        <div class="att-group-stats__cell att-group-stats__cell--${alertsCount > 0 ? 'warning' : ''}">
+          <strong>${alertsCount}</strong>
+          <span>${alertsCount === 1 ? 'pessoa em alerta' : 'pessoas em alerta'}</span>
+        </div>
+      </div>
+
+      <section class="att-section-v2">
+        <header class="att-section-v2__head">
+          <h2>Encontros <span class="att-section-v2__count">${happenedCount} / ${allMeetings.length}</span></h2>
+          <div class="att-section-v2__head-right">
+            ${(group.schedule_kind === 'weekly' || group.schedule_kind === 'biweekly') ? `
               ${range.semester ? `<button id="generateSemesterBtn" class="btn btn--ghost btn--small">${icon('calendar', { size: 14 })}<span style="margin-left:6px;">Gerar todo o semestre</span></button>` : ''}
               <button id="generateMeetingsBtn" class="btn btn--ghost btn--small">${icon('calendar', { size: 14 })}<span style="margin-left:6px;">Gerar mês corrente</span></button>
-            </div>
-          ` : `
-            <button id="newMeetingBtn" class="btn btn--ghost btn--small">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Novo encontro</span></button>
-          `}
+            ` : `
+              <button id="newMeetingBtn" class="btn btn--ghost btn--small">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Novo encontro</span></button>
+            `}
+          </div>
         </header>
-        <div id="meetingsList" class="att-meetings">carregando…</div>
+        <p class="muted" style="margin: -8px 0 12px; font-size: 12.5px;">${escapeHtml(periodLabel)}</p>
+        <div id="meetingsList" class="att-meetings"></div>
       </section>
 
-      <section class="att-section">
-        <header class="att-section__head">
-          <h2>Membros</h2>
-          <button id="addMemberBtn" class="btn btn--ghost btn--small">${icon('user-plus', { size: 14 })}<span style="margin-left:6px;">Vincular pessoa</span></button>
+      <section class="att-section-v2">
+        <header class="att-section-v2__head">
+          <h2>Membros <span class="att-section-v2__count">${allMembers.length}</span></h2>
+          <div class="att-section-v2__head-right">
+            <button id="addMemberBtn" class="btn btn--ghost btn--small">${icon('user-plus', { size: 14 })}<span style="margin-left:6px;">Vincular pessoa</span></button>
+          </div>
         </header>
-        <div id="membersList" class="empty-state">carregando…</div>
+        <div id="membersList" class="empty-state"></div>
       </section>
 
-      <section class="att-section">
-        <header class="att-section__head">
-          <h2>Faltas justificadas · ${escapeHtml(range.semester ? range.semester.name : monthLabel(year, month))}</h2>
+      <section class="att-section-v2">
+        <header class="att-section-v2__head">
+          <h2>Faltas justificadas <span class="att-section-v2__count" id="justCount">…</span></h2>
         </header>
-        <div id="justificationsList" class="empty-state">carregando…</div>
+        <div id="justificationsList" class="empty-state"></div>
       </section>
     </div>
   `;
 
   document.getElementById('editGroupBtn')?.addEventListener('click', () => {
-    // navega pra lista de grupos onde o admin pode editar
     location.hash = '#/presenca/grupos';
   });
 
@@ -144,13 +216,20 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
 
 async function loadJustifications(groupId, from, to) {
   const box = document.getElementById('justificationsList');
+  const countEl = document.getElementById('justCount');
   if (!box) return;
   const { data: rows, error } = await data.listJustifications(groupId, from, to);
-  if (error) { box.innerHTML = `<p class="muted">${error.message}</p>`; return; }
-  if (!rows?.length) {
-    box.innerHTML = `<p class="muted">Nenhuma falta justificada este mês.</p>`;
+  if (error) {
+    if (countEl) countEl.textContent = '—';
+    box.innerHTML = `<p class="muted">${escapeHtml(error.message)}</p>`;
     return;
   }
+  if (!rows?.length) {
+    if (countEl) countEl.textContent = '0';
+    box.innerHTML = `<p class="muted" style="padding: 8px 0;">Nenhuma falta justificada no período.</p>`;
+    return;
+  }
+  if (countEl) countEl.textContent = String(rows.length);
   box.className = '';
   box.innerHTML = `
     <table class="table att-just-table">
@@ -163,7 +242,7 @@ async function loadJustifications(groupId, from, to) {
             <tr>
               <td>${escapeHtml(dStr)}</td>
               <td><strong>${escapeHtml(r.person?.full_name || '—')}</strong></td>
-              <td><span class="att-pill">${escapeHtml(categoryLabel(r.justification_category))}</span></td>
+              <td><span class="att-pill-v2 att-pill-v2--gold-soft">${escapeHtml(categoryLabel(r.justification_category))}</span></td>
               <td class="muted">${escapeHtml(r.notes || '—')}</td>
             </tr>
           `;
@@ -176,17 +255,17 @@ async function loadJustifications(groupId, from, to) {
 async function loadMeetings(groupId, group, from, to, isAdmin) {
   const box = document.getElementById('meetingsList');
   const { data: rows, error } = await data.listMeetings(groupId, { from, to });
-  if (error) { box.innerHTML = `<p class="muted">${error.message}</p>`; return; }
+  if (error) { box.innerHTML = `<p class="muted">${escapeHtml(error.message)}</p>`; return; }
   if (!rows?.length) {
-    box.innerHTML = `<p class="muted">Nenhum encontro neste mês. ${(group.schedule_kind === 'weekly' || group.schedule_kind === 'biweekly') ? 'Use "Gerar encontros do mês" pra criar de uma vez.' : 'Use "Novo encontro" pra criar.'}</p>`;
+    box.innerHTML = `<p class="muted" style="padding: 8px 0;">Nenhum encontro neste período. ${(group.schedule_kind === 'weekly' || group.schedule_kind === 'biweekly') ? 'Use "Gerar mês corrente" pra criar de uma vez.' : 'Use "Novo encontro" pra criar.'}</p>`;
     return;
   }
-  box.innerHTML = rows.map((m) => meetingChip(m, { isAdmin })).join('');
+  box.innerHTML = rows.map((m) => meetingChipV2(m, { isAdmin })).join('');
   if (isAdmin) wireMeetingChips(box, groupId, group, from, to, isAdmin);
 }
 
 function wireMeetingChips(box, groupId, group, from, to, isAdmin) {
-  box.querySelectorAll('.att-meeting-chip').forEach((chip) => {
+  box.querySelectorAll('.att-meeting-chip-v2').forEach((chip) => {
     const meetingId = chip.dataset.meetingId;
     const meetingDate = chip.dataset.meetingDate;
 
@@ -207,6 +286,30 @@ function wireMeetingChips(box, groupId, group, from, to, isAdmin) {
       await loadMeetings(groupId, group, from, to, isAdmin);
     });
   });
+}
+
+function meetingChipV2(m, opts = {}) {
+  const { isAdmin = false } = opts;
+  const date = new Date(m.date + 'T00:00:00');
+  const day = String(date.getDate()).padStart(2, '0');
+  const monthShort = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][date.getMonth()];
+  const weekday = WEEKDAY_LABELS[date.getDay()].slice(0, 3).toLowerCase();
+  const statusLabel = { scheduled: 'agendado', happened: 'aconteceu', cancelled: 'cancelado' }[m.status] || m.status;
+  return `
+    <div class="att-meeting-chip-v2 att-meeting-chip-v2--${m.status}" data-meeting-id="${escapeAttr(m.id)}" data-meeting-date="${escapeAttr(m.date)}">
+      <a class="att-meeting-chip-v2__link" href="#/presenca/encontros/${escapeAttr(m.id)}">
+        <span class="att-meeting-chip-v2__date">${day}</span>
+        <span class="att-meeting-chip-v2__weekday">${escapeHtml(monthShort)} · ${escapeHtml(weekday)}</span>
+        <span class="att-meeting-chip-v2__status">${escapeHtml(statusLabel)}</span>
+      </a>
+      ${isAdmin ? `
+        <div class="att-meeting-chip-v2__menu">
+          <button class="icon-btn icon-btn--xs" data-action="edit-date" title="Editar data" aria-label="Editar data">${icon('edit', { size: 12 })}</button>
+          <button class="icon-btn icon-btn--xs" data-action="delete-meeting" title="Excluir" aria-label="Excluir">${icon('trash', { size: 12 })}</button>
+        </div>
+      ` : ''}
+    </div>
+  `;
 }
 
 function openEditDateDrawer(meeting, onDone) {
@@ -241,7 +344,6 @@ function openEditDateDrawer(meeting, onDone) {
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.classList.add('is-open'));
 
-  // previne submit acidental do form (Enter)
   overlay.querySelector('#editDateForm').addEventListener('submit', (e) => e.preventDefault());
 
   function close() {
@@ -284,27 +386,6 @@ function openEditDateDrawer(meeting, onDone) {
   });
 }
 
-function meetingChip(m, opts = {}) {
-  const { isAdmin = false } = opts;
-  const date = new Date(m.date + 'T00:00:00');
-  const formatted = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'short' });
-  const statusLabel = { scheduled: 'agendado', happened: 'aconteceu', cancelled: 'cancelado' }[m.status];
-  return `
-    <div class="att-meeting-chip att-meeting-chip--${m.status}" data-meeting-id="${escapeAttr(m.id)}" data-meeting-date="${escapeAttr(m.date)}">
-      <a class="att-meeting-chip__link" href="#/presenca/encontros/${escapeAttr(m.id)}">
-        <strong>${escapeHtml(formatted)}</strong>
-        <span class="muted">${escapeHtml(statusLabel)}</span>
-      </a>
-      ${isAdmin ? `
-        <div class="att-meeting-chip__menu">
-          <button class="icon-btn icon-btn--xs" data-action="edit-date" title="Editar data">${icon('edit', { size: 12 })}</button>
-          <button class="icon-btn icon-btn--xs" data-action="delete-meeting" title="Excluir">${icon('trash', { size: 12 })}</button>
-        </div>
-      ` : ''}
-    </div>
-  `;
-}
-
 async function loadMembers(groupId, group, from, to) {
   const box = document.getElementById('membersList');
   const [{ data: members, error: mErr }, { data: meetings }] = await Promise.all([
@@ -312,9 +393,9 @@ async function loadMembers(groupId, group, from, to) {
     data.listAttendanceByGroupInRange(groupId, from, to),
   ]);
 
-  if (mErr) { box.innerHTML = `<p class="muted">${mErr.message}</p>`; return; }
+  if (mErr) { box.innerHTML = `<p class="muted">${escapeHtml(mErr.message)}</p>`; return; }
   if (!members?.length) {
-    box.innerHTML = `<p class="muted">Nenhuma pessoa vinculada. Use "Vincular pessoa" pra adicionar.</p>`;
+    box.innerHTML = `<p class="muted" style="padding: 8px 0;">Nenhuma pessoa vinculada. Use "Vincular pessoa" pra adicionar.</p>`;
     return;
   }
 
@@ -322,7 +403,7 @@ async function loadMembers(groupId, group, from, to) {
   box.innerHTML = `
     <table class="table att-members-table">
       <thead>
-        <tr><th>Pessoa</th><th>Vínculo</th><th>Faltas no mês</th><th>Status</th><th></th></tr>
+        <tr><th>Pessoa</th><th>Vínculo</th><th>Faltas no período</th><th>Status</th><th></th></tr>
       </thead>
       <tbody>
         ${members.map((m) => {
@@ -335,7 +416,6 @@ async function loadMembers(groupId, group, from, to) {
     </table>
   `;
 
-  // wire actions
   box.querySelectorAll('tr[data-person-id]').forEach((tr) => {
     const personId = tr.dataset.personId;
     tr.querySelector('[data-action="toggle-primary"]')?.addEventListener('click', async () => {
@@ -375,15 +455,15 @@ function memberRow(groupId, m, status) {
       </td>
       <td>
         ${m.is_primary
-          ? `<span class="pill pill--gold" title="Vínculo primário">${icon('star', { size: 11 })}<span style="margin-left:4px;">primário</span></span>`
+          ? `<span class="att-pill-v2 att-pill-v2--gold" title="Vínculo primário">${icon('star', { size: 11 })}<span style="margin-left:4px;">primário</span></span>`
           : '<span class="muted">secundário</span>'
         }
       </td>
       <td class="muted">${escapeHtml(detail)}</td>
-      <td><span class="att-dot att-dot--${status.color}" title="${escapeHtml(sc.label)}"></span><span style="margin-left:8px;">${escapeHtml(sc.label)}</span></td>
+      <td><span class="att-dot att-dot--${status.color}" title="${escapeHtml(sc.label)}" aria-label="${escapeHtml(sc.label)}"></span><span style="margin-left:8px;">${escapeHtml(sc.label)}</span></td>
       <td>
-        <button class="icon-btn" data-action="toggle-primary" title="${m.is_primary ? 'Tornar secundário' : 'Marcar como primário'}">${icon('star', { size: 14 })}</button>
-        <button class="icon-btn" data-action="remove" title="Remover do grupo">${icon('trash', { size: 14 })}</button>
+        <button class="icon-btn" data-action="toggle-primary" title="${m.is_primary ? 'Tornar secundário' : 'Marcar como primário'}" aria-label="${m.is_primary ? 'Tornar secundário' : 'Marcar como primário'}">${icon('star', { size: 14 })}</button>
+        <button class="icon-btn" data-action="remove" title="Remover do grupo" aria-label="Remover do grupo">${icon('trash', { size: 14 })}</button>
       </td>
     </tr>
   `;
@@ -536,6 +616,16 @@ function openMeetingForm(groupId, group, existing, onDone) {
     el.textContent = msg;
     el.style.display = '';
   }
+}
+
+function monogramOf(name) {
+  if (!name) return '·';
+  const cleaned = String(name).trim();
+  const parts = cleaned.split(/\s+/);
+  if (parts.length >= 2) {
+    return ((parts[0][0] || '') + (parts[parts.length - 1][0] || '')).toUpperCase();
+  }
+  return (cleaned[0] || '·').toUpperCase();
 }
 
 function escapeHtml(s) {
