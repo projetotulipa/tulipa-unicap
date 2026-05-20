@@ -108,6 +108,71 @@ function renderColumns() {
       await loadTasks();
     });
   }
+
+  bindKanbanDnD();
+}
+
+// ---------- drag and drop entre colunas ----------
+function bindKanbanDnD() {
+  let draggedId = null;
+
+  for (const card of document.querySelectorAll('.media-task-card')) {
+    card.setAttribute('draggable', 'true');
+    card.addEventListener('dragstart', (ev) => {
+      draggedId = card.dataset.id;
+      card.classList.add('is-dragging');
+      // dataTransfer obrigatório em Firefox
+      try { ev.dataTransfer.setData('text/plain', draggedId); } catch {}
+      ev.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('is-dragging');
+      document.querySelectorAll('.is-drop-target').forEach((el) => el.classList.remove('is-drop-target'));
+      document.querySelectorAll('.is-drop-active').forEach((el) => el.classList.remove('is-drop-active'));
+      draggedId = null;
+    });
+  }
+
+  for (const col of document.querySelectorAll('.media-col')) {
+    const body = col.querySelector('.media-col__body');
+    const targetStatus = body.dataset.target;
+
+    body.addEventListener('dragover', (ev) => {
+      if (!draggedId) return;
+      ev.preventDefault();
+      ev.dataTransfer.dropEffect = 'move';
+      body.classList.add('is-drop-target');
+      col.classList.add('is-drop-active');
+    });
+    body.addEventListener('dragleave', (ev) => {
+      // só remove se o ponteiro saiu do body (não de um filho)
+      if (ev.target === body) {
+        body.classList.remove('is-drop-target');
+        col.classList.remove('is-drop-active');
+      }
+    });
+    body.addEventListener('drop', async (ev) => {
+      ev.preventDefault();
+      body.classList.remove('is-drop-target');
+      col.classList.remove('is-drop-active');
+      const taskId = draggedId || ev.dataTransfer.getData('text/plain');
+      if (!taskId) return;
+      const task = cachedTasks.find((t) => t.id === taskId);
+      if (!task || task.status === targetStatus) return;
+      // atualiza otimisticamente
+      const original = task.status;
+      task.status = targetStatus;
+      renderColumns();
+      const { error } = await data.updateTask(taskId, { status: targetStatus });
+      if (error) {
+        task.status = original;
+        renderColumns();
+        toastError(error.message);
+        return;
+      }
+      toastSuccess(`Movido pra ${STATUS_COLUMNS.find((c) => c.id === targetStatus)?.label?.toLowerCase()}.`);
+    });
+  }
 }
 
 function renderTaskToolbar() {
@@ -274,7 +339,9 @@ export async function openTaskForm(existing, opts = {}) {
 
   const isEdit = !!existing;
   const prefilledPost = opts.prefilledPost || null;
+  const prefilledStatus = opts.prefilledStatus || null;
   const post = prefilledPost || existing?.post || null;
+  const initialStatus = existing?.status || prefilledStatus || 'todo';
 
   const [{ data: teams }, { data: allPeople }, { data: incomingPosts }] = await Promise.all([
     data.listTeams(),
@@ -325,7 +392,7 @@ export async function openTaskForm(existing, opts = {}) {
           <label class="drawer-field" style="flex:1; min-width:160px;">
             <span class="drawer-field__label">Status</span>
             <select name="status" class="drawer-field__input">
-              ${STATUS_COLUMNS.map((c) => `<option value="${c.id}" ${(existing?.status || 'todo') === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}
+              ${STATUS_COLUMNS.map((c) => `<option value="${c.id}" ${initialStatus === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}
             </select>
           </label>
         </div>

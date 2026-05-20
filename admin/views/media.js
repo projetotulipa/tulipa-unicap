@@ -111,11 +111,11 @@ async function loadAll() {
     const row  = document.getElementById('pipelineRow');
     pane.style.display = '';
     row.innerHTML = pipelineRow([
-      { label: 'a fazer',         num: todoCount },
-      { label: 'aguardando',      num: aguardando },
-      { label: 'em produção',     num: progressCount },
-      { label: 'agendado',        num: agendados },
-      { label: 'publicado',       num: publicados },
+      { label: 'a fazer',     num: todoCount,      href: '#/midia/tarefas' },
+      { label: 'aguardando',  num: aguardando,     href: '#/midia/posts' },
+      { label: 'em produção', num: progressCount,  href: '#/midia/tarefas' },
+      { label: 'agendado',    num: agendados,      href: '#/midia/posts' },
+      { label: 'publicado',   num: publicados,     href: '#/midia/posts' },
     ]);
   }
 
@@ -203,13 +203,15 @@ function pipelineRow(nodes) {
   const arrow = `<span class="media-pipeline__arrow" aria-hidden="true">${icon('chevron', { size: 14 })}</span>`;
   return nodes.map((n, i) => {
     const node = `
-      <div class="media-pipeline__node">
+      <a class="media-pipeline__node" href="${escapeAttr(n.href || '#')}">
         <span class="media-pipeline__num">${escapeHtml(String(n.num))}</span>
         <span class="media-pipeline__label">${escapeHtml(n.label)}</span>
-      </div>`;
+      </a>`;
     return i < nodes.length - 1 ? node + arrow : node;
   }).join('');
 }
+
+function escapeAttr(s) { return escapeHtml(s); }
 
 function skylineBars(startIso, days, tasks) {
   // conta tarefas por dia (todas, incluindo done — para mostrar carga histórica + futura)

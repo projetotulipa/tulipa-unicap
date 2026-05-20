@@ -178,6 +178,99 @@ function renderList() {
       });
     }
   });
+
+  bindPostDragToTask();
+}
+
+// ---------- arrastar post pra criar tarefa ----------
+function bindPostDragToTask() {
+  let draggedPostId = null;
+
+  // garante que o overlay existe no DOM (uma vez só)
+  let overlay = document.getElementById('postDropOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'postDropOverlay';
+    overlay.className = 'media-drop-overlay';
+    overlay.innerHTML = `
+      <div class="media-drop-overlay__hint">
+        <span>criar tarefa</span>
+        soltar em um status
+      </div>
+      ${dropZone('todo',        'A fazer',     'check-circle')}
+      ${dropZone('in_progress', 'Em produção', 'clock')}
+      ${dropZone('done',        'Concluído',   'check')}
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  function showOverlay() { overlay.classList.add('is-visible'); }
+  function hideOverlay() {
+    overlay.classList.remove('is-visible');
+    overlay.querySelectorAll('.media-drop-zone').forEach((z) => z.classList.remove('is-hover'));
+  }
+
+  // listeners das zonas
+  overlay.querySelectorAll('.media-drop-zone').forEach((zone) => {
+    zone.addEventListener('dragover', (ev) => {
+      if (!draggedPostId) return;
+      ev.preventDefault();
+      ev.dataTransfer.dropEffect = 'copy';
+      zone.classList.add('is-hover');
+    });
+    zone.addEventListener('dragleave', () => zone.classList.remove('is-hover'));
+    zone.addEventListener('drop', async (ev) => {
+      ev.preventDefault();
+      const postId = draggedPostId || ev.dataTransfer.getData('text/plain');
+      hideOverlay();
+      if (!postId) return;
+      const { data: full } = await researchData.getPost(postId);
+      if (!full) { toastError('Não consegui carregar o post.'); return; }
+      const targetStatus = zone.dataset.zone;
+      const { openTaskForm } = await import('./media-tasks.js');
+      openTaskForm(null, {
+        prefilledPost: full,
+        prefilledStatus: targetStatus,
+        onSaved: () => loadPosts(),
+      });
+    });
+  });
+
+  // listeners de cada card de post
+  document.querySelectorAll('.media-post-card[data-post-id], .media-post-list-row[data-post-id]').forEach((el) => {
+    el.setAttribute('draggable', 'true');
+    el.addEventListener('dragstart', (ev) => {
+      draggedPostId = el.dataset.postId;
+      el.classList.add('is-dragging');
+      try { ev.dataTransfer.setData('text/plain', draggedPostId); } catch {}
+      ev.dataTransfer.effectAllowed = 'copy';
+      showOverlay();
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('is-dragging');
+      draggedPostId = null;
+      hideOverlay();
+    });
+  });
+}
+
+function dropZone(status, label, iconName) {
+  return `
+    <div class="media-drop-zone media-drop-zone--${status}" data-zone="${status}">
+      <span class="media-drop-zone__icon">${iconForZone(iconName)}</span>
+      <span>${escapeHtml(label)}</span>
+    </div>
+  `;
+}
+
+function iconForZone(name) {
+  // ícones locais pra não acoplar com import dinâmico
+  const map = {
+    'check-circle': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="8 12 11 15 16 9"/></svg>',
+    'clock':        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+    'check':        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  };
+  return map[name] || '';
 }
 
 function applyFilters(list) {
