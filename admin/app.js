@@ -116,6 +116,10 @@ function enterApp() {
     role: state.role, sector: state.sector, team: state.team,
   });
 
+  // mostra "Páginas" pra admin OU setores sem view dedicada
+  for (const el of $$('[data-pages-only]')) {
+    el.hidden = !canManagePages();
+  }
   // mostra "Membros" só pra admin
   for (const el of $$('[data-admin-only]')) {
     el.hidden = state.role !== 'admin';
@@ -138,8 +142,9 @@ function enterApp() {
   }
 
   setBodyState('app');
+  const initialHash = defaultHashForUser();
   if (!location.hash || location.hash === '#/' || location.hash === '#/visao-geral' || location.hash === '#/navbar') {
-    location.hash = '#/paginas';
+    location.hash = initialHash;
   }
   route();
 }
@@ -180,10 +185,11 @@ function route() {
   try {
     switch (parts[0]) {
       case 'paginas':
+        if (!canManagePages()) { location.hash = defaultHashForUser(); return; }
         if (parts[1]) return renderPageEditor(ctx, parts[1]);
         return renderPages(ctx);
       case 'presenca':
-        if (!canManageAttendance()) { location.hash = '#/paginas'; return; }
+        if (!canManageAttendance()) { location.hash = defaultHashForUser(); return; }
         if (parts[1] === 'grupos' && parts[2]) return renderAttendanceGroupDetail(ctx, parts[2]);
         if (parts[1] === 'grupos')             return renderAttendanceGroups(ctx);
         if (parts[1] === 'pessoas')            return renderAttendancePeople(ctx);
@@ -191,19 +197,19 @@ function route() {
         if (parts[1] === 'encontros' && parts[2]) return renderAttendanceMeeting(ctx, parts[2]);
         return renderAttendanceDashboard(ctx);
       case 'financeiro':
-        if (!canManageFinance()) { location.hash = '#/paginas'; return; }
+        if (!canManageFinance()) { location.hash = defaultHashForUser(); return; }
         if (parts[1] === 'mensalidades') return renderFinancePayments(ctx);
         if (parts[1] === 'gastos')       return renderFinanceExpenses(ctx);
         if (parts[1] === 'planejamento') return renderFinancePlans(ctx);
         return renderFinanceDashboard(ctx);
       case 'pesquisa':
-        if (!canManageResearch()) { location.hash = '#/paginas'; return; }
+        if (!canManageResearch()) { location.hash = defaultHashForUser(); return; }
         if (parts[1] === 'fichamentos') return renderResearchNotes(ctx);
         if (parts[1] === 'posts')       return renderResearchPosts(ctx);
         if (parts[1] === 'equipes')     return renderResearchTeams(ctx);
         return renderResearchDashboard(ctx);
       case 'midia':
-        if (!canManageMedia()) { location.hash = '#/paginas'; return; }
+        if (!canManageMedia()) { location.hash = defaultHashForUser(); return; }
         if (parts[1] === 'posts')       return renderMediaPosts(ctx);
         if (parts[1] === 'equipes')     return renderMediaTeams(ctx);
         if (parts[1] === 'tarefas')     return renderMediaTasks(ctx);
@@ -211,11 +217,11 @@ function route() {
         return renderMediaDashboard(ctx);
       case 'membros':
         if (state.role !== 'admin') {
-          location.hash = '#/paginas'; return;
+          location.hash = defaultHashForUser(); return;
         }
         return renderMembers(ctx);
       default:
-        location.hash = '#/paginas';
+        location.hash = defaultHashForUser();
     }
   } catch (e) {
     console.error(e);
@@ -241,6 +247,27 @@ function canManageResearch() {
 function canManageMedia() {
   if (state.role === 'admin') return true;
   return state.sector === 'midia';
+}
+
+// Setores cuja própria view substitui o CMS de páginas — vêem só sua aba.
+const SECTORS_WITH_OWN_VIEW = new Set(['secretaria', 'tesouraria', 'pesquisa', 'midia']);
+
+function canManagePages() {
+  if (state.role === 'admin') return true;
+  // setor com view dedicada não tem motivo de ver Páginas
+  if (state.sector && SECTORS_WITH_OWN_VIEW.has(state.sector)) return false;
+  // demais setores (presidencia, professores, atividades) usam Páginas pra editar suas LPs
+  return true;
+}
+
+// Primeira tela visível pra o usuário corrente.
+function defaultHashForUser() {
+  if (state.role === 'admin') return '#/paginas';
+  if (state.sector === 'secretaria') return '#/presenca';
+  if (state.sector === 'tesouraria') return '#/financeiro';
+  if (state.sector === 'pesquisa')   return '#/pesquisa';
+  if (state.sector === 'midia')      return '#/midia';
+  return '#/paginas';
 }
 
 function canEditScope(scope) {
