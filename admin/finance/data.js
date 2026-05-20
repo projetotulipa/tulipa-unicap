@@ -30,12 +30,31 @@ export async function listMonthlyPayments(year, month) {
 }
 
 export async function markPayment({ person_id, year, month, paid, amount = null, notes = null, paid_at = null }) {
+  const { data: { user } } = await supabase.auth.getUser();
   return supabase
     .from('monthly_payments')
     .upsert({
       person_id, year, month, paid, amount, notes, paid_at,
       marked_at: new Date().toISOString(),
+      marked_by: user?.id || null,
     }, { onConflict: 'person_id,year,month' });
+}
+
+// histórico de pagamentos num range (last N months). Filtragem fina por month
+// é feita client-side — query devolve tudo dos anos envolvidos.
+// Usado pelo heatmap pra montar a matriz pessoa × mês de uma vez só.
+export async function listPaymentsRange({ fromYear, toYear } = {}) {
+  let q = supabase.from('monthly_payments').select('person_id, year, month, paid, amount, paid_at, notes');
+  if (fromYear != null) q = q.gte('year', fromYear);
+  if (toYear != null)   q = q.lte('year', toYear);
+  return q;
+}
+
+export async function listDuesRange({ fromYear, toYear } = {}) {
+  let q = supabase.from('monthly_dues').select('year, month, amount');
+  if (fromYear != null) q = q.gte('year', fromYear);
+  if (toYear != null)   q = q.lte('year', toYear);
+  return q;
 }
 
 // pessoas ativas que pagam mensalidade (não isentas)
