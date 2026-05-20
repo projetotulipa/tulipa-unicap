@@ -43,6 +43,15 @@ export async function renderMediaDashboard(ctx) {
         <div class="media-pipeline" id="pipelineRow"></div>
       </section>
 
+      <section class="media-pane" id="skylinePane" style="display:none; margin-bottom:14px;">
+        <header class="media-pane__head">
+          <span class="media-pane__icon">${icon('calendar', { size: 18 })}</span>
+          <h2>Próximas 4 semanas</h2>
+          <p class="media-pane__hint">altura = nº de prazos por dia</p>
+        </header>
+        <div class="media-skyline" id="skylineRow"></div>
+      </section>
+
       <section class="media-pane__row">
         <div class="media-pane">
           <header class="media-pane__head">
@@ -108,6 +117,20 @@ async function loadAll() {
       { label: 'agendado',        num: agendados },
       { label: 'publicado',       num: publicados },
     ]);
+  }
+
+  // skyline de 4 semanas (mostra só se tiver tarefa com prazo nesse horizonte)
+  const tasksWithDate = tasksArr.filter((t) => t.due_date);
+  if (tasksWithDate.length > 0) {
+    const pane = document.getElementById('skylinePane');
+    const row  = document.getElementById('skylineRow');
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const horizonEnd = addDays(todayStr, 27);
+    const inHorizon = tasksWithDate.filter((t) => t.due_date >= todayStr && t.due_date <= horizonEnd);
+    if (inHorizon.length > 0) {
+      pane.style.display = '';
+      row.innerHTML = skylineBars(todayStr, 28, tasksWithDate);
+    }
   }
 
   // posts aguardando
@@ -185,6 +208,35 @@ function pipelineRow(nodes) {
         <span class="media-pipeline__label">${escapeHtml(n.label)}</span>
       </div>`;
     return i < nodes.length - 1 ? node + arrow : node;
+  }).join('');
+}
+
+function skylineBars(startIso, days, tasks) {
+  // conta tarefas por dia (todas, incluindo done — para mostrar carga histórica + futura)
+  const byDate = new Map();
+  for (const t of tasks) {
+    if (!t.due_date) continue;
+    byDate.set(t.due_date, (byDate.get(t.due_date) || 0) + 1);
+  }
+  // escala: maior valor no horizonte vira 100%
+  const horizonDates = [];
+  for (let i = 0; i < days; i++) horizonDates.push(addDays(startIso, i));
+  const maxN = Math.max(1, ...horizonDates.map((d) => byDate.get(d) || 0));
+
+  const today = startIso;
+  return horizonDates.map((iso) => {
+    const n = byDate.get(iso) || 0;
+    const pct = Math.round((n / maxN) * 100);
+    const isToday = iso === today;
+    const isLate = iso < today; // não chega aqui já que horizonte = hoje+27, mas defensivo
+    const dObj = new Date(iso + 'T00:00:00');
+    const tooltip = `${dObj.getDate()}/${dObj.getMonth() + 1} · ${n} ${n === 1 ? 'tarefa' : 'tarefas'}`;
+    return `
+      <div class="media-skyline__bar ${isToday ? 'media-skyline__bar--today' : ''} ${isLate ? 'media-skyline__bar--late' : ''}"
+           data-tooltip="${escapeHtml(tooltip)}">
+        <div class="media-skyline__fill" style="height:${pct}%;"></div>
+      </div>
+    `;
   }).join('');
 }
 
