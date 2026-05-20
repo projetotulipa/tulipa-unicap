@@ -21,6 +21,14 @@ import { renderFinanceDashboard }    from './views/finance.js';
 import { renderFinancePayments }     from './views/finance-payments.js';
 import { renderFinanceExpenses }     from './views/finance-expenses.js';
 import { renderFinancePlans }        from './views/finance-plans.js';
+import { renderResearchDashboard }   from './views/research.js';
+import { renderResearchNotes }       from './views/research-notes.js';
+import { renderResearchPosts }       from './views/research-posts.js';
+import { renderMediaDashboard }      from './views/media.js';
+import { renderMediaPosts }          from './views/media-posts.js';
+import { renderMediaTeams }          from './views/media-teams.js';
+import { renderMediaTasks }          from './views/media-tasks.js';
+import { renderMediaCalendar }       from './views/media-calendar.js';
 
 // ---------- estado ----------
 const state = {
@@ -119,6 +127,14 @@ function enterApp() {
   for (const el of $$('[data-tesouraria-only]')) {
     el.hidden = !canManageFinance();
   }
+  // mostra "Pesquisa" pra admin OR setor pesquisa
+  for (const el of $$('[data-pesquisa-only]')) {
+    el.hidden = !canManageResearch();
+  }
+  // mostra "Artes & Mídias" pra admin OR setor midia
+  for (const el of $$('[data-midia-only]')) {
+    el.hidden = !canManageMedia();
+  }
 
   setBodyState('app');
   if (!location.hash || location.hash === '#/' || location.hash === '#/visao-geral' || location.hash === '#/navbar') {
@@ -155,6 +171,8 @@ function route() {
       canEditScope,
       canManageAttendance,
       canManageFinance,
+      canManageResearch,
+      canManageMedia,
     },
   };
 
@@ -177,6 +195,18 @@ function route() {
         if (parts[1] === 'gastos')       return renderFinanceExpenses(ctx);
         if (parts[1] === 'planejamento') return renderFinancePlans(ctx);
         return renderFinanceDashboard(ctx);
+      case 'pesquisa':
+        if (!canManageResearch()) { location.hash = '#/paginas'; return; }
+        if (parts[1] === 'fichamentos') return renderResearchNotes(ctx);
+        if (parts[1] === 'posts')       return renderResearchPosts(ctx);
+        return renderResearchDashboard(ctx);
+      case 'midia':
+        if (!canManageMedia()) { location.hash = '#/paginas'; return; }
+        if (parts[1] === 'posts')       return renderMediaPosts(ctx);
+        if (parts[1] === 'equipes')     return renderMediaTeams(ctx);
+        if (parts[1] === 'tarefas')     return renderMediaTasks(ctx);
+        if (parts[1] === 'calendario')  return renderMediaCalendar(ctx);
+        return renderMediaDashboard(ctx);
       case 'membros':
         if (state.role !== 'admin') {
           location.hash = '#/paginas'; return;
@@ -199,6 +229,16 @@ function canManageAttendance() {
 function canManageFinance() {
   if (state.role === 'admin') return true;
   return state.sector === 'tesouraria';
+}
+
+function canManageResearch() {
+  if (state.role === 'admin') return true;
+  return state.sector === 'pesquisa';
+}
+
+function canManageMedia() {
+  if (state.role === 'admin') return true;
+  return state.sector === 'midia';
 }
 
 function canEditScope(scope) {
