@@ -6,13 +6,22 @@ import * as researchData from '../research/data.js';
 import { renderMediaNav } from './media-nav.js';
 import { toastSuccess, toastError } from '../toast.js';
 
-// pétala watermark dos cards (mesma forma do hero, em tamanho menor)
+// pétala watermark dos cards
 const POST_WATERMARK = `
   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <path d="M50 18 C 32 28, 26 50, 32 66 C 38 80, 50 82, 50 82 C 50 82, 62 80, 68 66 C 74 50, 68 28, 50 18 Z" fill="currentColor"/>
     <path d="M50 78 L50 96" stroke="currentColor" stroke-width="1.5" fill="none"/>
   </svg>
 `;
+
+// estado da view (persiste durante a sessão da página)
+const viewState = {
+  status: 'all',     // 'all' | 'sent_to_media' | 'scheduled' | 'published'
+  sort: 'recent',    // 'recent' | 'oldest' | 'title' | 'origin'
+  layout: 'grid',    // 'grid' | 'list'
+};
+
+let cachedPosts = [];
 
 export async function renderMediaPosts(ctx) {
   const { root } = ctx;
@@ -28,6 +37,8 @@ export async function renderMediaPosts(ctx) {
         </div>
       </header>
 
+      <div id="postsToolbar"></div>
+
       <div id="postsList" class="empty-state"><div class="skel skel--block"></div></div>
     </div>
   `;
@@ -36,11 +47,16 @@ export async function renderMediaPosts(ctx) {
 }
 
 async function loadPosts() {
-  const box = document.getElementById('postsList');
   const { data: posts, error } = await data.listIncomingPosts();
-  if (error) { box.innerHTML = `<p class="muted">${error.message}</p>`; return; }
-  if (!posts?.length) {
-    box.innerHTML = `
+  if (error) {
+    document.getElementById('postsList').innerHTML = `<p class="muted">${error.message}</p>`;
+    return;
+  }
+  cachedPosts = posts || [];
+
+  if (!cachedPosts.length) {
+    document.getElementById('postsToolbar').innerHTML = '';
+    document.getElementById('postsList').innerHTML = `
       <div class="media-empty">
         <div class="media-empty__art">${icon('spark', { size: 48 })}</div>
         <h3>Nenhum post aguardando</h3>
@@ -49,25 +65,172 @@ async function loadPosts() {
     `;
     return;
   }
-  box.className = '';
-  box.innerHTML = `<div class="res-post-grid">${posts.map(postCard).join('')}</div>`;
-  for (const card of box.querySelectorAll('.media-post-card')) {
-    card.querySelector('[data-action="open"]')?.addEventListener('click', async () => {
-      const { data: full } = await researchData.getPost(card.dataset.id);
-      if (full) openPostDetail(full);
+
+  renderToolbar();
+  renderList();
+}
+
+function renderToolbar() {
+  const counts = countByStatus(cachedPosts);
+  const chips = [
+    { key: 'all',           label: 'todos',       count: cachedPosts.length },
+    { key: 'sent_to_media', label: 'aguardando',  count: counts.sent_to_media || 0 },
+    { key: 'scheduled',     label: 'agendado',    count: counts.scheduled || 0 },
+    { key: 'published',     label: 'publicado',   count: counts.published || 0 },
+  ];
+
+  document.getElementById('postsToolbar').innerHTML = `
+    <div class="media-toolbar">
+      <div class="media-toolbar__group" role="tablist" aria-label="Filtrar por status">
+        ${chips.map((c) => `
+          <button class="media-chip ${viewState.status === c.key ? 'is-active' : ''}"
+                  data-chip="${c.key}"
+                  ${c.count === 0 && c.key !== 'all' ? 'disabled' : ''}>
+            <span>${escapeHtml(c.label)}</span>
+            <span class="media-chip__count">${c.count}</span>
+          </button>
+        `).join('')}
+      </div>
+
+      <span class="media-toolbar__sep"></span>
+
+      <div class="media-toolbar__group">
+        <span class="media-toolbar__label">ordenar</span>
+        <select id="postsSort">
+          <option value="recent" ${viewState.sort === 'recent' ? 'selected' : ''}>mais recente</option>
+          <option value="oldest" ${viewState.sort === 'oldest' ? 'selected' : ''}>mais antigo</option>
+          <option value="title"  ${viewState.sort === 'title'  ? 'selected' : ''}>título (a-z)</option>
+          <option value="origin" ${viewState.sort === 'origin' ? 'selected' : ''}>fichamento</option>
+        </select>
+      </div>
+
+      <span class="media-toolbar__spacer"></span>
+
+      <div class="media-view-toggle" role="tablist" aria-label="Visualização">
+        <button data-layout="grid" class="${viewState.layout === 'grid' ? 'is-active' : ''}" title="Grade">
+          ${icon('departamentos', { size: 14 })}<span>grade</span>
+        </button>
+        <button data-layout="list" class="${viewState.layout === 'list' ? 'is-active' : ''}" title="Lista">
+          ${icon('marquee', { size: 14 })}<span>lista</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  // bind events
+  const toolbar = document.getElementById('postsToolbar');
+  toolbar.querySelectorAll('[data-chip]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.hasAttribute('disabled')) return;
+      viewState.status = btn.dataset.chip;
+      renderToolbar();
+      renderList();
     });
+  });
+  toolbar.querySelector('#postsSort').addEventListener('change', (e) => {
+    viewState.sort = e.target.value;
+    renderList();
+  });
+  toolbar.querySelectorAll('[data-layout]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      viewState.layout = btn.dataset.layout;
+      renderToolbar();
+      renderList();
+    });
+  });
+}
+
+function renderList() {
+  const box = document.getElementById('postsList');
+  const filtered = applyFilters(cachedPosts);
+
+  box.className = '';
+
+  if (!filtered.length) {
+    box.innerHTML = `
+      <div class="media-no-results">
+        <span>Nada por aqui ainda</span>
+        Nenhum post bate com esse filtro. Tenta outro estado ou ordenação.
+      </div>
+    `;
+    return;
   }
+
+  if (viewState.layout === 'list') {
+    box.innerHTML = `<div class="media-post-list">${filtered.map(postListRow).join('')}</div>`;
+  } else {
+    box.innerHTML = `<div class="res-post-grid">${filtered.map(postCard).join('')}</div>`;
+  }
+
+  box.querySelectorAll('[data-post-id]').forEach((el) => {
+    const id = el.dataset.postId;
+    el.querySelectorAll('[data-action="open"]').forEach((btn) => {
+      btn.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        const { data: full } = await researchData.getPost(id);
+        if (full) openPostDetail(full);
+      });
+    });
+    if (viewState.layout === 'list') {
+      el.addEventListener('click', async () => {
+        const { data: full } = await researchData.getPost(id);
+        if (full) openPostDetail(full);
+      });
+    }
+  });
+}
+
+function applyFilters(list) {
+  let out = list;
+  if (viewState.status !== 'all') {
+    out = out.filter((p) => p.status === viewState.status);
+  }
+  switch (viewState.sort) {
+    case 'oldest':
+      out = [...out].sort((a, b) => cmpDate(a.created_at, b.created_at));
+      break;
+    case 'title':
+      out = [...out].sort((a, b) => String(a.title || '').localeCompare(String(b.title || ''), 'pt-BR'));
+      break;
+    case 'origin':
+      out = [...out].sort((a, b) => {
+        const oa = a.research_note?.title || '~';
+        const ob = b.research_note?.title || '~';
+        return oa.localeCompare(ob, 'pt-BR');
+      });
+      break;
+    case 'recent':
+    default:
+      out = [...out].sort((a, b) => cmpDate(b.created_at, a.created_at));
+      break;
+  }
+  return out;
+}
+
+function cmpDate(a, b) {
+  return new Date(a || 0).getTime() - new Date(b || 0).getTime();
+}
+
+function countByStatus(posts) {
+  const out = {};
+  for (const p of posts) out[p.status] = (out[p.status] || 0) + 1;
+  return out;
 }
 
 function postCard(p) {
   const isScheduled = p.status === 'scheduled';
-  const pillClass   = isScheduled ? 'media-pill--scheduled' : 'media-pill--progress';
-  const statusLabel = isScheduled ? 'agendado' : 'aguardando';
+  const isPublished = p.status === 'published';
+  const pillClass   = isPublished ? 'media-pill--done'
+                    : isScheduled ? 'media-pill--scheduled'
+                    : 'media-pill--progress';
+  const statusLabel = isPublished ? 'publicado'
+                    : isScheduled ? 'agendado'
+                    : 'aguardando';
   const preview     = (p.body || '').replace(/\s+/g, ' ').slice(0, 220);
   const isNew       = isPostNew(p);
   const eyebrowText = p.research_note ? `de "${p.research_note.title}"` : 'recebido';
   return `
-    <article class="media-post-card" data-id="${escapeAttr(p.id)}">
+    <article class="media-post-card" data-post-id="${escapeAttr(p.id)}">
       <div class="media-post-card__watermark">${POST_WATERMARK}</div>
       <p class="media-post-card__eyebrow">
         ${icon('page', { size: 13 })}
@@ -89,12 +252,46 @@ function postCard(p) {
   `;
 }
 
+function postListRow(p) {
+  const isScheduled = p.status === 'scheduled';
+  const isPublished = p.status === 'published';
+  const bulletClass = isScheduled ? 'media-post-list-row__bullet--scheduled' :
+                      isPublished ? 'media-post-list-row__bullet--scheduled' : '';
+  const statusLabel = isPublished ? 'publicado' : isScheduled ? 'agendado' : 'aguardando';
+  const isNew = isPostNew(p);
+  const dateStr = p.created_at ? formatShortDate(p.created_at) : '—';
+  return `
+    <div class="media-post-list-row" data-post-id="${escapeAttr(p.id)}" role="button" tabindex="0">
+      <span class="media-post-list-row__bullet ${bulletClass}" aria-hidden="true"></span>
+      <div class="media-post-list-row__title">
+        <strong>${escapeHtml(p.title)}</strong>
+        <span>${escapeHtml(statusLabel)}${isNew ? ' · novo' : ''}</span>
+      </div>
+      <div class="media-post-list-row__origin">${p.research_note ? escapeHtml(p.research_note.title) : '—'}</div>
+      <div class="media-post-list-row__date">${escapeHtml(dateStr)}</div>
+      <div style="display:flex; gap:6px; justify-self:end;">
+        <button class="btn btn--ghost btn--small" data-action="open">${icon('edit', { size: 12 })}</button>
+      </div>
+    </div>
+  `;
+}
+
 function isPostNew(p) {
   if (!p.created_at) return false;
   const created = new Date(p.created_at).getTime();
   const now = Date.now();
   const hours = (now - created) / 3600000;
   return hours <= 24 && p.status === 'sent_to_media';
+}
+
+function formatShortDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  const now = new Date();
+  const sameYear = d.getFullYear() === now.getFullYear();
+  return d.toLocaleDateString('pt-BR', sameYear
+    ? { day: '2-digit', month: 'short' }
+    : { day: '2-digit', month: '2-digit', year: '2-digit' });
 }
 
 function openPostDetail(post) {

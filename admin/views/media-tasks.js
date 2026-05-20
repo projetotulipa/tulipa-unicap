@@ -15,9 +15,21 @@ const STATUS_COLUMNS = [
 ];
 
 let cachedTasks = [];
+let cachedTeams = [];
+let cachedPeople = [];
+
+// estado de filtros (persiste enquanto a view existir)
+const taskFilters = {
+  teamId: '',     // '' = todos
+  personId: '',   // '' = todos
+  onlyMine: false,
+};
+let currentUserPersonId = null; // tenta resolver pelo state.user
 
 export async function renderMediaTasks(ctx) {
   const { root } = ctx;
+  // tenta resolver "só meus" — busca pessoa cujo email bate com o user logado
+  currentUserPersonId = ctx.state?.user?.id || null;
 
   root.innerHTML = `
     <div class="view">
@@ -30,6 +42,8 @@ export async function renderMediaTasks(ctx) {
         </div>
         <button class="btn btn--primary" id="newTaskBtn">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Nova tarefa</span></button>
       </header>
+
+      <div id="taskToolbar"></div>
 
       <div id="kanban" class="media-kanban">
         ${STATUS_COLUMNS.map((c) => `
@@ -47,14 +61,27 @@ export async function renderMediaTasks(ctx) {
 }
 
 async function loadTasks() {
-  const { data: tasks, error } = await data.listTasks();
+  const [{ data: tasks, error }, { data: teams }, { data: people }] = await Promise.all([
+    data.listTasks(),
+    data.listTeams(),
+    attData.listPeople(),
+  ]);
   if (error) { toastError(error.message); return; }
   cachedTasks = tasks || [];
+  cachedTeams = teams || [];
+  cachedPeople = people || [];
+
+  renderTaskToolbar();
+  renderColumns();
+}
+
+function renderColumns() {
+  const filtered = applyTaskFilters(cachedTasks);
 
   for (const col of STATUS_COLUMNS) {
     const body = document.querySelector(`[data-target="${col.id}"]`);
     const count = document.querySelector(`.media-col[data-status="${col.id}"] [data-count]`);
-    const tasksOfCol = cachedTasks.filter((t) => t.status === col.id);
+    const tasksOfCol = filtered.filter((t) => t.status === col.id);
     count.textContent = tasksOfCol.length;
     if (!tasksOfCol.length) {
       body.innerHTML = `
@@ -83,6 +110,90 @@ async function loadTasks() {
   }
 }
 
+function renderTaskToolbar() {
+  const toolbar = document.getElementById('taskToolbar');
+  if (!toolbar) return;
+
+  // pessoas relevantes = quem tem alguma tarefa atribuída OU está na equipe filtrada
+  const peopleWithTasks = new Set(cachedTasks.map((t) => t.assigned_to_person_id).filter(Boolean));
+  const peopleOptions = cachedPeople
+    .filter((p) => peopleWithTasks.has(p.id))
+    .sort((a, b) => String(a.full_name || '').localeCompare(String(b.full_name || ''), 'pt-BR'));
+
+  toolbar.innerHTML = `
+    <div class="media-toolbar">
+      <div class="media-toolbar__group">
+        <span class="media-toolbar__label">equipe</span>
+        <select id="filterTeam">
+          <option value="">todas</option>
+          ${cachedTeams.map((t) => `
+            <option value="${escapeAttr(t.id)}" ${taskFilters.teamId === t.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>
+          `).join('')}
+        </select>
+      </div>
+
+      <div class="media-toolbar__group">
+        <span class="media-toolbar__label">pessoa</span>
+        <select id="filterPerson" ${peopleOptions.length === 0 ? 'disabled' : ''}>
+          <option value="">todas</option>
+          ${peopleOptions.map((p) => `
+            <option value="${escapeAttr(p.id)}" ${taskFilters.personId === p.id ? 'selected' : ''}>${escapeHtml(p.full_name)}</option>
+          `).join('')}
+        </select>
+      </div>
+
+      <span class="media-toolbar__sep"></span>
+
+      <button class="media-chip ${taskFilters.onlyMine ? 'is-active' : ''}" id="filterMine" title="Mostrar só tarefas que eu posso ter criado">
+        ${icon('star', { size: 12 })}
+        <span>só minhas</span>
+      </button>
+
+      <span class="media-toolbar__spacer"></span>
+
+      ${hasAnyFilter() ? `
+        <button class="btn btn--ghost btn--small" id="clearFilters">${icon('x', { size: 12 })}<span style="margin-left:4px;">limpar</span></button>
+      ` : ''}
+    </div>
+  `;
+
+  toolbar.querySelector('#filterTeam').addEventListener('change', (e) => {
+    taskFilters.teamId = e.target.value;
+    renderColumns();
+  });
+  toolbar.querySelector('#filterPerson').addEventListener('change', (e) => {
+    taskFilters.personId = e.target.value;
+    renderColumns();
+  });
+  toolbar.querySelector('#filterMine').addEventListener('click', () => {
+    taskFilters.onlyMine = !taskFilters.onlyMine;
+    renderTaskToolbar();
+    renderColumns();
+  });
+  toolbar.querySelector('#clearFilters')?.addEventListener('click', () => {
+    taskFilters.teamId = '';
+    taskFilters.personId = '';
+    taskFilters.onlyMine = false;
+    renderTaskToolbar();
+    renderColumns();
+  });
+}
+
+function hasAnyFilter() {
+  return !!(taskFilters.teamId || taskFilters.personId || taskFilters.onlyMine);
+}
+
+function applyTaskFilters(tasks) {
+  let out = tasks;
+  if (taskFilters.teamId) out = out.filter((t) => t.team_id === taskFilters.teamId);
+  if (taskFilters.personId) out = out.filter((t) => t.assigned_to_person_id === taskFilters.personId);
+  if (taskFilters.onlyMine && currentUserPersonId) {
+    // best-effort: usa created_by (auth uuid) ou assigned (pessoa). não-perfeito mas útil
+    out = out.filter((t) => t.created_by === currentUserPersonId);
+  }
+  return out;
+}
+
 function taskCard(t) {
   const dueStr = t.due_date ? new Date(t.due_date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : null;
   const days = t.due_date ? daysUntil(t.due_date) : null;
@@ -106,7 +217,7 @@ function taskCard(t) {
       ${t.description ? `<p class="media-task-card__desc">${escapeHtml(t.description.slice(0, 100))}${t.description.length > 100 ? '…' : ''}</p>` : ''}
       <div class="media-task-card__meta">
         ${t.team ? `<span class="media-pill">${icon('group', { size: 11 })}<span>${escapeHtml(t.team.name)}</span></span>` : ''}
-        ${t.assignee ? avatarHtml(t.assignee.full_name, { size: 'sm' }) : ''}
+        ${t.assignee ? `<span class="media-avatar-wrap" data-tooltip="${escapeAttr(t.assignee.full_name)}">${avatarHtml(t.assignee.full_name, { size: 'sm' })}</span>` : ''}
         ${t.post ? `<span class="media-pill" style="margin-left:auto;">${icon('spark', { size: 11 })}<span>post</span></span>` : ''}
       </div>
       <footer class="media-task-card__foot">

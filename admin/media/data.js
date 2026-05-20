@@ -48,11 +48,13 @@ export async function removeTeamMember(teamId, personId) {
 }
 
 // ---------- posts recebidos ----------
+// Inclui sent_to_media + scheduled + published para que Mídia veja o histórico
+// do que já produziu. O dashboard e os filtros separam por status.
 export async function listIncomingPosts() {
   return supabase
     .from('instagram_posts')
     .select('*, research_note:research_notes(id, title, body)')
-    .in('status', ['sent_to_media', 'scheduled'])
+    .in('status', ['sent_to_media', 'scheduled', 'published'])
     .order('created_at', { ascending: false });
 }
 
