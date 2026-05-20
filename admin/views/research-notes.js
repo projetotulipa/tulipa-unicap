@@ -5,6 +5,7 @@ import * as data from '../research/data.js';
 import * as attData from '../attendance/data.js';
 import { renderResearchNav } from './research-nav.js';
 import { toastSuccess, toastError } from '../toast.js';
+import { FICHAMENTO_TEMPLATE, FICHAMENTO_GUIDE } from '../research/template.js';
 
 export async function renderResearchNotes(ctx) {
   const { root } = ctx;
@@ -137,9 +138,27 @@ async function openNoteForm(existing) {
           <p class="drawer-field__hint">Quem dentro da Pesquisa está cuidando deste fichamento.</p>
         </label>
         <label class="drawer-field">
-          <span class="drawer-field__label">Conteúdo</span>
-          <textarea name="body" class="drawer-field__input drawer-field__input--tall" rows="12" placeholder="Resumo do estudo, citações, observações, perguntas…">${escapeHtml(existing?.body || '')}</textarea>
-          <p class="drawer-field__hint">Texto livre. Aceita quebras de linha. Tudo é salvo como está.</p>
+          <div class="drawer-field__head" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <span class="drawer-field__label">Conteúdo</span>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn btn--ghost btn--small" data-action="insert-template">
+                ${icon('page', { size: 12 })}<span style="margin-left:6px;">Inserir modelo</span>
+              </button>
+              <button type="button" class="btn btn--ghost btn--small" data-action="toggle-guide">
+                ${icon('spark', { size: 12 })}<span style="margin-left:6px;">Como fichar</span>
+              </button>
+            </div>
+          </div>
+          <div id="fichGuide" class="fich-guide" hidden>
+            ${FICHAMENTO_GUIDE.map((g, i) => `
+              <details ${i === 0 ? 'open' : ''}>
+                <summary>${escapeHtml(g.title)}</summary>
+                <p>${escapeHtml(g.body).replace(/\n/g, '<br/>')}</p>
+              </details>
+            `).join('')}
+          </div>
+          <textarea name="body" class="drawer-field__input drawer-field__input--tall" rows="14" placeholder="Resumo do estudo, citações, observações, perguntas… ou clique em &quot;Inserir modelo&quot;.">${escapeHtml(existing?.body || '')}</textarea>
+          <p class="drawer-field__hint">Texto livre. Aceita quebras de linha e markdown leve (** negrito **, * itálico *, &gt; citação).</p>
         </label>
       </form>
       <footer class="block-drawer__foot">
@@ -187,6 +206,19 @@ async function openNoteForm(existing) {
     if (ev.target === overlay) return close();
     const action = ev.target.closest('[data-action]')?.dataset?.action;
     if (action === 'close') return close();
+    if (action === 'insert-template') {
+      const ta = overlay.querySelector('textarea[name="body"]');
+      if (ta.value.trim() && !confirm('Isso vai substituir o conteúdo atual pelo modelo. Continuar?')) return;
+      ta.value = FICHAMENTO_TEMPLATE;
+      ta.focus();
+      ta.setSelectionRange(0, 0);
+      return;
+    }
+    if (action === 'toggle-guide') {
+      const g = overlay.querySelector('#fichGuide');
+      g.hidden = !g.hidden;
+      return;
+    }
     if (action === 'delete' && existing) {
       if (!confirm(`Excluir o fichamento "${existing.title}"?`)) return;
       const { error } = await data.deleteNote(existing.id);
