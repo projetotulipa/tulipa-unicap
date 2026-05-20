@@ -53,6 +53,7 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
         </div>
         ${isAdmin ? `<div style="display:flex; gap:8px;">
           <button id="editGroupBtn" class="btn btn--ghost btn--small">${icon('edit', { size: 14 })}<span style="margin-left:6px;">Editar grupo</span></button>
+          <button id="deleteGroupBtn" class="btn btn--danger btn--small">${icon('trash', { size: 14 })}<span style="margin-left:6px;">Excluir grupo</span></button>
         </div>` : ''}
       </header>
 
@@ -91,6 +92,14 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
   document.getElementById('editGroupBtn')?.addEventListener('click', () => {
     // navega pra lista de grupos onde o admin pode editar
     location.hash = '#/presenca/grupos';
+  });
+
+  document.getElementById('deleteGroupBtn')?.addEventListener('click', async () => {
+    if (!confirm(`Excluir o grupo "${group.name}"? Isso apaga todos os encontros, presenças e justificativas associadas. Não desfaz.`)) return;
+    const { error } = await data.deleteGroup(groupId);
+    if (error) { toastError(error.message); return; }
+    toastSuccess('Grupo excluído.');
+    setTimeout(() => { location.hash = '#/presenca/grupos'; }, 350);
   });
 
   document.getElementById('generateMeetingsBtn')?.addEventListener('click', async () => {

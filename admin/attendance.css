@@ -279,17 +279,19 @@
   right: 10px;
   display: flex;
   gap: 4px;
-  opacity: 0;
+  opacity: 0.7;
   transition: opacity 0.18s;
 }
 .att-group-card:hover .att-group-card__menu { opacity: 1; }
 .att-group-card__menu .icon-btn {
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.55);
   backdrop-filter: blur(6px);
   border: 1px solid var(--border);
 }
-@media (hover: none) {
-  .att-group-card__menu { opacity: 1; }
+.att-group-card__menu .icon-btn[data-action="delete-group"]:hover {
+  background: rgba(194, 74, 74, 0.2);
+  border-color: rgba(194, 74, 74, 0.5);
+  color: var(--danger-soft);
 }
 
 .att-group-card__main {
