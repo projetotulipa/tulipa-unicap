@@ -6,6 +6,14 @@ import * as researchData from '../research/data.js';
 import { renderMediaNav } from './media-nav.js';
 import { toastSuccess, toastError } from '../toast.js';
 
+// pétala watermark dos cards (mesma forma do hero, em tamanho menor)
+const POST_WATERMARK = `
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M50 18 C 32 28, 26 50, 32 66 C 38 80, 50 82, 50 82 C 50 82, 62 80, 68 66 C 74 50, 68 28, 50 18 Z" fill="currentColor"/>
+    <path d="M50 78 L50 96" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  </svg>
+`;
+
 export async function renderMediaPosts(ctx) {
   const { root } = ctx;
 
@@ -33,17 +41,17 @@ async function loadPosts() {
   if (error) { box.innerHTML = `<p class="muted">${error.message}</p>`; return; }
   if (!posts?.length) {
     box.innerHTML = `
-      <div class="att-empty">
-        <div class="att-empty__art">${icon('spark', { size: 56 })}</div>
+      <div class="media-empty">
+        <div class="media-empty__art">${icon('spark', { size: 48 })}</div>
         <h3>Nenhum post aguardando</h3>
-        <p>Quando a Pesquisa enviar um post, ele aparece aqui pra ser produzido.</p>
+        <p>Quando a Pesquisa enviar um post, ele aparece aqui pra virar arte.</p>
       </div>
     `;
     return;
   }
   box.className = '';
   box.innerHTML = `<div class="res-post-grid">${posts.map(postCard).join('')}</div>`;
-  for (const card of box.querySelectorAll('.res-post-card')) {
+  for (const card of box.querySelectorAll('.media-post-card')) {
     card.querySelector('[data-action="open"]')?.addEventListener('click', async () => {
       const { data: full } = await researchData.getPost(card.dataset.id);
       if (full) openPostDetail(full);
@@ -52,22 +60,41 @@ async function loadPosts() {
 }
 
 function postCard(p) {
-  const statusLabel = p.status === 'scheduled' ? 'agendado' : 'aguardando produção';
-  const preview = (p.body || '').replace(/\s+/g, ' ').slice(0, 160);
+  const isScheduled = p.status === 'scheduled';
+  const pillClass   = isScheduled ? 'media-pill--scheduled' : 'media-pill--progress';
+  const statusLabel = isScheduled ? 'agendado' : 'aguardando';
+  const preview     = (p.body || '').replace(/\s+/g, ' ').slice(0, 220);
+  const isNew       = isPostNew(p);
+  const eyebrowText = p.research_note ? `de "${p.research_note.title}"` : 'recebido';
   return `
-    <article class="res-post-card" data-id="${escapeAttr(p.id)}">
-      <header class="res-post-card__head">
+    <article class="media-post-card" data-id="${escapeAttr(p.id)}">
+      <div class="media-post-card__watermark">${POST_WATERMARK}</div>
+      <p class="media-post-card__eyebrow">
+        ${icon('page', { size: 13 })}
+        <span>${escapeHtml(eyebrowText)}</span>
+      </p>
+      <div class="media-post-card__head">
         <h3>${escapeHtml(p.title)}</h3>
-        <span class="pill ${p.status === 'scheduled' ? 'pill--success' : 'pill--gold'}">${escapeHtml(statusLabel)}</span>
-      </header>
-      ${p.research_note ? `<p class="muted" style="font-size:12px; margin:0;">de "${escapeHtml(p.research_note.title)}"</p>` : ''}
-      ${preview ? `<p class="res-post-card__preview">${escapeHtml(preview)}${p.body.length > 160 ? '…' : ''}</p>` : ''}
-      <footer style="display:flex; gap:6px; margin-top:10px;">
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0;">
+          ${isNew ? `<span class="media-badge-new">novo</span>` : ''}
+          <span class="media-pill ${pillClass}">${escapeHtml(statusLabel)}</span>
+        </div>
+      </div>
+      ${preview ? `<p class="media-post-card__preview">${escapeHtml(preview)}${p.body.length > 220 ? '…' : ''}</p>` : ''}
+      <footer class="media-post-card__foot">
         <button class="btn btn--ghost btn--small" data-action="open">${icon('edit', { size: 12 })}<span style="margin-left:6px;">Detalhe</span></button>
         <button class="btn btn--primary btn--small" data-action="open">${icon('plus', { size: 12 })}<span style="margin-left:6px;">Criar tarefa</span></button>
       </footer>
     </article>
   `;
+}
+
+function isPostNew(p) {
+  if (!p.created_at) return false;
+  const created = new Date(p.created_at).getTime();
+  const now = Date.now();
+  const hours = (now - created) / 3600000;
+  return hours <= 24 && p.status === 'sent_to_media';
 }
 
 function openPostDetail(post) {
@@ -125,7 +152,6 @@ function openPostDetail(post) {
   function onKey(e) { if (e.key === 'Escape') close(); }
   document.addEventListener('keydown', onKey);
 
-  // salva status ao mudar
   overlay.querySelector('#postStatusSel').addEventListener('change', async (ev) => {
     const { error } = await researchData.updatePost(post.id, { status: ev.target.value });
     if (error) { toastError(error.message); return; }

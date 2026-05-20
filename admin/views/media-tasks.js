@@ -57,7 +57,11 @@ async function loadTasks() {
     const tasksOfCol = cachedTasks.filter((t) => t.status === col.id);
     count.textContent = tasksOfCol.length;
     if (!tasksOfCol.length) {
-      body.innerHTML = `<p class="muted" style="padding: 12px 4px; font-size:13px;">vazio</p>`;
+      body.innerHTML = `
+        <div class="media-col__empty">
+          <span class="media-col__empty-art">${icon(col.id === 'done' ? 'check-circle' : 'spark', { size: 18 })}</span>
+          <span>${emptyHint(col.id)}</span>
+        </div>`;
     } else {
       body.innerHTML = tasksOfCol.map(taskCard).join('');
     }
@@ -81,19 +85,29 @@ async function loadTasks() {
 
 function taskCard(t) {
   const dueStr = t.due_date ? new Date(t.due_date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : null;
-  const today = new Date().toISOString().slice(0, 10);
-  const isLate = t.due_date && t.due_date < today && t.status !== 'done';
+  const days = t.due_date ? daysUntil(t.due_date) : null;
+  const isLate = t.due_date && days < 0 && t.status !== 'done';
+  const isDone = t.status === 'done';
+  const urgencyClass = isDone ? null : urgencyFromDays(days);
+  const pillClass = !dueStr ? 'media-pill' :
+    isLate ? 'media-pill media-pill--late' :
+    isDone ? 'media-pill media-pill--done' :
+    'media-pill media-pill--progress';
   return `
-    <article class="media-task-card ${isLate ? 'is-late' : ''}" data-id="${escapeAttr(t.id)}">
+    <article class="media-task-card ${isLate ? 'is-late' : ''} ${isDone ? 'is-done' : ''}"
+             data-id="${escapeAttr(t.id)}"
+             style="${isLate ? '' : teamAccent(t.team_id)}">
       <header class="media-task-card__head">
         <strong>${escapeHtml(t.title)}</strong>
-        ${dueStr ? `<span class="pill ${isLate ? '' : 'pill--gold'}" ${isLate ? 'style="background:rgba(194,74,74,0.14); border-color:rgba(194,74,74,0.4); color:var(--danger-soft);"' : ''}>${icon('clock', { size: 11 })}<span style="margin-left:4px;">${escapeHtml(dueStr)}</span></span>` : ''}
+        ${dueStr
+          ? `<span class="${pillClass}">${urgencyClass ? `<span class="media-urgency ${urgencyClass}" aria-hidden="true" style="width:8px;height:8px;"></span>` : ''}${icon('clock', { size: 11 })}<span>${escapeHtml(dueStr)}</span></span>`
+          : ''}
       </header>
       ${t.description ? `<p class="media-task-card__desc">${escapeHtml(t.description.slice(0, 100))}${t.description.length > 100 ? '…' : ''}</p>` : ''}
       <div class="media-task-card__meta">
-        ${t.team ? `<span class="pill">${icon('group', { size: 11 })}<span style="margin-left:4px;">${escapeHtml(t.team.name)}</span></span>` : ''}
+        ${t.team ? `<span class="media-pill">${icon('group', { size: 11 })}<span>${escapeHtml(t.team.name)}</span></span>` : ''}
         ${t.assignee ? avatarHtml(t.assignee.full_name, { size: 'sm' }) : ''}
-        ${t.post ? `<span class="pill" style="margin-left:auto;">${icon('spark', { size: 11 })}<span style="margin-left:4px;">post</span></span>` : ''}
+        ${t.post ? `<span class="media-pill" style="margin-left:auto;">${icon('spark', { size: 11 })}<span>post</span></span>` : ''}
       </div>
       <footer class="media-task-card__foot">
         <select data-action="status">
@@ -102,6 +116,46 @@ function taskCard(t) {
       </footer>
     </article>
   `;
+}
+
+function emptyHint(status) {
+  return ({
+    todo: 'sem tarefas pendentes',
+    in_progress: 'nada em produção',
+    done: 'nada concluído ainda',
+  })[status] || 'vazio';
+}
+
+function daysUntil(isoDate) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(isoDate + 'T00:00:00');
+  return Math.round((target - today) / 86400000);
+}
+
+function urgencyFromDays(days) {
+  if (days == null) return null;
+  if (days < 0) return 'media-urgency--late';
+  if (days <= 1) return 'media-urgency--close';
+  if (days <= 6) return 'media-urgency--soon';
+  return 'media-urgency--ok';
+}
+
+// Cor lateral consistente por equipe (hash do team_id → tom)
+const TEAM_ACCENTS = [
+  'var(--rose-soft)',
+  'var(--gold)',
+  'var(--sage)',
+  'var(--paper)',
+  'var(--warning)',
+  'var(--rose)',
+];
+function teamAccent(teamId) {
+  if (!teamId) return '';
+  let h = 0;
+  for (let i = 0; i < teamId.length; i++) h = (h * 31 + teamId.charCodeAt(i)) >>> 0;
+  const color = TEAM_ACCENTS[h % TEAM_ACCENTS.length];
+  return `border-left: 3px solid ${color};`;
 }
 
 export async function openTaskForm(existing, opts = {}) {

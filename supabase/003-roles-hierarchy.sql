@@ -146,9 +146,11 @@ create or replace function public.get_users_admin()
   security definer
   set search_path = public, auth
 as $$
+#variable_conflict use_column
 begin
   if not exists (
-    select 1 from public.profiles where user_id = auth.uid() and role = 'admin'
+    select 1 from public.profiles p
+    where p.user_id = auth.uid() and p.role = 'admin'
   ) then
     raise exception 'apenas admin pode listar usuários';
   end if;

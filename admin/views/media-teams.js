@@ -7,6 +7,9 @@ import { renderMediaNav } from './media-nav.js';
 import { avatarHtml } from '../avatar.js';
 import { toastSuccess, toastError } from '../toast.js';
 
+// carga das equipes (tarefas pendentes), preenchido em loadTeams()
+let cachedTaskLoad = new Map(); // team_id → { pending, total }
+
 export async function renderMediaTeams(ctx) {
   const { root } = ctx;
 
@@ -32,19 +35,32 @@ export async function renderMediaTeams(ctx) {
 
 async function loadTeams() {
   const box = document.getElementById('teamsList');
-  const { data: teams, error } = await data.listTeams({ includeArchived: true });
+  const [{ data: teams, error }, { data: tasks }] = await Promise.all([
+    data.listTeams({ includeArchived: true }),
+    data.listTasks(),
+  ]);
   if (error) { box.innerHTML = `<p class="muted">${error.message}</p>`; return; }
   if (!teams?.length) {
     box.innerHTML = `
-      <div class="att-empty">
-        <div class="att-empty__art">${icon('group', { size: 56 })}</div>
-        <h3>Nenhuma equipe</h3>
-        <p>Crie equipes pra organizar quem faz o quê dentro da Mídia.</p>
-        <button class="btn btn--primary" id="emptyNew">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Criar primeira</span></button>
+      <div class="media-empty">
+        <div class="media-empty__art">${icon('group', { size: 48 })}</div>
+        <h3>Nenhuma equipe ainda</h3>
+        <p>Crie equipes pra organizar quem faz o quê dentro da Mídia — Design, Filmagem, Redes…</p>
+        <button class="btn btn--primary" id="emptyNew">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Criar primeira equipe</span></button>
       </div>
     `;
     document.getElementById('emptyNew').addEventListener('click', () => openTeamForm(null));
     return;
+  }
+
+  // calcula carga por equipe
+  cachedTaskLoad = new Map();
+  for (const t of (tasks || [])) {
+    if (!t.team_id) continue;
+    const entry = cachedTaskLoad.get(t.team_id) || { pending: 0, total: 0 };
+    entry.total++;
+    if (t.status !== 'done') entry.pending++;
+    cachedTaskLoad.set(t.team_id, entry);
   }
 
   const memberCounts = await Promise.all(teams.map((t) => data.listTeamMembers(t.id)));
@@ -60,19 +76,47 @@ async function loadTeams() {
   }
 }
 
+function monogramFor(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '·';
+  if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function loadBarFor(teamId) {
+  const load = cachedTaskLoad.get(teamId);
+  if (!load || load.pending === 0) {
+    return `<div class="media-load-bar"><div class="media-load-bar__track"><div class="media-load-bar__fill" style="width:0%;"></div></div><span class="media-load-bar__label">livre</span></div>`;
+  }
+  // 1-3 pendentes leve, 4-7 média, 8+ pesada
+  const pct = Math.min(100, (load.pending / 8) * 100);
+  const tone = load.pending >= 8 ? 'media-load-bar__fill--overload'
+             : load.pending >= 4 ? 'media-load-bar__fill--heavy'
+             : '';
+  return `
+    <div class="media-load-bar" title="${load.pending} pendentes de ${load.total}">
+      <div class="media-load-bar__track">
+        <div class="media-load-bar__fill ${tone}" style="width:${pct}%;"></div>
+      </div>
+      <span class="media-load-bar__label">${load.pending}/${load.total}</span>
+    </div>
+  `;
+}
+
 function teamCard(t, members) {
   return `
     <article class="att-group-card ${t.is_archived ? 'is-archived' : ''}" data-team-id="${escapeAttr(t.id)}">
       <button class="att-group-card__main" data-action="open" style="background:transparent; border:none; cursor:pointer; font:inherit; color:inherit; text-align:left; width:100%;">
-        <span class="att-group-card__icon">${icon('group', { size: 22 })}</span>
+        <span class="media-monogram" aria-hidden="true">${escapeHtml(monogramFor(t.name))}</span>
         <div class="att-group-card__body">
           <strong>${escapeHtml(t.name)}</strong>
           ${t.description ? `<span class="att-group-card__desc">${escapeHtml(t.description)}</span>` : ''}
           <div class="att-group-card__stats">
-            <span class="pill">${icon('users', { size: 11 })}<span style="margin-left:4px;">${members.length} ${members.length === 1 ? 'pessoa' : 'pessoas'}</span></span>
+            <span class="media-pill">${icon('users', { size: 11 })}<span>${members.length} ${members.length === 1 ? 'pessoa' : 'pessoas'}</span></span>
             ${t.is_archived ? '<span class="att-group-card__badge">arquivada</span>' : ''}
           </div>
-          ${members.length ? `<div style="display:flex; gap:-4px; margin-top: 8px;">${members.slice(0, 5).map((m) => avatarHtml(m.person?.full_name, { size: 'sm' })).join('')}${members.length > 5 ? `<span class="muted" style="margin-left:8px; font-size:12px;">+${members.length - 5}</span>` : ''}</div>` : ''}
+          ${loadBarFor(t.id)}
+          ${members.length ? `<div style="display:flex; gap:4px; margin-top: 10px; flex-wrap:wrap;">${members.slice(0, 5).map((m) => avatarHtml(m.person?.full_name, { size: 'sm' })).join('')}${members.length > 5 ? `<span class="muted" style="margin-left:8px; font-size:12px; align-self:center;">+${members.length - 5}</span>` : ''}</div>` : ''}
         </div>
       </button>
     </article>
