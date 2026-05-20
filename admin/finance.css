@@ -1893,3 +1893,399 @@
   flex: 1;
   text-align: right;
 }
+
+/* =========================================================
+   ===== Sprint 4: Dashboard rico Tesouraria =====
+   Pipeline + skyline dual 12 meses + mural balanços fechados + top gastos.
+   ========================================================= */
+
+/* ---------- pipeline editorial ---------- */
+.fin-pipeline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 10px 0 6px;
+  flex-wrap: wrap;
+}
+.fin-pipeline__node {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s, transform 0.18s, background 0.18s;
+}
+a.fin-pipeline__node { cursor: pointer; }
+a.fin-pipeline__node:hover {
+  border-color: rgba(193, 158, 90, 0.5);
+  background: var(--bg-card-hi);
+  transform: translateY(-2px);
+}
+a.fin-pipeline__node:hover .fin-pipeline__num { color: var(--gold); }
+.fin-pipeline__num {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 24px;
+  color: var(--cream);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.18s;
+  letter-spacing: 0.005em;
+}
+.fin-pipeline__num--positive { color: var(--success); }
+.fin-pipeline__num--negative { color: var(--danger-soft); }
+.fin-pipeline__num--gold     { color: var(--gold); }
+.fin-pipeline__num--sage     { color: var(--sage); }
+.fin-pipeline__num--rose     { color: var(--rose-soft); }
+.fin-pipeline__label {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  line-height: 1.2;
+}
+.fin-pipeline__hint {
+  font-size: 10.5px;
+  color: var(--text-dimer);
+  font-style: italic;
+  margin-top: 1px;
+}
+.fin-pipeline__arrow {
+  color: var(--text-mute);
+  display: flex;
+  align-items: center;
+}
+@media (max-width: 720px) {
+  .fin-pipeline__arrow { display: none; }
+  .fin-pipeline__node { min-width: 130px; }
+}
+
+/* ---------- skyline dual: receita (gold) vs despesa (rose) 12 meses ---------- */
+.fin-skyline-dual {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 96px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-top: 12px;
+}
+.fin-skyline-dual__group {
+  flex: 1;
+  min-width: 30px;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  position: relative;
+  border-radius: 3px;
+  background: var(--bg-elev);
+  cursor: default;
+  transition: background 0.15s;
+}
+.fin-skyline-dual__group:hover { background: var(--bg-card-hi); }
+.fin-skyline-dual__group--current {
+  background: rgba(193, 158, 90, 0.18);
+  outline: 1px solid var(--gold);
+}
+.fin-skyline-dual__bar {
+  width: 8px;
+  min-height: 2px;
+  border-radius: 2px 2px 0 0;
+}
+.fin-skyline-dual__bar--in  { background: linear-gradient(180deg, var(--gold), #6F5524); }
+.fin-skyline-dual__bar--out { background: linear-gradient(180deg, var(--rose-soft), var(--rose)); }
+.fin-skyline-dual__group[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-deep);
+  color: var(--cream);
+  font-size: 11px;
+  padding: 5px 9px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  z-index: 30;
+  pointer-events: none;
+  font-family: 'Lora', Georgia, serif;
+}
+.fin-skyline-dual__labels {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--text-dimer);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.fin-skyline-dual__labels-item {
+  flex: 1;
+  min-width: 30px;
+  text-align: center;
+}
+.fin-skyline-dual__labels-item.is-current {
+  color: var(--gold);
+  font-weight: 600;
+}
+.fin-skyline-dual__legend {
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-dimer);
+  flex-wrap: wrap;
+}
+.fin-skyline-dual__legend-swatch {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-right: 4px;
+}
+.fin-skyline-dual__legend-swatch--in  { background: var(--gold); }
+.fin-skyline-dual__legend-swatch--out { background: var(--rose-soft); }
+
+/* ---------- mural de balanços fechados ---------- */
+.fin-mural {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.fin-mural__card {
+  position: relative;
+  aspect-ratio: 4/5;
+  padding: 22px 20px 18px;
+  background:
+    radial-gradient(circle at 80% 8%, rgba(193, 158, 90, 0.5), transparent 55%),
+    radial-gradient(circle at -10% 120%, rgba(237, 223, 194, 0.10), transparent 60%),
+    linear-gradient(160deg, #6F5524 0%, var(--gold) 100%);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--cream);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease);
+}
+.fin-mural__card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 50px rgba(60, 45, 15, 0.5);
+}
+.fin-mural__card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 14px; right: 14px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cream) 50%, transparent);
+  opacity: 0.6;
+}
+.fin-mural__page {
+  position: absolute;
+  bottom: -34px;
+  right: -26px;
+  width: 160px; height: 160px;
+  opacity: 0.10;
+  color: var(--cream);
+  transform: rotate(-10deg);
+  pointer-events: none;
+}
+.fin-mural__page svg { width: 100%; height: 100%; }
+.fin-mural__eyebrow {
+  position: relative;
+  z-index: 1;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(237, 223, 194, 0.75);
+  margin: 0 0 6px;
+}
+.fin-mural__month {
+  position: relative;
+  z-index: 1;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 30px;
+  color: var(--cream);
+  line-height: 1;
+  margin: 0;
+  text-transform: capitalize;
+}
+.fin-mural__year {
+  position: relative;
+  z-index: 1;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 16px;
+  color: rgba(237, 223, 194, 0.85);
+  margin: 0 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+.fin-mural__foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fin-mural__saldo {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--cream);
+  font-variant-numeric: tabular-nums;
+}
+.fin-mural__saldo small {
+  display: block;
+  font-family: 'Lora', Georgia, serif;
+  font-style: normal;
+  font-size: 10.5px;
+  color: rgba(237, 223, 194, 0.7);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.fin-mural__seal-corner {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: rgba(237, 223, 194, 0.2);
+  color: var(--cream);
+  z-index: 2;
+  animation: att-sem-seal 2.4s ease-in-out infinite;
+}
+@media (max-width: 720px) {
+  .fin-mural { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .fin-mural__card { padding: 18px 16px 14px; }
+  .fin-mural__month { font-size: 24px; }
+}
+
+/* ---------- top gastos (5 maiores) ---------- */
+.fin-top-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fin-top-item {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s;
+  color: inherit;
+  text-decoration: none;
+}
+.fin-top-item:hover {
+  border-color: rgba(193, 158, 90, 0.5);
+  background: var(--bg-card-hi);
+  transform: translateX(2px);
+}
+.fin-top-item--alimentacao   { border-left-color: var(--warning); }
+.fin-top-item--materiais     { border-left-color: var(--rose-soft); }
+.fin-top-item--investimentos { border-left-color: var(--success); }
+.fin-top-item__icon {
+  width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 7px;
+  background: rgba(193, 158, 90, 0.14);
+  color: var(--gold);
+}
+.fin-top-item--alimentacao   .fin-top-item__icon { background: rgba(199, 127, 61, 0.16); color: var(--warning); }
+.fin-top-item--materiais     .fin-top-item__icon { background: rgba(159, 90, 107, 0.14); color: var(--rose-soft); }
+.fin-top-item--investimentos .fin-top-item__icon { background: rgba(107, 142, 61, 0.16); color: var(--success); }
+.fin-top-item__main { min-width: 0; }
+.fin-top-item__main strong {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 14.5px;
+  color: var(--cream);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fin-top-item__main span {
+  display: block;
+  font-size: 11px;
+  color: var(--text-dimer);
+  margin-top: 1px;
+  letter-spacing: 0.04em;
+}
+.fin-top-item__amount {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--cream);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- mini trend (esta semana vs anterior — paleta gold) ---------- */
+.fin-trend {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 4px 0 0;
+}
+.fin-trend__big {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 30px;
+  color: var(--cream);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.005em;
+}
+.fin-trend__big--positive { color: var(--success); }
+.fin-trend__big--negative { color: var(--danger-soft); }
+.fin-trend__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-style: italic;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-dim);
+}
+.fin-trend__delta--up      { color: var(--success); border-color: rgba(107, 142, 61, 0.45); background: rgba(107, 142, 61, 0.08); }
+.fin-trend__delta--down    { color: var(--danger-soft); border-color: rgba(194, 74, 74, 0.45); background: rgba(194, 74, 74, 0.08); }
+.fin-trend__delta--neutral { color: var(--gold-soft); border-color: rgba(217, 189, 131, 0.4); background: rgba(217, 189, 131, 0.08); }
+.fin-trend__label {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  font-style: italic;
+}

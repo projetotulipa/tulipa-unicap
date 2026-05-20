@@ -57,6 +57,15 @@ export async function listDuesRange({ fromYear, toYear } = {}) {
   return q;
 }
 
+// gastos num range de datas (full ISO YYYY-MM-DD em spent_on)
+// usado no dashboard pra montar skyline 12 meses + mural de balanços fechados.
+export async function listExpensesByRange({ from, to } = {}) {
+  let q = supabase.from('expenses').select('id, category, amount, description, spent_on').order('spent_on', { ascending: false });
+  if (from) q = q.gte('spent_on', from);
+  if (to)   q = q.lte('spent_on', to);
+  return q;
+}
+
 // pessoas ativas que pagam mensalidade (não isentas)
 export async function listPayingPeople() {
   return supabase
