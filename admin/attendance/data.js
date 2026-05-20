@@ -292,6 +292,21 @@ export async function listJustifications(group_id, from, to) {
     .order('marked_at', { ascending: false });
 }
 
+// histórico de presença de uma pessoa específica (todos os grupos dela)
+// usado no drawer de pessoa pra montar o skyline individual.
+export async function listAttendanceOfPerson(personId, { from, to } = {}) {
+  let q = supabase
+    .from('attendance')
+    .select(`
+      meeting_id, is_present, justified, justification_category, notes, marked_at,
+      meeting:meetings!inner(id, date, status, group_id, group:attendance_groups(id, name))
+    `)
+    .eq('person_id', personId);
+  if (from) q = q.gte('meeting.date', from);
+  if (to)   q = q.lte('meeting.date', to);
+  return q;
+}
+
 export async function bulkUpdateAttendance(meeting_id, rows) {
   // rows: [{ person_id, is_present, justified?, notes? }]
   const records = rows.map((r) => ({

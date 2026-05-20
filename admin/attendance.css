@@ -3461,3 +3461,645 @@
   font-style: italic;
   font-size: 13px;
 }
+
+/* =========================================================
+   ===== Sprint 5: Pessoas + Semestres + Polish =====
+   ========================================================= */
+
+/* ---------- pessoas: carta editorial ---------- */
+.att-person-letter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+.att-person-letter {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.22s var(--ease), transform 0.22s var(--ease), box-shadow 0.22s var(--ease);
+}
+.att-person-letter:hover {
+  border-color: var(--border-rose);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.att-person-letter::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--rose-soft) 30%, var(--sage) 70%, transparent);
+  opacity: 0;
+  transition: opacity 0.22s;
+}
+.att-person-letter:hover::before { opacity: 0.55; }
+.att-person-letter.is-inactive { opacity: 0.55; }
+.att-person-letter__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+.att-person-letter__mono {
+  width: 46px; height: 46px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 28%, var(--sage) 0%, var(--sage-deep) 60%, #1f2917 100%);
+  color: var(--cream);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(40, 15, 18, 0.35), inset 0 1px 0 rgba(237, 223, 194, 0.18);
+}
+.att-person-letter__title { flex: 1; min-width: 0; }
+.att-person-letter__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.att-person-letter__name strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--cream);
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.att-person-letter__primary-star {
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.att-person-letter__primary-group {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--gold-soft);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.att-person-letter__contacts {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 12px;
+}
+.att-person-letter__contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 2px 0;
+  transition: color 0.15s;
+}
+.att-person-letter__contact--wa { color: #5ECF80; }
+.att-person-letter__contact:hover { color: var(--cream); }
+.att-person-letter__chips {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 2px;
+}
+.att-person-letter__foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dimer);
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+  margin-top: 2px;
+}
+.att-person-letter__menu {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.18s;
+  z-index: 2;
+}
+.att-person-letter:hover .att-person-letter__menu { opacity: 1; }
+.att-person-letter__menu .icon-btn {
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+}
+.att-person-letter__menu .icon-btn[data-action="delete"]:hover {
+  background: rgba(194, 74, 74, 0.2);
+  border-color: rgba(194, 74, 74, 0.5);
+  color: var(--danger-soft);
+}
+
+/* ---------- pessoas: lista densa v2 ---------- */
+.att-person-dense-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.att-person-dense-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1.6fr) minmax(0, 1.4fr) minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.att-person-dense-row:hover { background: var(--bg-card-hi); }
+.att-person-dense-row.is-inactive { opacity: 0.55; }
+.att-person-dense-row__mono {
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--sage), var(--sage-deep));
+  color: var(--cream);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.att-person-dense-row__main { min-width: 0; }
+.att-person-dense-row__main strong {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--cream);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.att-person-dense-row__main span {
+  display: block;
+  font-size: 11.5px;
+  color: var(--gold-soft);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.att-person-dense-row__contact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  min-width: 0;
+}
+.att-person-dense-row__contact a {
+  color: var(--text-dim);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.att-person-dense-row__contact a.is-wa { color: #5ECF80; }
+.att-person-dense-row__groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.att-person-dense-row__chevron { color: var(--text-mute); }
+
+@media (max-width: 720px) {
+  .att-person-dense-row {
+    grid-template-columns: 32px 1fr auto;
+    gap: 10px;
+  }
+  .att-person-dense-row__contact,
+  .att-person-dense-row__groups { display: none; }
+}
+
+/* ---------- drawer: bio rico ---------- */
+.att-person-bio {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.att-person-bio::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sage) 30%, var(--rose-soft) 70%, transparent);
+  opacity: 0.5;
+}
+.att-person-bio__mono {
+  width: 56px; height: 56px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 28%, var(--sage) 0%, var(--sage-deep) 60%, #1f2917 100%);
+  color: var(--cream);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.att-person-bio__main { flex: 1; min-width: 0; }
+.att-person-bio__main strong {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--cream);
+  line-height: 1.1;
+}
+.att-person-bio__main span {
+  display: block;
+  font-size: 12px;
+  color: var(--gold-soft);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* skyline individual no drawer */
+.att-person-spark {
+  margin: 18px 0 14px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.att-person-spark__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.att-person-spark__head h4 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--cream);
+}
+.att-person-spark__pct {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--sage);
+  font-variant-numeric: tabular-nums;
+}
+.att-person-spark__pct--low  { color: var(--gold); }
+.att-person-spark__pct--bad  { color: var(--warning); }
+.att-person-spark__pct--gone { color: var(--text-mute); }
+.att-person-spark__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 40px;
+  padding: 6px 0;
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 8px 8px 6px;
+}
+.att-person-spark__cell {
+  flex: 1;
+  min-width: 8px;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--bg-elev);
+  position: relative;
+  border: 1px solid transparent;
+}
+.att-person-spark__cell--present   { background: linear-gradient(180deg, var(--sage), var(--sage-deep)); }
+.att-person-spark__cell--justified { background: linear-gradient(180deg, rgba(193, 158, 90, 0.85), rgba(193, 158, 90, 0.45)); }
+.att-person-spark__cell--absent    { background: rgba(194, 74, 74, 0.3); border-color: rgba(194, 74, 74, 0.4); }
+.att-person-spark__cell--cancelled { background: var(--bg); border: 1px dashed var(--border-strong); opacity: 0.5; }
+.att-person-spark__cell[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-deep);
+  color: var(--cream);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  z-index: 30;
+  pointer-events: none;
+}
+.att-person-spark__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  color: var(--text-mute);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* grupos como mini-cards no drawer */
+.att-person-groups-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.att-person-group-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--sage);
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s, transform 0.18s;
+}
+.att-person-group-card:hover {
+  border-color: rgba(74, 92, 54, 0.5);
+  transform: translateY(-1px);
+}
+.att-person-group-card.is-primary {
+  border-left-color: var(--gold);
+  background: linear-gradient(90deg, rgba(193, 158, 90, 0.06), var(--bg-card) 60%);
+}
+.att-person-group-card__mono {
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 7px;
+  background: radial-gradient(circle at 30% 30%, var(--sage), var(--sage-deep));
+  color: var(--cream);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.att-person-group-card.is-primary .att-person-group-card__mono {
+  background: radial-gradient(circle at 30% 30%, var(--gold), rgba(193, 158, 90, 0.6));
+  color: var(--bg-deep);
+}
+.att-person-group-card__main { flex: 1; min-width: 0; }
+.att-person-group-card__main strong {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--cream);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.att-person-group-card__main span {
+  display: block;
+  font-size: 10.5px;
+  color: var(--text-dimer);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+/* anotações refinadas (mantém .person-notes do CSS original — adiciona variantes) */
+.person-notes__head h3,
+.person-notes__head {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 17px;
+  color: var(--cream);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+}
+
+/* ---------- semestres como "anais" ---------- */
+.att-sem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.att-sem-letter {
+  position: relative;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(193, 158, 90, 0.10), transparent 50%),
+    var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+  transition: border-color 0.22s var(--ease), transform 0.22s var(--ease), box-shadow 0.22s var(--ease);
+}
+.att-sem-letter:hover {
+  border-color: rgba(193, 158, 90, 0.45);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.att-sem-letter::before {
+  /* fita gold pendente do canto superior direito */
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 20px;
+  width: 22px;
+  height: 36px;
+  background: linear-gradient(180deg, var(--gold) 0%, rgba(193, 158, 90, 0.65) 70%, transparent 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%);
+  opacity: 0.55;
+  transition: opacity 0.22s;
+}
+.att-sem-letter:hover::before { opacity: 0.9; }
+.att-sem-letter.is-current::before { opacity: 1; }
+
+.att-sem-letter__page {
+  position: absolute;
+  bottom: -34px;
+  right: -28px;
+  width: 150px;
+  height: 150px;
+  opacity: 0.06;
+  color: var(--paper);
+  pointer-events: none;
+  transform: rotate(-12deg);
+  z-index: 0;
+}
+.att-sem-letter__page svg { width: 100%; height: 100%; }
+
+.att-sem-letter__head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.att-sem-letter__seal {
+  width: 46px; height: 46px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(217, 189, 131, 0.32), rgba(193, 158, 90, 0.08));
+  color: var(--gold);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.att-sem-letter__seal::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px solid rgba(217, 189, 131, 0.32);
+  pointer-events: none;
+}
+.att-sem-letter.is-current .att-sem-letter__seal {
+  background: radial-gradient(circle at 30% 30%, rgba(217, 189, 131, 0.55), rgba(193, 158, 90, 0.18));
+  box-shadow: 0 0 0 3px rgba(193, 158, 90, 0.18), 0 8px 20px rgba(40, 15, 18, 0.3);
+  animation: att-sem-seal 2.4s ease-in-out infinite;
+}
+@keyframes att-sem-seal {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(193, 158, 90, 0.18), 0 8px 20px rgba(40, 15, 18, 0.3); }
+  50%      { box-shadow: 0 0 0 7px rgba(193, 158, 90, 0.06), 0 8px 20px rgba(40, 15, 18, 0.3); }
+}
+
+.att-sem-letter__title { flex: 1; min-width: 0; }
+.att-sem-letter__eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+  margin: 0 0 4px;
+  font-style: normal;
+}
+.att-sem-letter__name {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 26px;
+  color: var(--cream);
+  line-height: 1.05;
+}
+
+.att-sem-letter__range {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.att-sem-letter__range strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 17px;
+  color: var(--cream);
+  font-weight: 500;
+}
+.att-sem-letter__range svg { color: var(--text-mute); flex-shrink: 0; }
+
+.att-sem-letter__current-badge {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(193, 158, 90, 0.22), rgba(193, 158, 90, 0.08));
+  border: 1px solid rgba(193, 158, 90, 0.5);
+  color: var(--gold);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  align-self: flex-start;
+}
+
+.att-sem-letter__actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.att-sem-letter__actions .spacer { flex: 1; }
+
+/* ---------- polish: pulse-check no fólio quando marca presente ---------- */
+.att-fol-card.is-dropped[data-bucket="present"] {
+  animation: media-drop-flash 0.55s ease-out, att-pulse-check 0.7s ease-out 0.1s;
+}
+@keyframes att-pulse-check {
+  0%   { box-shadow: 0 0 0 0 rgba(74, 92, 54, 0.45); }
+  60%  { box-shadow: 0 0 0 10px rgba(74, 92, 54, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 92, 54, 0); }
+}
+
+/* polish: tooltip pra status dots visíveis em mobile */
+.att-dot[data-tooltip]:hover::after,
+.att-dot:focus::after {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-deep);
+  color: var(--cream);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  z-index: 30;
+}
+.att-dot { position: relative; }

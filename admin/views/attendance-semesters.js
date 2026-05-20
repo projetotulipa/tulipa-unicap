@@ -1,8 +1,10 @@
-// CRUD de semestres. Apenas admin.
+// Semestres — Sprint 5 ("anais" editoriais com fita + selo gold animado).
+// Apenas admin.
 
 import { icon } from '../icons.js';
 import * as data from '../attendance/data.js';
 import { renderSubNav } from './attendance-nav.js';
+import { codexSeal, codexPage } from '../attendance/codex.js';
 import { toastSuccess, toastError } from '../toast.js';
 
 export async function renderAttendanceSemesters(ctx) {
@@ -16,17 +18,31 @@ export async function renderAttendanceSemesters(ctx) {
   root.innerHTML = `
     <div class="view">
       ${renderSubNav('semestres', { isAdmin: true })}
-      <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
-        <div>
-          <h1>Semestres</h1>
-          <p class="view__lede">Defina os períodos acadêmicos. O semestre marcado como atual é usado por padrão nos cálculos de presença.</p>
+
+      <header class="att-hero-v2">
+        <div class="att-hero-v2__seal-wrap">
+          <span class="att-codex-seal">${codexSeal({ size: 32 })}</span>
         </div>
-        <button id="newSemesterBtn" class="btn btn--primary">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Novo semestre</span></button>
+        <div class="att-hero-v2__inner">
+          <p class="att-hero-v2__eyebrow">anais · períodos do livro</p>
+          <h1>Semestres</h1>
+          <p class="att-hero-v2__lede">
+            Cada semestre é um livro aberto. O selo dourado marca o atual — usado por padrão nos cálculos de presença e na geração de encontros.
+          </p>
+        </div>
+        <div class="att-hero-v2__cta">
+          <button id="newSemesterBtn" class="btn btn--primary">
+            ${icon('plus', { size: 14 })}<span style="margin-left:6px;">Novo semestre</span>
+          </button>
+        </div>
+        <div class="att-hero-v2__page">${codexPage({ size: 200 })}</div>
       </header>
 
-      <div id="semestersList" class="empty-state">
-        <div class="skel skel--title"></div>
-        <div class="skel skel--block"></div>
+      <div id="semestersList">
+        <div class="att-loading-wrap">
+          <span class="att-bloom"><span class="att-codex-seal">${codexSeal({ size: 24 })}</span></span>
+          <p>Abrindo os anais…</p>
+        </div>
       </div>
     </div>
   `;
@@ -38,11 +54,11 @@ export async function renderAttendanceSemesters(ctx) {
 async function loadSemesters() {
   const box = document.getElementById('semestersList');
   const { data: rows, error } = await data.listSemesters();
-  if (error) { box.innerHTML = `<p class="muted">${error.message}</p>`; return; }
+  if (error) { box.innerHTML = `<p class="muted">${escapeHtml(error.message)}</p>`; return; }
   if (!rows?.length) {
     box.innerHTML = `
-      <div class="att-empty">
-        <div class="att-empty__art">${icon('calendar', { size: 60 })}</div>
+      <div class="att-empty-v2">
+        <div class="att-empty-v2__art">${icon('calendar', { size: 56 })}</div>
         <h3>Nenhum semestre criado ainda</h3>
         <p>Defina o período letivo (ex.: "2026.1" de 01/03 a 15/07) pra organizar os encontros.</p>
         <button class="btn btn--primary" id="emptyNewSemesterBtn">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Criar primeiro</span></button>
@@ -52,20 +68,23 @@ async function loadSemesters() {
     return;
   }
 
-  box.className = '';
-  box.innerHTML = `
-    <div class="att-sem-list">
-      ${rows.map(semesterCard).join('')}
-    </div>
-  `;
+  // ordena: atual primeiro, depois por start_date desc
+  const sorted = [...rows].sort((a, b) => {
+    if (a.is_current !== b.is_current) return a.is_current ? -1 : 1;
+    return b.start_date.localeCompare(a.start_date);
+  });
 
-  for (const card of document.querySelectorAll('.att-sem-card')) {
+  box.innerHTML = `<div class="att-sem-grid">${sorted.map(semesterLetter).join('')}</div>`;
+
+  for (const card of box.querySelectorAll('.att-sem-letter')) {
     const id = card.dataset.semesterId;
-    card.querySelector('[data-action="edit"]')?.addEventListener('click', async () => {
+    card.querySelector('[data-action="edit"]')?.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
       const { data: row } = await data.getSemester(id);
       if (row) openSemesterForm(row, () => loadSemesters());
     });
-    card.querySelector('[data-action="set-current"]')?.addEventListener('click', async () => {
+    card.querySelector('[data-action="set-current"]')?.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
       const { error } = await data.setCurrentSemester(id);
       if (error) toastError(error.message);
       else toastSuccess('Marcado como semestre atual.');
@@ -74,21 +93,53 @@ async function loadSemesters() {
   }
 }
 
-function semesterCard(s) {
+function semesterLetter(s) {
   const start = new Date(s.start_date + 'T00:00:00');
   const end   = new Date(s.end_date + 'T00:00:00');
-  const fmt = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const fmt = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const isPast = s.end_date < todayStr;
+  const isFuture = s.start_date > todayStr;
+  const eyebrow = s.is_current ? 'aberto agora' : isPast ? 'encerrado' : isFuture ? 'por vir' : 'em andamento';
+
+  // duração em semanas
+  const weeks = Math.max(1, Math.round((end - start) / (7 * 86400000)));
+
   return `
-    <article class="att-sem-card ${s.is_current ? 'is-current' : ''}" data-semester-id="${escapeAttr(s.id)}">
-      <div class="att-sem-card__icon">${icon('calendar', { size: 22 })}</div>
-      <div class="att-sem-card__main">
-        <strong>${escapeHtml(s.name)}</strong>
-        <span class="muted">${escapeHtml(fmt(start))} → ${escapeHtml(fmt(end))}</span>
-        ${s.is_current ? '<span class="pill pill--gold" style="margin-top:6px;">semestre atual</span>' : ''}
+    <article class="att-sem-letter ${s.is_current ? 'is-current' : ''}" data-semester-id="${escapeAttr(s.id)}">
+      <div class="att-sem-letter__page">${codexPage({ size: 150 })}</div>
+
+      <div class="att-sem-letter__head">
+        <span class="att-sem-letter__seal">${codexSeal({ size: 22 })}</span>
+        <div class="att-sem-letter__title">
+          <p class="att-sem-letter__eyebrow">${escapeHtml(eyebrow)}</p>
+          <h3 class="att-sem-letter__name">${escapeHtml(s.name)}</h3>
+        </div>
       </div>
-      <div class="att-sem-card__actions">
-        ${!s.is_current ? `<button class="btn btn--ghost btn--small" data-action="set-current">Marcar como atual</button>` : ''}
-        <button class="icon-btn" data-action="edit" title="Editar">${icon('edit', { size: 14 })}</button>
+
+      <div class="att-sem-letter__range">
+        <strong>${escapeHtml(fmt(start))}</strong>
+        ${icon('arrow-right', { size: 12 })}
+        <strong>${escapeHtml(fmt(end))}</strong>
+        <span class="muted">· ${weeks} ${weeks === 1 ? 'semana' : 'semanas'}</span>
+      </div>
+
+      ${s.is_current ? `
+        <span class="att-sem-letter__current-badge">
+          ${icon('star', { size: 11 })}
+          <span>semestre atual</span>
+        </span>
+      ` : ''}
+
+      <div class="att-sem-letter__actions">
+        ${!s.is_current ? `
+          <button class="btn btn--ghost btn--small" data-action="set-current">
+            ${icon('star', { size: 12 })}<span style="margin-left:6px;">tornar atual</span>
+          </button>
+        ` : ''}
+        <span class="spacer"></span>
+        <button class="icon-btn" data-action="edit" title="Editar semestre" aria-label="Editar semestre">${icon('edit', { size: 14 })}</button>
       </div>
     </article>
   `;
@@ -148,8 +199,54 @@ function openSemesterForm(existing, onDone) {
     setTimeout(() => overlay.remove(), 220);
     document.removeEventListener('keydown', onKey);
   }
-  function onKey(e) { if (e.key === 'Escape') close(); }
+  function onKey(e) {
+    if (e.key === 'Escape') close();
+    if ((e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      doSave();
+    }
+  }
   document.addEventListener('keydown', onKey);
+
+  async function doSave() {
+    const form = overlay.querySelector('#semesterForm');
+    const fd = new FormData(form);
+    const fields = {
+      name: String(fd.get('name') || '').trim(),
+      start_date: String(fd.get('start_date') || ''),
+      end_date: String(fd.get('end_date') || ''),
+    };
+    const wantCurrent = fd.get('is_current') === 'true';
+    if (!fields.name || !fields.start_date || !fields.end_date) {
+      toastError('Preencha nome, início e fim.'); return;
+    }
+    if (fields.end_date <= fields.start_date) {
+      toastError('Data de fim precisa ser depois da data de início.'); return;
+    }
+
+    try {
+      if (isEdit) {
+        const { error } = await data.updateSemester(existing.id, fields);
+        if (error) throw error;
+        if (wantCurrent && !existing.is_current) {
+          const { error: e2 } = await data.setCurrentSemester(existing.id);
+          if (e2) throw e2;
+        }
+      } else {
+        const { data: created, error } = await data.createSemester(fields);
+        if (error) throw error;
+        if (wantCurrent) {
+          const { error: e2 } = await data.setCurrentSemester(created.id);
+          if (e2) throw e2;
+        }
+      }
+      toastSuccess(isEdit ? 'Semestre atualizado.' : 'Semestre criado.');
+      close();
+      onDone?.();
+    } catch (e) {
+      toastError(e.message || String(e));
+    }
+  }
 
   overlay.addEventListener('click', async (ev) => {
     if (ev.target === overlay) return close();
@@ -166,45 +263,7 @@ function openSemesterForm(existing, onDone) {
       return;
     }
 
-    if (action === 'save') {
-      const form = overlay.querySelector('#semesterForm');
-      const fd = new FormData(form);
-      const fields = {
-        name: String(fd.get('name') || '').trim(),
-        start_date: String(fd.get('start_date') || ''),
-        end_date: String(fd.get('end_date') || ''),
-      };
-      const wantCurrent = fd.get('is_current') === 'true';
-      if (!fields.name || !fields.start_date || !fields.end_date) {
-        toastError('Preencha nome, início e fim.'); return;
-      }
-      if (fields.end_date <= fields.start_date) {
-        toastError('Data de fim precisa ser depois da data de início.'); return;
-      }
-
-      try {
-        if (isEdit) {
-          const { error } = await data.updateSemester(existing.id, fields);
-          if (error) throw error;
-          if (wantCurrent && !existing.is_current) {
-            const { error: e2 } = await data.setCurrentSemester(existing.id);
-            if (e2) throw e2;
-          }
-        } else {
-          const { data: created, error } = await data.createSemester(fields);
-          if (error) throw error;
-          if (wantCurrent) {
-            const { error: e2 } = await data.setCurrentSemester(created.id);
-            if (e2) throw e2;
-          }
-        }
-        toastSuccess(isEdit ? 'Semestre atualizado.' : 'Semestre criado.');
-        close();
-        onDone?.();
-      } catch (e) {
-        toastError(e.message || String(e));
-      }
-    }
+    if (action === 'save') await doSave();
   });
 }
 
