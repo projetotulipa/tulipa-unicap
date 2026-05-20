@@ -149,6 +149,95 @@ async function loadMeetings(groupId, group, from, to) {
     return;
   }
   box.innerHTML = rows.map(meetingChip).join('');
+  wireMeetingChips(box, groupId, group, from, to);
+}
+
+function wireMeetingChips(box, groupId, group, from, to) {
+  box.querySelectorAll('.att-meeting-chip').forEach((chip) => {
+    const meetingId = chip.dataset.meetingId;
+    const meetingDate = chip.dataset.meetingDate;
+
+    chip.querySelector('[data-action="edit-date"]')?.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      openEditDateDrawer({ id: meetingId, date: meetingDate }, () => loadMeetings(groupId, group, from, to));
+    });
+
+    chip.querySelector('[data-action="delete-meeting"]')?.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const ptDate = new Date(meetingDate + 'T00:00:00').toLocaleDateString('pt-BR');
+      if (!confirm(`Excluir o encontro de ${ptDate}? Isso apaga as marcações deste dia.`)) return;
+      const { error } = await data.deleteMeeting(meetingId);
+      if (error) { toastError(error.message); return; }
+      toastSuccess('Encontro excluído.');
+      await loadMeetings(groupId, group, from, to);
+    });
+  });
+}
+
+function openEditDateDrawer(meeting, onDone) {
+  document.querySelectorAll('.block-drawer-overlay').forEach((el) => el.remove());
+
+  const overlay = document.createElement('div');
+  overlay.className = 'block-drawer-overlay';
+  overlay.innerHTML = `
+    <div class="block-drawer block-drawer--small">
+      <header class="block-drawer__head">
+        <div>
+          <p class="block-drawer__crumb">Encontro</p>
+          <h2><span class="block-drawer__icon">${icon('calendar', { size: 24 })}</span> Mudar a data</h2>
+          <p class="block-drawer__desc">Atalho rápido pra corrigir a data sem perder os registros associados.</p>
+        </div>
+        <button class="icon-btn" data-action="close" aria-label="Fechar">${icon('x', { size: 16 })}</button>
+      </header>
+      <form class="block-drawer__body" id="editDateForm">
+        <label class="drawer-field">
+          <span class="drawer-field__label">Nova data</span>
+          <input type="date" name="date" class="drawer-field__input" value="${escapeAttr(meeting.date)}" required />
+        </label>
+        <p class="muted" style="font-size: 12px; margin: 0;">Se já houver outro encontro deste grupo na nova data, o salvamento será bloqueado.</p>
+      </form>
+      <footer class="block-drawer__foot">
+        <span class="spacer"></span>
+        <button class="btn btn--ghost" data-action="close">Cancelar</button>
+        <button class="btn btn--primary" data-action="save">Salvar</button>
+      </footer>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('is-open'));
+
+  function close() {
+    overlay.classList.remove('is-open');
+    setTimeout(() => overlay.remove(), 220);
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', onKey);
+
+  overlay.addEventListener('click', async (ev) => {
+    if (ev.target === overlay) return close();
+    const action = ev.target.closest('[data-action]')?.dataset?.action;
+    if (action === 'close') return close();
+    if (action === 'save') {
+      const form = overlay.querySelector('#editDateForm');
+      const newDate = String(new FormData(form).get('date') || '');
+      if (!newDate || newDate === meeting.date) { close(); return; }
+      const { error } = await data.updateMeeting(meeting.id, { date: newDate });
+      if (error) {
+        if (/duplicate|unique/i.test(error.message)) {
+          toastError('Já existe um encontro deste grupo nessa data.');
+        } else {
+          toastError(error.message);
+        }
+        return;
+      }
+      toastSuccess('Data atualizada.');
+      close();
+      onDone?.();
+    }
+  });
 }
 
 function meetingChip(m) {
@@ -156,10 +245,16 @@ function meetingChip(m) {
   const formatted = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'short' });
   const statusLabel = { scheduled: 'agendado', happened: 'aconteceu', cancelled: 'cancelado' }[m.status];
   return `
-    <a class="att-meeting-chip att-meeting-chip--${m.status}" href="#/presenca/encontros/${escapeAttr(m.id)}">
-      <strong>${escapeHtml(formatted)}</strong>
-      <span class="muted">${escapeHtml(statusLabel)}</span>
-    </a>
+    <div class="att-meeting-chip att-meeting-chip--${m.status}" data-meeting-id="${escapeAttr(m.id)}" data-meeting-date="${escapeAttr(m.date)}">
+      <a class="att-meeting-chip__link" href="#/presenca/encontros/${escapeAttr(m.id)}">
+        <strong>${escapeHtml(formatted)}</strong>
+        <span class="muted">${escapeHtml(statusLabel)}</span>
+      </a>
+      <div class="att-meeting-chip__menu">
+        <button class="icon-btn icon-btn--xs" data-action="edit-date" title="Editar data">${icon('edit', { size: 12 })}</button>
+        <button class="icon-btn icon-btn--xs" data-action="delete-meeting" title="Excluir">${icon('trash', { size: 12 })}</button>
+      </div>
+    </div>
   `;
 }
 

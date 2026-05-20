@@ -70,6 +70,10 @@ export async function renderAttendanceMeeting(ctx, meetingId) {
           </p>
           <div class="att-meeting-head__controls">
             <label class="att-status-select">
+              <span class="muted">data:</span>
+              <input type="date" id="meetingDate" value="${escapeAttr(meeting.date)}" />
+            </label>
+            <label class="att-status-select">
               <span class="muted">status:</span>
               <select id="meetingStatus">
                 <option value="scheduled" ${meeting.status === 'scheduled' ? 'selected' : ''}>agendado</option>
@@ -77,6 +81,9 @@ export async function renderAttendanceMeeting(ctx, meetingId) {
                 <option value="cancelled" ${meeting.status === 'cancelled' ? 'selected' : ''}>cancelado</option>
               </select>
             </label>
+            <button id="deleteMeetingBtn" class="btn btn--danger btn--small" title="Excluir este encontro">
+              ${icon('trash', { size: 14 })}<span style="margin-left:6px;">Excluir</span>
+            </button>
           </div>
         </div>
       </header>
@@ -130,6 +137,34 @@ export async function renderAttendanceMeeting(ctx, meetingId) {
     if (error) { toastError(error.message); return; }
     toastSuccess('Status atualizado.');
     setTimeout(() => location.reload(), 350);
+  });
+
+  const dateInput = document.getElementById('meetingDate');
+  dateInput.addEventListener('change', async (ev) => {
+    const newDate = ev.target.value;
+    if (!newDate) { dateInput.value = meeting.date; return; }
+    if (newDate === meeting.date) return;
+    const { error } = await data.updateMeeting(meetingId, { date: newDate });
+    if (error) {
+      // provável conflito de unique (group_id, date)
+      if (/duplicate|unique/i.test(error.message)) {
+        toastError('Já existe um encontro deste grupo nessa data.');
+      } else {
+        toastError(error.message);
+      }
+      dateInput.value = meeting.date;
+      return;
+    }
+    toastSuccess('Data atualizada.');
+    setTimeout(() => location.reload(), 350);
+  });
+
+  document.getElementById('deleteMeetingBtn').addEventListener('click', async () => {
+    if (!confirm(`Excluir o encontro de ${new Date(meeting.date + 'T00:00:00').toLocaleDateString('pt-BR')}? Isso apaga as marcações de presença deste dia. Não desfaz.`)) return;
+    const { error } = await data.deleteMeeting(meetingId);
+    if (error) { toastError(error.message); return; }
+    toastSuccess('Encontro excluído.');
+    setTimeout(() => { location.hash = `#/presenca/grupos/${meeting.group_id}`; }, 400);
   });
 
   for (const li of document.querySelectorAll('.att-row')) wireRow(li, people.length);

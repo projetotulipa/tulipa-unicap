@@ -442,23 +442,51 @@
   gap: 8px;
 }
 .att-meeting-chip {
+  position: relative;
   display: inline-flex;
   flex-direction: column;
-  padding: 10px 14px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
-  color: var(--text);
-  text-decoration: none;
-  min-width: 130px;
+  min-width: 150px;
   transition: border-color 0.18s, transform 0.18s var(--ease);
 }
 .att-meeting-chip:hover { border-color: var(--border-rose); transform: translateY(-1px); }
-.att-meeting-chip strong { font-size: 14px; color: var(--cream); }
-.att-meeting-chip .muted { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.att-meeting-chip:hover .att-meeting-chip__menu { opacity: 1; }
+.att-meeting-chip__link {
+  padding: 10px 14px;
+  color: var(--text);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+}
+.att-meeting-chip__link strong { font-size: 14px; color: var(--cream); }
+.att-meeting-chip__link .muted { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.att-meeting-chip__menu {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.att-meeting-chip__menu .icon-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
 .att-meeting-chip--happened { border-color: rgba(107, 142, 61, 0.4); background: rgba(107, 142, 61, 0.06); }
 .att-meeting-chip--happened .muted { color: var(--success); }
-.att-meeting-chip--cancelled { opacity: 0.55; text-decoration: line-through; }
+.att-meeting-chip--cancelled .att-meeting-chip__link { opacity: 0.55; text-decoration: line-through; }
+@media (hover: none) {
+  .att-meeting-chip__menu { opacity: 1; }
+}
+
+/* ícone botão extra pequeno */
+.icon-btn--xs {
+  width: 24px; height: 24px;
+  border-radius: 5px;
+}
 
 /* ---------- tabelas attendance ---------- */
 .att-members-table tr.is-primary strong { color: var(--gold); }
@@ -525,7 +553,23 @@
 }
 .att-meeting-head__main { flex: 1; min-width: 0; }
 .att-meeting-head__main h1 { margin: 0 0 6px; }
-.att-meeting-head__controls { margin-top: 8px; }
+.att-meeting-head__controls {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.att-status-select input[type="date"] {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  outline: none;
+  color-scheme: dark;
+  padding: 0;
+}
 
 .att-status-select {
   display: inline-flex;
