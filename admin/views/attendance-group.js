@@ -100,7 +100,7 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
     btn.textContent = 'gerando…';
     const { data: count, error } = await data.generateMonthlyMeetings(groupId, year, month);
     if (error) toastError(error.message);
-    else { toastSuccess(`${count} encontro(s) gerado(s).`); await loadMeetings(groupId, group, from, to); }
+    else { toastSuccess(`${count} encontro(s) gerado(s).`); await loadMeetings(groupId, group, from, to, isAdmin); }
     btn.disabled = false;
     btn.innerHTML = original;
   });
@@ -117,17 +117,17 @@ export async function renderAttendanceGroupDetail(ctx, groupId) {
       range.semester.end_date
     );
     if (error) toastError(error.message);
-    else { toastSuccess(`${count} encontro(s) gerado(s) no semestre.`); await loadMeetings(groupId, group, from, to); }
+    else { toastSuccess(`${count} encontro(s) gerado(s) no semestre.`); await loadMeetings(groupId, group, from, to, isAdmin); }
     btn.disabled = false;
     btn.innerHTML = original;
   });
 
-  document.getElementById('newMeetingBtn')?.addEventListener('click', () => openMeetingForm(groupId, group, null, () => loadMeetings(groupId, group, from, to)));
+  document.getElementById('newMeetingBtn')?.addEventListener('click', () => openMeetingForm(groupId, group, null, () => loadMeetings(groupId, group, from, to, isAdmin)));
 
   document.getElementById('addMemberBtn').addEventListener('click', () => openAddMemberForm(groupId, () => loadMembers(groupId, group, from, to)));
 
   await Promise.all([
-    loadMeetings(groupId, group, from, to),
+    loadMeetings(groupId, group, from, to, isAdmin),
     loadMembers(groupId, group, from, to),
     loadJustifications(groupId, from, to),
   ]);
@@ -164,7 +164,7 @@ async function loadJustifications(groupId, from, to) {
   `;
 }
 
-async function loadMeetings(groupId, group, from, to) {
+async function loadMeetings(groupId, group, from, to, isAdmin) {
   const box = document.getElementById('meetingsList');
   const { data: rows, error } = await data.listMeetings(groupId, { from, to });
   if (error) { box.innerHTML = `<p class="muted">${error.message}</p>`; return; }
@@ -172,11 +172,11 @@ async function loadMeetings(groupId, group, from, to) {
     box.innerHTML = `<p class="muted">Nenhum encontro neste mês. ${(group.schedule_kind === 'weekly' || group.schedule_kind === 'biweekly') ? 'Use "Gerar encontros do mês" pra criar de uma vez.' : 'Use "Novo encontro" pra criar.'}</p>`;
     return;
   }
-  box.innerHTML = rows.map(meetingChip).join('');
-  wireMeetingChips(box, groupId, group, from, to);
+  box.innerHTML = rows.map((m) => meetingChip(m, { isAdmin })).join('');
+  if (isAdmin) wireMeetingChips(box, groupId, group, from, to, isAdmin);
 }
 
-function wireMeetingChips(box, groupId, group, from, to) {
+function wireMeetingChips(box, groupId, group, from, to, isAdmin) {
   box.querySelectorAll('.att-meeting-chip').forEach((chip) => {
     const meetingId = chip.dataset.meetingId;
     const meetingDate = chip.dataset.meetingDate;
@@ -184,7 +184,7 @@ function wireMeetingChips(box, groupId, group, from, to) {
     chip.querySelector('[data-action="edit-date"]')?.addEventListener('click', (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-      openEditDateDrawer({ id: meetingId, date: meetingDate }, () => loadMeetings(groupId, group, from, to));
+      openEditDateDrawer({ id: meetingId, date: meetingDate }, () => loadMeetings(groupId, group, from, to, isAdmin));
     });
 
     chip.querySelector('[data-action="delete-meeting"]')?.addEventListener('click', async (ev) => {
@@ -195,7 +195,7 @@ function wireMeetingChips(box, groupId, group, from, to) {
       const { error } = await data.deleteMeeting(meetingId);
       if (error) { toastError(error.message); return; }
       toastSuccess('Encontro excluído.');
-      await loadMeetings(groupId, group, from, to);
+      await loadMeetings(groupId, group, from, to, isAdmin);
     });
   });
 }
@@ -232,6 +232,9 @@ function openEditDateDrawer(meeting, onDone) {
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.classList.add('is-open'));
 
+  // previne submit acidental do form (Enter)
+  overlay.querySelector('#editDateForm').addEventListener('submit', (e) => e.preventDefault());
+
   function close() {
     overlay.classList.remove('is-open');
     setTimeout(() => overlay.remove(), 220);
@@ -240,31 +243,40 @@ function openEditDateDrawer(meeting, onDone) {
   function onKey(e) { if (e.key === 'Escape') close(); }
   document.addEventListener('keydown', onKey);
 
+  async function doSave() {
+    const form = overlay.querySelector('#editDateForm');
+    const newDate = String(new FormData(form).get('date') || '');
+    if (!newDate) { toastError('Escolha uma data.'); return; }
+    if (newDate === meeting.date) { close(); return; }
+    const saveBtn = overlay.querySelector('[data-action="save"]');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'salvando…';
+    const { error } = await data.updateMeeting(meeting.id, { date: newDate });
+    if (error) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Salvar';
+      if (/duplicate|unique/i.test(error.message)) {
+        toastError('Já existe um encontro deste grupo nessa data.');
+      } else {
+        toastError(error.message);
+      }
+      return;
+    }
+    toastSuccess('Data atualizada.');
+    close();
+    onDone?.();
+  }
+
   overlay.addEventListener('click', async (ev) => {
     if (ev.target === overlay) return close();
     const action = ev.target.closest('[data-action]')?.dataset?.action;
     if (action === 'close') return close();
-    if (action === 'save') {
-      const form = overlay.querySelector('#editDateForm');
-      const newDate = String(new FormData(form).get('date') || '');
-      if (!newDate || newDate === meeting.date) { close(); return; }
-      const { error } = await data.updateMeeting(meeting.id, { date: newDate });
-      if (error) {
-        if (/duplicate|unique/i.test(error.message)) {
-          toastError('Já existe um encontro deste grupo nessa data.');
-        } else {
-          toastError(error.message);
-        }
-        return;
-      }
-      toastSuccess('Data atualizada.');
-      close();
-      onDone?.();
-    }
+    if (action === 'save') await doSave();
   });
 }
 
-function meetingChip(m) {
+function meetingChip(m, opts = {}) {
+  const { isAdmin = false } = opts;
   const date = new Date(m.date + 'T00:00:00');
   const formatted = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'short' });
   const statusLabel = { scheduled: 'agendado', happened: 'aconteceu', cancelled: 'cancelado' }[m.status];
@@ -274,10 +286,12 @@ function meetingChip(m) {
         <strong>${escapeHtml(formatted)}</strong>
         <span class="muted">${escapeHtml(statusLabel)}</span>
       </a>
-      <div class="att-meeting-chip__menu">
-        <button class="icon-btn icon-btn--xs" data-action="edit-date" title="Editar data">${icon('edit', { size: 12 })}</button>
-        <button class="icon-btn icon-btn--xs" data-action="delete-meeting" title="Excluir">${icon('trash', { size: 12 })}</button>
-      </div>
+      ${isAdmin ? `
+        <div class="att-meeting-chip__menu">
+          <button class="icon-btn icon-btn--xs" data-action="edit-date" title="Editar data">${icon('edit', { size: 12 })}</button>
+          <button class="icon-btn icon-btn--xs" data-action="delete-meeting" title="Excluir">${icon('trash', { size: 12 })}</button>
+        </div>
+      ` : ''}
     </div>
   `;
 }
