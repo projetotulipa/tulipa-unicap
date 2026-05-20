@@ -103,6 +103,92 @@
 /* drawer field tall */
 .drawer-field__input--tall { min-height: 180px; }
 
+/* picker de modelos de fichamento (modal sobreposto ao drawer) */
+.fich-picker-overlay {
+  position: fixed; inset: 0;
+  background: rgba(10, 6, 4, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 20px;
+  transition: background 0.2s;
+  pointer-events: none;
+}
+.fich-picker-overlay.is-open {
+  background: rgba(10, 6, 4, 0.6);
+  pointer-events: auto;
+}
+.fich-picker {
+  width: min(540px, 100%);
+  max-height: 80vh;
+  background: var(--bg-card-hi);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(12px) scale(0.98);
+  opacity: 0;
+  transition: transform 0.22s var(--ease), opacity 0.22s var(--ease);
+}
+.fich-picker-overlay.is-open .fich-picker {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.fich-picker__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.fich-picker__list {
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fich-picker__option {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.18s, transform 0.18s, background 0.18s;
+}
+.fich-picker__option:hover {
+  border-color: var(--gold);
+  transform: translateY(-1px);
+  background: var(--bg-elev);
+}
+.fich-picker__option-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.fich-picker__option-head strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--cream);
+}
+.fich-picker__option p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
 /* guia de fichamento (collapsible inline) */
 .fich-guide {
   background: rgba(193, 158, 90, 0.06);

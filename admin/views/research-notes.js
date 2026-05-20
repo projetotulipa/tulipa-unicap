@@ -5,7 +5,7 @@ import * as data from '../research/data.js';
 import * as attData from '../attendance/data.js';
 import { renderResearchNav } from './research-nav.js';
 import { toastSuccess, toastError } from '../toast.js';
-import { FICHAMENTO_TEMPLATE, FICHAMENTO_GUIDE } from '../research/template.js';
+import { FICHAMENTO_TEMPLATES, FICHAMENTO_GUIDE, templateById } from '../research/template.js';
 
 export async function renderResearchNotes(ctx) {
   const { root } = ctx;
@@ -207,11 +207,7 @@ async function openNoteForm(existing) {
     const action = ev.target.closest('[data-action]')?.dataset?.action;
     if (action === 'close') return close();
     if (action === 'insert-template') {
-      const ta = overlay.querySelector('textarea[name="body"]');
-      if (ta.value.trim() && !confirm('Isso vai substituir o conteúdo atual pelo modelo. Continuar?')) return;
-      ta.value = FICHAMENTO_TEMPLATE;
-      ta.focus();
-      ta.setSelectionRange(0, 0);
+      openTemplatePicker(overlay);
       return;
     }
     if (action === 'toggle-guide') {
@@ -244,6 +240,59 @@ async function openNoteForm(existing) {
       close();
       await loadNotes();
     }
+  });
+}
+
+function openTemplatePicker(parentOverlay) {
+  // mini-modal por cima do drawer de fichamento
+  const picker = document.createElement('div');
+  picker.className = 'fich-picker-overlay';
+  picker.innerHTML = `
+    <div class="fich-picker">
+      <header class="fich-picker__head">
+        <div>
+          <p class="block-drawer__crumb">Escolha um modelo</p>
+          <h2 style="margin:0; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:22px; color:var(--cream);">Modelos ABNT</h2>
+        </div>
+        <button class="icon-btn" data-action="close-picker" aria-label="Fechar">${icon('x', { size: 16 })}</button>
+      </header>
+      <div class="fich-picker__list">
+        ${FICHAMENTO_TEMPLATES.map((t) => `
+          <button class="fich-picker__option" data-template-id="${escapeAttr(t.id)}">
+            <header class="fich-picker__option-head">
+              <strong>${escapeHtml(t.label)}</strong>
+              <span class="pill pill--gold">${escapeHtml(t.abnt)}</span>
+            </header>
+            <p>${escapeHtml(t.description)}</p>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(picker);
+  requestAnimationFrame(() => picker.classList.add('is-open'));
+
+  function close() {
+    picker.classList.remove('is-open');
+    setTimeout(() => picker.remove(), 200);
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', onKey);
+
+  picker.addEventListener('click', (ev) => {
+    if (ev.target === picker) return close();
+    if (ev.target.closest('[data-action="close-picker"]')) return close();
+    const opt = ev.target.closest('[data-template-id]');
+    if (!opt) return;
+    const tmpl = templateById(opt.dataset.templateId);
+    if (!tmpl) return;
+    const ta = parentOverlay.querySelector('textarea[name="body"]');
+    if (ta.value.trim() && !confirm('Isso vai substituir o conteúdo atual pelo modelo. Continuar?')) return;
+    ta.value = tmpl.body;
+    ta.focus();
+    ta.setSelectionRange(0, 0);
+    close();
   });
 }
 
