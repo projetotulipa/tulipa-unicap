@@ -2289,3 +2289,236 @@ a.fin-pipeline__node:hover .fin-pipeline__num { color: var(--gold); }
   color: var(--text-dim);
   font-style: italic;
 }
+
+/* =========================================================
+   ===== Sprint 5: Planejamento como anais + polish =====
+   ========================================================= */
+
+/* ---------- plano como carta-anais ---------- */
+.fin-plan-grid-v2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+}
+.fin-plan-letter {
+  position: relative;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(193, 158, 90, 0.10), transparent 50%),
+    var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  transition: border-color 0.22s var(--ease), transform 0.22s var(--ease), box-shadow 0.22s var(--ease);
+  min-height: 200px;
+}
+.fin-plan-letter:hover {
+  border-color: rgba(193, 158, 90, 0.45);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.fin-plan-letter::before {
+  /* fita gold pendente do canto sup. direito */
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 20px;
+  width: 22px;
+  height: 36px;
+  background: linear-gradient(180deg, var(--gold) 0%, rgba(193, 158, 90, 0.65) 70%, transparent 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%);
+  opacity: 0.55;
+  transition: opacity 0.22s;
+}
+.fin-plan-letter:hover::before { opacity: 0.9; }
+.fin-plan-letter.is-completed { opacity: 0.72; }
+.fin-plan-letter.is-completed::before { opacity: 1; }
+
+.fin-plan-letter__page {
+  position: absolute;
+  bottom: -34px;
+  right: -28px;
+  width: 150px;
+  height: 150px;
+  opacity: 0.06;
+  color: var(--paper);
+  pointer-events: none;
+  transform: rotate(-12deg);
+  z-index: 0;
+}
+.fin-plan-letter__page svg { width: 100%; height: 100%; }
+
+.fin-plan-letter__head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.fin-plan-letter__seal {
+  width: 46px; height: 46px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(217, 189, 131, 0.32), rgba(193, 158, 90, 0.08));
+  color: var(--gold);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.fin-plan-letter__seal::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px solid rgba(217, 189, 131, 0.32);
+  pointer-events: none;
+}
+.fin-plan-letter.is-completed .fin-plan-letter__seal {
+  background: radial-gradient(circle at 30% 30%, rgba(217, 189, 131, 0.55), rgba(193, 158, 90, 0.18));
+  box-shadow: 0 0 0 3px rgba(193, 158, 90, 0.18), 0 8px 20px rgba(40, 15, 18, 0.3);
+  animation: att-sem-seal 2.4s ease-in-out infinite; /* reusa keyframe de attendance.css */
+}
+
+.fin-plan-letter__title { flex: 1; min-width: 0; }
+.fin-plan-letter__eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+  margin: 0 0 4px;
+  font-style: normal;
+}
+.fin-plan-letter__eyebrow--completed { color: var(--success); }
+.fin-plan-letter__name {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--cream);
+  line-height: 1.15;
+  word-break: break-word;
+}
+.fin-plan-letter.is-completed .fin-plan-letter__name {
+  text-decoration: line-through;
+  text-decoration-color: rgba(237, 223, 194, 0.45);
+}
+
+.fin-plan-letter__desc {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.fin-plan-letter__desc--empty {
+  font-style: italic;
+  color: var(--text-mute);
+}
+
+.fin-plan-letter__amount {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+.fin-plan-letter__amount strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 24px;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.fin-plan-letter__amount span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dimer);
+}
+.fin-plan-letter.is-completed .fin-plan-letter__amount strong {
+  color: var(--success);
+}
+.fin-plan-letter__amount--empty {
+  color: var(--text-mute);
+  font-style: italic;
+  font-size: 12px;
+}
+
+.fin-plan-letter__actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 8px;
+}
+.fin-plan-letter__actions .spacer { flex: 1; }
+
+/* estampa "concluído" gold quando is-completed */
+.fin-plan-letter__stamp {
+  position: absolute;
+  top: 12px;
+  right: 56px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(107, 142, 61, 0.22), rgba(107, 142, 61, 0.08));
+  border: 1px solid rgba(107, 142, 61, 0.5);
+  color: var(--success);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  z-index: 2;
+  animation: fin-plan-stamp 0.55s var(--ease);
+}
+.fin-plan-letter__stamp svg { color: var(--success); }
+@keyframes fin-plan-stamp {
+  0%   { transform: scale(0.6) rotate(-10deg); opacity: 0; }
+  60%  { transform: scale(1.08) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* pulse de "concluído" ao marcar */
+.fin-plan-letter.is-just-completed {
+  animation: fin-plan-pulse 0.7s ease-out;
+}
+@keyframes fin-plan-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(107, 142, 61, 0.45); }
+  60%  { box-shadow: 0 0 0 12px rgba(107, 142, 61, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(107, 142, 61, 0); }
+}
+
+/* polish: tooltip dos status dots já existentes — visíveis ao focar */
+.att-dot[title]:focus::after {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-deep);
+  color: var(--cream);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  z-index: 30;
+}
