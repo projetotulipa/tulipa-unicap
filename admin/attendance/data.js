@@ -191,12 +191,23 @@ export async function getSemester(id) {
 }
 
 export async function getCurrentSemester() {
-  const { data, error } = await supabase
-    .from('semesters')
-    .select('*')
-    .eq('is_current', true)
-    .maybeSingle();
-  return { data, error };
+  try {
+    const { data, error } = await supabase
+      .from('semesters')
+      .select('*')
+      .eq('is_current', true)
+      .maybeSingle();
+    if (error) {
+      // se a tabela ainda não existe (migration 007 não rodada), retorna null silenciosamente
+      if (/relation .* does not exist/i.test(error.message)) {
+        return { data: null, error: null };
+      }
+      return { data: null, error };
+    }
+    return { data, error: null };
+  } catch (e) {
+    return { data: null, error: null };
+  }
 }
 
 export async function createSemester(fields) {

@@ -83,14 +83,29 @@ export async function renderAttendanceDashboard(ctx) {
   `;
 
   // carrega tudo em paralelo
-  loadEverything({ year, month, from, to, today });
+  loadEverything({ year, month, from, to, today, range }).catch((err) => {
+    console.error('[attendance dashboard] erro carregando:', err);
+    const fail = (id, msg) => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<p class="muted">Erro ao carregar: ${escapeHtml(msg)}</p>`;
+    };
+    fail('attStats', err.message || String(err));
+    fail('attToday', '');
+    fail('attUpcoming', '');
+    fail('attAlerts', err.message || String(err));
+  });
 }
 
-async function loadEverything({ year, month, from, to, today }) {
-  const { data: groups } = await data.listGroups();
-  const { data: people } = await data.listPeople();
+async function loadEverything({ year, month, from, to, today, range }) {
+  const groupsRes = await data.listGroups();
+  if (groupsRes.error) throw new Error(`listGroups: ${groupsRes.error.message}`);
+  const groups = groupsRes.data || [];
 
-  if (!groups?.length) {
+  const peopleRes = await data.listPeople();
+  if (peopleRes.error) throw new Error(`listPeople: ${peopleRes.error.message}`);
+  const people = peopleRes.data || [];
+
+  if (!groups.length) {
     document.getElementById('attStats').innerHTML = '';
     document.getElementById('attToday').innerHTML = '';
     document.getElementById('attUpcoming').innerHTML = '';
@@ -111,15 +126,20 @@ async function loadEverything({ year, month, from, to, today }) {
   const weekToStr = isoDate(new Date(today.getTime() + 6 * 86400000));
 
   const perGroupData = await Promise.all(groups.map(async (g) => {
-    const [meetingsRes, membersRes] = await Promise.all([
-      data.listAttendanceByGroupInRange(g.id, from, to),
-      data.listMembershipsOfGroup(g.id),
-    ]);
-    return {
-      group: g,
-      meetings: meetingsRes.data || [],
-      members: membersRes.data || [],
-    };
+    try {
+      const [meetingsRes, membersRes] = await Promise.all([
+        data.listAttendanceByGroupInRange(g.id, from, to),
+        data.listMembershipsOfGroup(g.id),
+      ]);
+      return {
+        group: g,
+        meetings: meetingsRes.data || [],
+        members: membersRes.data || [],
+      };
+    } catch (e) {
+      console.error('[attendance dashboard] grupo', g.id, e);
+      return { group: g, meetings: [], members: [] };
+    }
   }));
 
   // % presença geral do mês (soma presentes / soma esperadas em meetings que aconteceram)
@@ -152,7 +172,7 @@ async function loadEverything({ year, month, from, to, today }) {
 
   document.getElementById('attStats').innerHTML = `
     ${statCard(icon('group', { size: 20 }), groups.length, groups.length === 1 ? 'grupo ativo' : 'grupos ativos')}
-    ${statCard(icon('users', { size: 20 }), people?.length || 0, (people?.length === 1) ? 'pessoa cadastrada' : 'pessoas cadastradas')}
+    ${statCard(icon('users', { size: 20 }), people.length, people.length === 1 ? 'pessoa cadastrada' : 'pessoas cadastradas')}
     ${statCard(icon('calendar', { size: 20 }), perGroupData.reduce((acc, x) => acc + x.meetings.filter(m => m.status === 'happened').length, 0), range.semester ? 'encontros no semestre' : 'encontros no mês')}
     ${statCard(icon('check-circle', { size: 20 }), pct === null ? '—' : `${pct}%`, 'presença média', pct !== null ? (pct >= 70 ? 'success' : pct >= 50 ? 'warning' : 'danger') : null)}
   `;
