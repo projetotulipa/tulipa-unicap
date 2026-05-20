@@ -7,6 +7,18 @@ import { renderResearchNav } from './research-nav.js';
 import { avatarHtml } from '../avatar.js';
 import { toastSuccess, toastError } from '../toast.js';
 
+const PAGE_WATERMARK = `
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M22 14 L62 14 L78 30 L78 86 L22 86 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M62 14 L62 30 L78 30" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="30" y1="42" x2="70" y2="42" stroke="currentColor" stroke-width="1.5"/>
+  </svg>
+`;
+
+// carga e fichamentos recentes por equipe (preenchidos no loadTeams)
+let cachedTaskLoad = new Map();    // team_id → { pending, total }
+let cachedRecentNotes = new Map(); // team_id → [Note, ...] (até 3)
+
 export async function renderResearchTeams(ctx) {
   const { root } = ctx;
 
@@ -15,14 +27,20 @@ export async function renderResearchTeams(ctx) {
       ${renderResearchNav('equipes')}
 
       <header class="view__header" style="display:flex; align-items:flex-end; justify-content:space-between; gap:14px;">
+        <div class="research-section-petal">${PAGE_WATERMARK}</div>
         <div>
           <h1>Equipes de Pesquisa</h1>
-          <p class="view__lede">Divida o setor em sub-equipes (estudo, comunicação científica, etc.). Vincule as pessoas a cada uma.</p>
+          <p class="view__lede">Divida o setor em sub-equipes (estudo, comunicação científica, etc.). A barra de carga mostra quantos fichamentos e rascunhos cada uma tem em aberto.</p>
         </div>
         <button class="btn btn--primary" id="newTeamBtn">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Nova equipe</span></button>
       </header>
 
-      <div id="teamsList" class="empty-state"><div class="skel skel--block"></div></div>
+      <div id="teamsList" class="empty-state">
+        <div class="research-loading-wrap">
+          <span class="research-seal" aria-hidden="true"><span class="research-seal__letter">P</span></span>
+          <span>carregando…</span>
+        </div>
+      </div>
     </div>
   `;
 
@@ -32,19 +50,58 @@ export async function renderResearchTeams(ctx) {
 
 async function loadTeams() {
   const box = document.getElementById('teamsList');
-  const { data: teams, error } = await data.listGroups({ includeArchived: true });
+  const [{ data: teams, error }, { data: notes }, { data: posts }] = await Promise.all([
+    data.listGroups({ includeArchived: true }),
+    data.listNotes(),
+    data.listPosts(),
+  ]);
   if (error) { box.innerHTML = `<p class="muted">${error.message}</p>`; return; }
   if (!teams?.length) {
     box.innerHTML = `
-      <div class="att-empty">
-        <div class="att-empty__art">${icon('group', { size: 56 })}</div>
-        <h3>Nenhuma equipe</h3>
-        <p>Crie equipes pra organizar quem estuda o quê dentro da Pesquisa.</p>
-        <button class="btn btn--primary" id="emptyNew">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Criar primeira</span></button>
+      <div class="research-empty">
+        <div class="research-empty__art">${icon('group', { size: 48 })}</div>
+        <h3>Nenhuma equipe de pesquisa</h3>
+        <p>Crie equipes pra organizar quem estuda o quê dentro da Pesquisa — Jung, Política, Comunicação científica…</p>
+        <button class="btn btn--primary" id="emptyNew">${icon('plus', { size: 14 })}<span style="margin-left:6px;">Criar primeira equipe</span></button>
       </div>
     `;
     document.getElementById('emptyNew').addEventListener('click', () => openTeamForm(null));
     return;
+  }
+
+  // carga por equipe: fichamentos vinculados (todos) + posts em draft/sent
+  cachedTaskLoad = new Map();
+  cachedRecentNotes = new Map();
+
+  const notesArr = notes || [];
+  const postsArr = posts || [];
+
+  for (const t of teams) {
+    cachedTaskLoad.set(t.id, { pending: 0, total: 0 });
+    cachedRecentNotes.set(t.id, []);
+  }
+  // fichamentos: cada um conta no total + (se ainda não virou post) entra como "pending"
+  const postedNoteIds = new Set(postsArr.map((p) => p.research_note_id).filter(Boolean));
+  for (const n of notesArr) {
+    if (!n.research_group_id) continue;
+    const entry = cachedTaskLoad.get(n.research_group_id);
+    if (!entry) continue;
+    entry.total++;
+    if (!postedNoteIds.has(n.id)) entry.pending++;
+  }
+  // posts em rascunho/enviado também entram como pending na equipe
+  for (const p of postsArr) {
+    if (!p.research_group_id) continue;
+    if (p.status !== 'draft' && p.status !== 'sent_to_media') continue;
+    const entry = cachedTaskLoad.get(p.research_group_id);
+    if (!entry) continue;
+    entry.pending++;
+  }
+  // últimos 3 fichamentos por equipe (notes já vêm ordenados desc por created_at)
+  for (const n of notesArr) {
+    if (!n.research_group_id) continue;
+    const list = cachedRecentNotes.get(n.research_group_id);
+    if (list && list.length < 3) list.push(n);
   }
 
   const memberCounts = await Promise.all(teams.map((t) => data.listGroupMembers(t.id)));
@@ -61,21 +118,57 @@ async function loadTeams() {
 }
 
 function teamCard(t, members) {
+  const recent = cachedRecentNotes.get(t.id) || [];
   return `
     <article class="att-group-card ${t.is_archived ? 'is-archived' : ''}" data-team-id="${escapeAttr(t.id)}">
       <button class="att-group-card__main" data-action="open" style="background:transparent; border:none; cursor:pointer; font:inherit; color:inherit; text-align:left; width:100%;">
-        <span class="att-group-card__icon">${icon('group', { size: 22 })}</span>
+        <span class="research-monogram" aria-hidden="true">${escapeHtml(monogramFor(t.name))}</span>
         <div class="att-group-card__body">
           <strong>${escapeHtml(t.name)}</strong>
           ${t.description ? `<span class="att-group-card__desc">${escapeHtml(t.description)}</span>` : ''}
           <div class="att-group-card__stats">
-            <span class="pill">${icon('users', { size: 11 })}<span style="margin-left:4px;">${members.length} ${members.length === 1 ? 'pessoa' : 'pessoas'}</span></span>
+            <span class="research-pill">${icon('users', { size: 11 })}<span>${members.length} ${members.length === 1 ? 'pessoa' : 'pessoas'}</span></span>
             ${t.is_archived ? '<span class="att-group-card__badge">arquivada</span>' : ''}
           </div>
-          ${members.length ? `<div style="display:flex; gap:-4px; margin-top: 8px;">${members.slice(0, 5).map((m) => avatarHtml(m.person?.full_name, { size: 'sm' })).join('')}${members.length > 5 ? `<span class="muted" style="margin-left:8px; font-size:12px;">+${members.length - 5}</span>` : ''}</div>` : ''}
+          ${loadBarFor(t.id)}
+          ${members.length ? `<div style="display:flex; gap:4px; margin-top: 10px; flex-wrap:wrap;">${members.slice(0, 5).map((m) => avatarHtml(m.person?.full_name, { size: 'sm' })).join('')}${members.length > 5 ? `<span class="muted" style="margin-left:8px; font-size:12px; align-self:center;">+${members.length - 5}</span>` : ''}</div>` : ''}
+          ${recent.length ? `
+            <div class="research-team-card__recent">
+              <strong>últimos fichamentos</strong>
+              <ul>
+                ${recent.map((n) => `<li>${escapeHtml(n.title)}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
         </div>
       </button>
     </article>
+  `;
+}
+
+function monogramFor(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '·';
+  if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function loadBarFor(teamId) {
+  const load = cachedTaskLoad.get(teamId);
+  if (!load || load.pending === 0) {
+    return `<div class="research-load-bar"><div class="research-load-bar__track"><div class="research-load-bar__fill" style="width:0%;"></div></div><span class="research-load-bar__label">livre</span></div>`;
+  }
+  const pct = Math.min(100, (load.pending / 8) * 100);
+  const tone = load.pending >= 8 ? 'research-load-bar__fill--overload'
+             : load.pending >= 4 ? 'research-load-bar__fill--heavy'
+             : '';
+  return `
+    <div class="research-load-bar" title="${load.pending} em aberto de ${load.total}">
+      <div class="research-load-bar__track">
+        <div class="research-load-bar__fill ${tone}" style="width:${pct}%;"></div>
+      </div>
+      <span class="research-load-bar__label">${load.pending}/${load.total}</span>
+    </div>
   `;
 }
 
@@ -165,7 +258,13 @@ async function openTeamForm(existing) {
     setTimeout(() => overlay.remove(), 220);
     document.removeEventListener('keydown', onKey);
   }
-  function onKey(e) { if (e.key === 'Escape') close(); }
+  function onKey(e) {
+    if (e.key === 'Escape') close();
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      overlay.querySelector('[data-action="save"]')?.click();
+    }
+  }
   document.addEventListener('keydown', onKey);
 
   overlay.addEventListener('click', async (ev) => {

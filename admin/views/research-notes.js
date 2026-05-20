@@ -223,7 +223,14 @@ function renderList() {
 
   box.querySelectorAll('[data-id]').forEach((el) => {
     el.addEventListener('click', async (ev) => {
-      // dnd-related interactions não devem abrir modal
+      // se o click foi no chip de posts derivados, intercepta
+      const derivedBtn = ev.target.closest('[data-action="show-derived"]');
+      if (derivedBtn) {
+        ev.stopPropagation();
+        openDerivedPostsDrawer(derivedBtn.dataset.noteId);
+        return;
+      }
+      // outros botões (drag etc.) também não abrem modal
       if (ev.target.closest('button')) return;
       const { data: full } = await data.getNote(el.dataset.id);
       if (full) openNoteForm(full);
@@ -231,6 +238,73 @@ function renderList() {
   });
 
   bindNoteDragToPost();
+}
+
+// ---------- painel lateral: posts derivados de um fichamento ----------
+function openDerivedPostsDrawer(noteId) {
+  const note = cachedNotes.find((n) => n.id === noteId);
+  if (!note) return;
+  const derived = cachedPosts.filter((p) => p.research_note_id === noteId);
+  if (!derived.length) return;
+
+  document.querySelectorAll('.research-derived-drawer').forEach((el) => el.remove());
+
+  const statusLabels = {
+    draft:         'rascunho',
+    sent_to_media: 'na mídia',
+    scheduled:     'agendado',
+    published:     'publicado',
+  };
+
+  const overlay = document.createElement('div');
+  overlay.className = 'research-derived-drawer';
+  overlay.innerHTML = `
+    <div class="research-derived-drawer__panel" role="dialog" aria-modal="true">
+      <header class="research-derived-drawer__head">
+        <div>
+          <p class="research-derived-drawer__crumb">Posts derivados de</p>
+          <h3>${escapeHtml(note.title)}</h3>
+        </div>
+        <button class="icon-btn" data-action="close" aria-label="Fechar">${icon('x', { size: 16 })}</button>
+      </header>
+      <div class="research-derived-drawer__body">
+        ${derived.length
+          ? derived.map((p) => `
+            <div class="research-derived-drawer__row research-derived-drawer__row--${p.status}" data-post-id="${escapeAttr(p.id)}">
+              <div>
+                <strong>${escapeHtml(p.title)}</strong>
+                <span>${escapeHtml(statusLabels[p.status] || p.status)}${p.research_group?.name ? ' · ' + escapeHtml(p.research_group.name) : ''}</span>
+              </div>
+              <span class="research-derived-drawer__row-meta">${icon('chevron', { size: 14 })}</span>
+            </div>
+          `).join('')
+          : `<div class="research-derived-drawer__empty">Sem posts derivados ainda.</div>`
+        }
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('is-open'));
+
+  function close() {
+    overlay.classList.remove('is-open');
+    setTimeout(() => overlay.remove(), 220);
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', onKey);
+
+  overlay.addEventListener('click', async (ev) => {
+    if (ev.target === overlay) return close();
+    if (ev.target.closest('[data-action="close"]')) return close();
+    const row = ev.target.closest('[data-post-id]');
+    if (!row) return;
+    close();
+    // abre o form do post diretamente
+    const { openPostForm } = await import('./research-posts.js');
+    const { data: full } = await data.getPost(row.dataset.postId);
+    if (full) openPostForm(full, { onSaved: () => loadAll() });
+  });
 }
 
 function applyFilters(list) {
@@ -334,7 +408,7 @@ function noteCard(n) {
         ${meetingDate ? `<span class="research-pill">${icon('calendar', { size: 11 })}<span>${escapeHtml(meetingDate)}</span></span>` : ''}
         ${groupLabel ? `<span class="research-pill research-pill--team">${icon('group', { size: 11 })}<span>${escapeHtml(groupLabel)}</span></span>` : ''}
         ${postCount > 0
-          ? `<span class="research-pill research-pill--posts" style="margin-left:auto;">${icon('spark', { size: 11 })}<span>${postCount} ${postCount === 1 ? 'post' : 'posts'}</span></span>`
+          ? `<button class="research-pill research-pill--posts" style="margin-left:auto;" data-action="show-derived" data-note-id="${escapeAttr(n.id)}" title="ver posts derivados">${icon('spark', { size: 11 })}<span>${postCount} ${postCount === 1 ? 'post' : 'posts'}</span></button>`
           : `<span class="research-pill research-pill--no-posts" style="margin-left:auto;">ainda sem post</span>`
         }
       </footer>

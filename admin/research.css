@@ -1872,3 +1872,222 @@
   .research-moodboard__card { padding: 18px 16px 14px; }
   .research-moodboard__title { font-size: 18px; }
 }
+
+/* ===== Sprint 5: equipes + conexão bidirecional + polish ===== */
+
+/* ---------- monograma sage (paralelo ao .media-monogram rose) ---------- */
+.research-monogram {
+  width: 48px; height: 48px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 14px;
+  background: radial-gradient(circle at 30% 28%, var(--sage) 0%, var(--sage-deep) 60%, #1f2917 100%);
+  color: var(--cream);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(40, 15, 18, 0.35), inset 0 1px 0 rgba(237, 223, 194, 0.18);
+  position: relative;
+  overflow: hidden;
+}
+.research-monogram::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 75% 80%, rgba(0,0,0,0.18), transparent 50%);
+  pointer-events: none;
+}
+
+/* ---------- barra de carga (paleta sage→gold→rose) ---------- */
+.research-load-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.research-load-bar__track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+.research-load-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--sage), var(--gold));
+  transition: width 0.3s var(--ease);
+}
+.research-load-bar__fill--heavy {
+  background: linear-gradient(90deg, var(--gold), var(--rose-soft));
+}
+.research-load-bar__fill--overload {
+  background: linear-gradient(90deg, var(--rose-soft), var(--danger));
+}
+.research-load-bar__label {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* card de equipe expandido (hover revela últimos fichamentos) */
+.research-team-card__recent {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: none;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.research-team-card__recent strong {
+  display: block;
+  color: var(--cream);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.research-team-card__recent ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.research-team-card__recent li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 10px;
+  position: relative;
+}
+.research-team-card__recent li::before {
+  content: '·';
+  position: absolute;
+  left: 0;
+  color: var(--sage);
+}
+.att-group-card:hover .research-team-card__recent { display: block; }
+
+/* mira sutil na pill clickable "N posts gerados" — vira link */
+.research-note-card .research-pill--posts {
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.research-note-card .research-pill--posts:hover {
+  background: rgba(217, 189, 131, 0.22);
+  border-color: var(--gold);
+  transform: translateY(-1px);
+}
+
+/* ---------- painel lateral: posts derivados de um fichamento ---------- */
+.research-derived-drawer {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+  display: flex;
+  justify-content: flex-end;
+}
+.research-derived-drawer.is-open { opacity: 1; }
+.research-derived-drawer__panel {
+  width: min(440px, 100%);
+  background: var(--bg-elev);
+  border-left: 1px solid var(--border);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(20px);
+  transition: transform 0.22s var(--ease);
+  box-shadow: var(--shadow-lg);
+}
+.research-derived-drawer.is-open .research-derived-drawer__panel {
+  transform: translateX(0);
+}
+.research-derived-drawer__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.research-derived-drawer__crumb {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+  margin: 0 0 4px;
+}
+.research-derived-drawer__head h3 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--cream);
+  line-height: 1.2;
+}
+.research-derived-drawer__body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.research-derived-drawer__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--sage);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.18s, transform 0.18s;
+}
+.research-derived-drawer__row:hover {
+  border-color: rgba(74, 92, 54, 0.55);
+  transform: translateY(-1px);
+}
+.research-derived-drawer__row--draft         { border-left-color: var(--paper); }
+.research-derived-drawer__row--sent_to_media { border-left-color: var(--gold-soft); }
+.research-derived-drawer__row--scheduled     { border-left-color: var(--gold); }
+.research-derived-drawer__row--published     { border-left-color: var(--success); opacity: 0.8; }
+.research-derived-drawer__row strong {
+  display: block;
+  color: var(--cream);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.research-derived-drawer__row span {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.research-derived-drawer__row-meta {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.research-derived-drawer__empty {
+  text-align: center;
+  padding: 36px 14px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* drop-flash do kanban — reusa keyframe de media (já definido) */
+.research-note-card.is-dropped { animation: media-drop-flash 0.55s ease-out; }
