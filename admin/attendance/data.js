@@ -149,6 +149,18 @@ export async function listMeetings(group_id, { from, to } = {}) {
   return q;
 }
 
+// retorna todas as meetings (de quaisquer grupos) numa janela de datas.
+// usada pelo dashboard de Pesquisa pra desenhar o skyline de aulas.
+export async function listMeetingsBetween({ from, to } = {}) {
+  let q = supabase
+    .from('meetings')
+    .select('*, group:attendance_groups(id, name)')
+    .order('date');
+  if (from) q = q.gte('date', from);
+  if (to)   q = q.lte('date', to);
+  return q;
+}
+
 export async function getMeeting(id) {
   return supabase.from('meetings').select('*, group:attendance_groups(*)').eq('id', id).maybeSingle();
 }
