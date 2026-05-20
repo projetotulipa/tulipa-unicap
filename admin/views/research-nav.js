@@ -1,9 +1,10 @@
 import { icon } from '../icons.js';
 
 const ITEMS = [
-  { key: 'dashboard',    label: 'Visão geral',  hash: '#/pesquisa',              iconName: 'attendance' },
-  { key: 'fichamentos',  label: 'Fichamentos',  hash: '#/pesquisa/fichamentos',  iconName: 'page' },
-  { key: 'posts',        label: 'Posts',        hash: '#/pesquisa/posts',        iconName: 'spark' },
+  { key: 'dashboard',   label: 'Visão geral',  hash: '#/pesquisa',              iconName: 'attendance' },
+  { key: 'fichamentos', label: 'Fichamentos',  hash: '#/pesquisa/fichamentos',  iconName: 'page' },
+  { key: 'posts',       label: 'Posts',        hash: '#/pesquisa/posts',        iconName: 'spark' },
+  { key: 'equipes',     label: 'Equipes',      hash: '#/pesquisa/equipes',      iconName: 'group' },
 ];
 
 export function renderResearchNav(active) {

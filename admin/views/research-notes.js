@@ -72,6 +72,7 @@ function noteCard(n) {
         ${meetingDate ? `<span class="pill pill--gold">${icon('calendar', { size: 11 })}<span style="margin-left:4px;">${escapeHtml(meetingDate)}</span></span>` : ''}
       </header>
       <p class="muted" style="font-size:12px; margin: 0;">${escapeHtml(n.group?.name || 'sem grupo associado')}</p>
+      ${n.research_group ? `<span class="pill" style="align-self:flex-start;">${icon('group', { size: 11 })}<span style="margin-left:4px;">${escapeHtml(n.research_group.name)}</span></span>` : ''}
       ${preview ? `<p class="res-note-card__preview">${escapeHtml(preview)}${n.body && n.body.length > 160 ? '…' : ''}</p>` : '<p class="muted" style="font-style:italic;">sem conteúdo ainda</p>'}
     </article>
   `;
@@ -91,7 +92,10 @@ async function openNoteForm(existing) {
 
   const isEdit = !!existing;
   // carrega grupos pro select
-  const { data: groups } = await attData.listGroups();
+  const [{ data: groups }, { data: researchTeams }] = await Promise.all([
+    attData.listGroups(),
+    data.listGroups(),
+  ]);
 
   const overlay = document.createElement('div');
   overlay.className = 'block-drawer-overlay';
@@ -111,7 +115,7 @@ async function openNoteForm(existing) {
         </label>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
           <label class="drawer-field" style="flex:1; min-width:200px;">
-            <span class="drawer-field__label">Grupo</span>
+            <span class="drawer-field__label">Grupo (aulas)</span>
             <select name="group_id" class="drawer-field__input" id="noteGroup">
               <option value="">— sem vínculo —</option>
               ${(groups || []).map((g) => `<option value="${escapeAttr(g.id)}" ${existing?.group_id === g.id ? 'selected' : ''}>${escapeHtml(g.name)}</option>`).join('')}
@@ -124,6 +128,14 @@ async function openNoteForm(existing) {
             </select>
           </label>
         </div>
+        <label class="drawer-field">
+          <span class="drawer-field__label">Equipe responsável (pesquisa)</span>
+          <select name="research_group_id" class="drawer-field__input">
+            <option value="">— nenhuma —</option>
+            ${(researchTeams || []).map((t) => `<option value="${escapeAttr(t.id)}" ${existing?.research_group_id === t.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>`).join('')}
+          </select>
+          <p class="drawer-field__hint">Quem dentro da Pesquisa está cuidando deste fichamento.</p>
+        </label>
         <label class="drawer-field">
           <span class="drawer-field__label">Conteúdo</span>
           <textarea name="body" class="drawer-field__input drawer-field__input--tall" rows="12" placeholder="Resumo do estudo, citações, observações, perguntas…">${escapeHtml(existing?.body || '')}</textarea>
@@ -191,6 +203,7 @@ async function openNoteForm(existing) {
         body: String(fd.get('body') || ''),
         group_id: fd.get('group_id') || null,
         meeting_id: fd.get('meeting_id') || null,
+        research_group_id: fd.get('research_group_id') || null,
       };
       if (!fields.title) { toastError('Título é obrigatório.'); return; }
       const { error } = isEdit ? await data.updateNote(existing.id, fields) : await data.createNote(fields);

@@ -93,7 +93,10 @@ async function openPostForm(existing) {
   document.querySelectorAll('.block-drawer-overlay').forEach((el) => el.remove());
 
   const isEdit = !!existing;
-  const { data: notes } = await data.listNotes({ limit: 80 });
+  const [{ data: notes }, { data: researchTeams }] = await Promise.all([
+    data.listNotes({ limit: 80 }),
+    data.listGroups(),
+  ]);
 
   const overlay = document.createElement('div');
   overlay.className = 'block-drawer-overlay';
@@ -111,13 +114,22 @@ async function openPostForm(existing) {
           <span class="drawer-field__label">Título interno</span>
           <input type="text" name="title" class="drawer-field__input" required value="${escapeAttr(existing?.title || '')}" placeholder="Como identificar este post" />
         </label>
-        <label class="drawer-field">
-          <span class="drawer-field__label">Fichamento base (opcional)</span>
-          <select name="research_note_id" class="drawer-field__input">
-            <option value="">— sem vínculo —</option>
-            ${(notes || []).map((n) => `<option value="${escapeAttr(n.id)}" ${existing?.research_note_id === n.id ? 'selected' : ''}>${escapeHtml(n.title)}</option>`).join('')}
-          </select>
-        </label>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <label class="drawer-field" style="flex:1; min-width:200px;">
+            <span class="drawer-field__label">Fichamento base</span>
+            <select name="research_note_id" class="drawer-field__input">
+              <option value="">— sem vínculo —</option>
+              ${(notes || []).map((n) => `<option value="${escapeAttr(n.id)}" ${existing?.research_note_id === n.id ? 'selected' : ''}>${escapeHtml(n.title)}</option>`).join('')}
+            </select>
+          </label>
+          <label class="drawer-field" style="flex:1; min-width:200px;">
+            <span class="drawer-field__label">Equipe responsável</span>
+            <select name="research_group_id" class="drawer-field__input">
+              <option value="">— nenhuma —</option>
+              ${(researchTeams || []).map((t) => `<option value="${escapeAttr(t.id)}" ${existing?.research_group_id === t.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>`).join('')}
+            </select>
+          </label>
+        </div>
         <label class="drawer-field">
           <span class="drawer-field__label">Texto do post</span>
           <textarea name="body" class="drawer-field__input drawer-field__input--tall" rows="10" placeholder="Como vai aparecer no feed">${escapeHtml(existing?.body || '')}</textarea>
@@ -174,6 +186,7 @@ async function openPostForm(existing) {
         title: String(fd.get('title') || '').trim(),
         body: String(fd.get('body') || ''),
         research_note_id: fd.get('research_note_id') || null,
+        research_group_id: fd.get('research_group_id') || null,
         status: String(fd.get('status') || 'draft'),
       };
       if (!fields.title) { toastError('Título é obrigatório.'); return; }

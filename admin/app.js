@@ -24,6 +24,7 @@ import { renderFinancePlans }        from './views/finance-plans.js';
 import { renderResearchDashboard }   from './views/research.js';
 import { renderResearchNotes }       from './views/research-notes.js';
 import { renderResearchPosts }       from './views/research-posts.js';
+import { renderResearchTeams }       from './views/research-teams.js';
 import { renderMediaDashboard }      from './views/media.js';
 import { renderMediaPosts }          from './views/media-posts.js';
 import { renderMediaTeams }          from './views/media-teams.js';
@@ -199,6 +200,7 @@ function route() {
         if (!canManageResearch()) { location.hash = '#/paginas'; return; }
         if (parts[1] === 'fichamentos') return renderResearchNotes(ctx);
         if (parts[1] === 'posts')       return renderResearchPosts(ctx);
+        if (parts[1] === 'equipes')     return renderResearchTeams(ctx);
         return renderResearchDashboard(ctx);
       case 'midia':
         if (!canManageMedia()) { location.hash = '#/paginas'; return; }
