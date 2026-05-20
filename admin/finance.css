@@ -1430,3 +1430,466 @@
   .fin-pay-row-v2__amount,
   .fin-pay-row-v2__date { display: none; }
 }
+
+/* =========================================================
+   ===== Sprint 3: Gastos como cartas + distribuição =====
+   ========================================================= */
+
+/* ---------- distribuição visual (4 categorias proporcionais) ---------- */
+.fin-cat-bars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.fin-cat-bar-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.18s, transform 0.18s, background 0.18s;
+}
+.fin-cat-bar-card:hover {
+  border-color: rgba(193, 158, 90, 0.45);
+  transform: translateY(-1px);
+}
+.fin-cat-bar-card.is-empty { opacity: 0.5; }
+.fin-cat-bar-card.is-inactive {
+  opacity: 0.42;
+  background: var(--bg);
+}
+.fin-cat-bar-card.is-active {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, rgba(193, 158, 90, 0.10), var(--bg-card) 70%);
+}
+.fin-cat-bar-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fin-cat-bar-card__icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(193, 158, 90, 0.14);
+  color: var(--gold-soft);
+  flex-shrink: 0;
+}
+.fin-cat-bar-card--alimentacao   .fin-cat-bar-card__icon { background: rgba(199, 127, 61, 0.16); color: var(--warning); }
+.fin-cat-bar-card--materiais     .fin-cat-bar-card__icon { background: rgba(159, 90, 107, 0.14); color: var(--rose-soft); }
+.fin-cat-bar-card--excepcionais  .fin-cat-bar-card__icon { background: rgba(193, 158, 90, 0.18); color: var(--gold); }
+.fin-cat-bar-card--investimentos .fin-cat-bar-card__icon { background: rgba(107, 142, 61, 0.16); color: var(--success); }
+.fin-cat-bar-card__label {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--cream);
+  line-height: 1.1;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fin-cat-bar-card__num {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 24px;
+  color: var(--cream);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.fin-cat-bar-card__bar {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+.fin-cat-bar-card__bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold-soft), var(--gold));
+  transition: width 0.4s var(--ease);
+}
+.fin-cat-bar-card--alimentacao   .fin-cat-bar-card__bar-fill { background: linear-gradient(90deg, rgba(199, 127, 61, 0.5), var(--warning)); }
+.fin-cat-bar-card--materiais     .fin-cat-bar-card__bar-fill { background: linear-gradient(90deg, rgba(159, 90, 107, 0.5), var(--rose-soft)); }
+.fin-cat-bar-card--excepcionais  .fin-cat-bar-card__bar-fill { background: linear-gradient(90deg, var(--gold-soft), var(--gold)); }
+.fin-cat-bar-card--investimentos .fin-cat-bar-card__bar-fill { background: linear-gradient(90deg, rgba(107, 142, 61, 0.5), var(--success)); }
+.fin-cat-bar-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.fin-cat-bar-card__pct {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--gold-soft);
+  font-variant-numeric: tabular-nums;
+}
+.fin-cat-bar-card--alimentacao   .fin-cat-bar-card__pct { color: var(--warning); }
+.fin-cat-bar-card--materiais     .fin-cat-bar-card__pct { color: var(--rose-soft); }
+.fin-cat-bar-card--excepcionais  .fin-cat-bar-card__pct { color: var(--gold); }
+.fin-cat-bar-card--investimentos .fin-cat-bar-card__pct { color: var(--success); }
+
+/* ---------- gastos como cartas editoriais ---------- */
+.fin-exp-letter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.fin-exp-letter {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 12px;
+  padding: 16px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.22s var(--ease), transform 0.22s var(--ease), box-shadow 0.22s var(--ease);
+}
+.fin-exp-letter:hover {
+  border-color: rgba(193, 158, 90, 0.55);
+  border-left-color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.fin-exp-letter--alimentacao   { border-left-color: var(--warning); }
+.fin-exp-letter--materiais     { border-left-color: var(--rose-soft); }
+.fin-exp-letter--excepcionais  { border-left-color: var(--gold); background: linear-gradient(135deg, rgba(193, 158, 90, 0.06), var(--bg-card) 60%); }
+.fin-exp-letter--investimentos { border-left-color: var(--success); }
+
+.fin-exp-letter__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+.fin-exp-letter__icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(193, 158, 90, 0.14);
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.fin-exp-letter--alimentacao   .fin-exp-letter__icon { background: rgba(199, 127, 61, 0.16); color: var(--warning); }
+.fin-exp-letter--materiais     .fin-exp-letter__icon { background: rgba(159, 90, 107, 0.14); color: var(--rose-soft); }
+.fin-exp-letter--excepcionais  .fin-exp-letter__icon { background: rgba(193, 158, 90, 0.18); color: var(--gold); }
+.fin-exp-letter--investimentos .fin-exp-letter__icon { background: rgba(107, 142, 61, 0.16); color: var(--success); }
+.fin-exp-letter__title { flex: 1; min-width: 0; }
+.fin-exp-letter__eyebrow {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 12.5px;
+  color: var(--gold-soft);
+  letter-spacing: 0.04em;
+  margin: 0 0 2px;
+  text-transform: lowercase;
+}
+.fin-exp-letter--alimentacao   .fin-exp-letter__eyebrow { color: var(--warning); }
+.fin-exp-letter--materiais     .fin-exp-letter__eyebrow { color: var(--rose-soft); }
+.fin-exp-letter--investimentos .fin-exp-letter__eyebrow { color: var(--success); }
+.fin-exp-letter__title h3 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 28px;
+  color: var(--cream);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.005em;
+}
+.fin-exp-letter--excepcionais .fin-exp-letter__title h3 { color: var(--gold); }
+.fin-exp-letter__desc {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.fin-exp-letter__desc--empty {
+  font-style: italic;
+  color: var(--text-mute);
+}
+.fin-exp-letter__foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+  flex-wrap: wrap;
+}
+.fin-exp-letter__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-dimer);
+  font-variant-numeric: tabular-nums;
+}
+.fin-exp-letter__date strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.fin-exp-letter__menu {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.18s;
+  z-index: 2;
+}
+.fin-exp-letter:hover .fin-exp-letter__menu { opacity: 1; }
+.fin-exp-letter__menu .icon-btn {
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+}
+.fin-exp-letter__menu .icon-btn[data-action="delete"]:hover {
+  background: rgba(194, 74, 74, 0.2);
+  border-color: rgba(194, 74, 74, 0.5);
+  color: var(--danger-soft);
+}
+
+/* estampa "excepcional" no canto */
+.fin-exp-letter__seal {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(193, 158, 90, 0.22), rgba(193, 158, 90, 0.08));
+  border: 1px solid rgba(193, 158, 90, 0.5);
+  color: var(--gold);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  z-index: 1;
+  pointer-events: none;
+}
+.fin-exp-letter:hover .fin-exp-letter__seal { opacity: 0; transition: opacity 0.15s; }
+
+/* ---------- lista densa de gastos v2 ---------- */
+.fin-exp-list-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.fin-exp-row-v2 {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 2.2fr) auto 110px auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 3px solid transparent;
+}
+.fin-exp-row-v2:hover { background: var(--bg-card-hi); }
+.fin-exp-row-v2--alimentacao   { border-left-color: var(--warning); }
+.fin-exp-row-v2--materiais     { border-left-color: var(--rose-soft); }
+.fin-exp-row-v2--excepcionais  { border-left-color: var(--gold); }
+.fin-exp-row-v2--investimentos { border-left-color: var(--success); }
+.fin-exp-row-v2__icon {
+  width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: rgba(193, 158, 90, 0.12);
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.fin-exp-row-v2--alimentacao   .fin-exp-row-v2__icon { background: rgba(199, 127, 61, 0.14); color: var(--warning); }
+.fin-exp-row-v2--materiais     .fin-exp-row-v2__icon { background: rgba(159, 90, 107, 0.12); color: var(--rose-soft); }
+.fin-exp-row-v2--investimentos .fin-exp-row-v2__icon { background: rgba(107, 142, 61, 0.14); color: var(--success); }
+.fin-exp-row-v2__main { min-width: 0; }
+.fin-exp-row-v2__main strong {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--cream);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fin-exp-row-v2__main span {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fin-exp-row-v2__amount {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 20px;
+  color: var(--cream);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.fin-exp-row-v2--excepcionais .fin-exp-row-v2__amount { color: var(--gold); }
+.fin-exp-row-v2__date {
+  font-size: 12px;
+  color: var(--text-dimer);
+  font-variant-numeric: tabular-nums;
+}
+.fin-exp-row-v2__chevron { color: var(--text-mute); }
+
+@media (max-width: 720px) {
+  .fin-exp-row-v2 {
+    grid-template-columns: 30px 1fr auto;
+    gap: 10px;
+  }
+  .fin-exp-row-v2__amount,
+  .fin-exp-row-v2__date { display: none; }
+}
+
+/* ---------- drawer: cards de categoria (paralelo att-just-cards) ---------- */
+.fin-cat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.fin-cat-card-pick {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.18s, transform 0.18s, background 0.18s;
+  text-align: center;
+}
+.fin-cat-card-pick:hover {
+  border-color: rgba(193, 158, 90, 0.45);
+  transform: translateY(-2px);
+  background: var(--bg-card-hi);
+}
+.fin-cat-card-pick.is-selected {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, rgba(193, 158, 90, 0.16), rgba(193, 158, 90, 0.04));
+  box-shadow: 0 6px 18px rgba(193, 158, 90, 0.18);
+}
+.fin-cat-card-pick.is-selected::after {
+  content: '';
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(193, 158, 90, 0.25);
+}
+.fin-cat-card-pick__icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(193, 158, 90, 0.14);
+  color: var(--gold-soft);
+}
+.fin-cat-card-pick--alimentacao   .fin-cat-card-pick__icon { background: rgba(199, 127, 61, 0.18); color: var(--warning); }
+.fin-cat-card-pick--materiais     .fin-cat-card-pick__icon { background: rgba(159, 90, 107, 0.16); color: var(--rose-soft); }
+.fin-cat-card-pick--excepcionais  .fin-cat-card-pick__icon { background: rgba(193, 158, 90, 0.22); color: var(--gold); }
+.fin-cat-card-pick--investimentos .fin-cat-card-pick__icon { background: rgba(107, 142, 61, 0.18); color: var(--success); }
+.fin-cat-card-pick.is-selected .fin-cat-card-pick__icon {
+  background: rgba(193, 158, 90, 0.30);
+  color: var(--cream);
+}
+.fin-cat-card-pick__label {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--cream);
+  line-height: 1.1;
+}
+.fin-cat-card-pick__hint {
+  font-size: 10.5px;
+  color: var(--text-dimer);
+  font-style: italic;
+  line-height: 1.3;
+  max-width: 130px;
+}
+.fin-cat-card-pick input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- valor "Cormorant grande" no drawer (preview) ---------- */
+.fin-amount-preview {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+.fin-amount-preview__label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dimer);
+}
+.fin-amount-preview__value {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 28px;
+  color: var(--cream);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  flex: 1;
+  text-align: right;
+}
