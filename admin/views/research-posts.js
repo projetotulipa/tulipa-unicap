@@ -4,6 +4,7 @@ import { icon } from '../icons.js';
 import * as data from '../research/data.js';
 import { renderResearchNav } from './research-nav.js';
 import { toastSuccess, toastError } from '../toast.js';
+import { attachMarkdownEditor } from '../markdown-editor.js';
 
 const STATUS_META = {
   draft:         { label: 'rascunho',  tone: 'muted' },
@@ -158,6 +159,7 @@ async function openPostForm(existing) {
 
   const form = overlay.querySelector('#postForm');
   form.addEventListener('submit', (e) => e.preventDefault());
+  attachMarkdownEditor(overlay.querySelector('textarea[name="body"]'));
 
   function close() {
     overlay.classList.remove('is-open');

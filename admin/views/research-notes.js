@@ -6,6 +6,7 @@ import * as attData from '../attendance/data.js';
 import { renderResearchNav } from './research-nav.js';
 import { toastSuccess, toastError } from '../toast.js';
 import { FICHAMENTO_TEMPLATES, FICHAMENTO_GUIDE, templateById } from '../research/template.js';
+import { attachMarkdownEditor } from '../markdown-editor.js';
 
 export async function renderResearchNotes(ctx) {
   const { root } = ctx;
@@ -174,6 +175,9 @@ async function openNoteForm(existing) {
 
   const form = overlay.querySelector('#noteForm');
   form.addEventListener('submit', (e) => e.preventDefault());
+
+  // anexa editor markdown ao textarea de conteúdo
+  attachMarkdownEditor(overlay.querySelector('textarea[name="body"]'));
 
   const groupSel = overlay.querySelector('#noteGroup');
   const meetingSel = overlay.querySelector('#noteMeeting');
