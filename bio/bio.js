@@ -42,10 +42,33 @@ const SVG_GENERIC = `
 </svg>
 `;
 
+const SVG_FORM = `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <radialGradient id="fg" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#F4E5C2" />
+      <stop offset="100%" stop-color="#C19E5A" />
+    </radialGradient>
+  </defs>
+  <path d="M24 18 L70 18 L82 30 L82 86 C 82 88 80 90 78 90 L24 90 C 22 90 20 88 20 86 L20 22 C 20 20 22 18 24 18 Z" fill="url(#fg)" stroke="#EDDFC2" stroke-width="0.6" opacity="0.96"/>
+  <path d="M70 18 L82 30 L70 30 Z" fill="#A88248" opacity="0.55"/>
+  <rect x="28" y="36" width="6" height="6" rx="1" fill="none" stroke="#5C2230" stroke-width="1" opacity="0.7"/>
+  <line x1="38" y1="39" x2="68" y2="39" stroke="#5C2230" stroke-width="1.2" opacity="0.5" stroke-linecap="round"/>
+  <rect x="28" y="50" width="6" height="6" rx="1" fill="#5C2230" opacity="0.85"/>
+  <path d="M29.5 53 L31.3 54.8 L33.5 51.4" stroke="#F4E5C2" stroke-width="0.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="38" y1="53" x2="64" y2="53" stroke="#5C2230" stroke-width="1.2" opacity="0.5" stroke-linecap="round"/>
+  <rect x="28" y="64" width="6" height="6" rx="1" fill="none" stroke="#5C2230" stroke-width="1" opacity="0.7"/>
+  <line x1="38" y1="67" x2="60" y2="67" stroke="#5C2230" stroke-width="1.2" opacity="0.5" stroke-linecap="round"/>
+  <circle cx="72" cy="80" r="3.5" fill="#5C2230" opacity="0.75"/>
+  <path d="M70.4 80 L71.6 81.2 L73.6 78.9" stroke="#F4E5C2" stroke-width="0.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`;
+
 const SVG_BY_ICON = {
   brand: SVG_BRAND,
   heart: SVG_HEART,
   generic: SVG_GENERIC,
+  form: SVG_FORM,
 };
 
 // ===== DEFAULTS (sincronizados com admin/bio/data.js) =====
@@ -74,6 +97,15 @@ const DEFAULTS = {
       image: null,
       icon: 'heart',
       hidden: false,
+    },
+    {
+      id: 'default-form',
+      label: 'Formulário',
+      href: 'https://forms.gle/SUA-URL-AQUI',
+      description: 'Pesquisa, inscrição ou outro formulário do projeto. Edite o link no admin antes de exibir.',
+      image: null,
+      icon: 'form',
+      hidden: true,
     },
   ],
 };
@@ -150,6 +182,7 @@ const ACCENT_CYCLE = ['rose', 'cream', 'sage', 'gold', 'terracotta', 'violet', '
 function accentFor(link, idx) {
   if (link.id === 'default-site')  return 'rose';
   if (link.id === 'default-allos') return 'sage';
+  if (link.id === 'default-form')  return 'gold';
   return ACCENT_CYCLE[idx % ACCENT_CYCLE.length];
 }
 

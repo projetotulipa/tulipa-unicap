@@ -34,6 +34,15 @@ export const BIO_DEFAULTS = Object.freeze({
       icon: 'heart',
       hidden: false,
     },
+    {
+      id: 'default-form',
+      label: 'Formulário',
+      href: 'https://forms.gle/SUA-URL-AQUI',
+      description: 'Pesquisa, inscrição ou outro formulário do projeto. Edite o link no admin antes de exibir.',
+      image: null,
+      icon: 'form',
+      hidden: true,
+    },
   ],
 });
 
