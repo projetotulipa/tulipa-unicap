@@ -382,7 +382,7 @@ body {
   --card-accent: var(--rose-soft);
   --card-glow:   rgba(159, 90, 107, 0.45);
   --card-tint:   rgba(159, 90, 107, 0.20);
-  --blob-shape:  68% 32% 60% 40% / 40% 60% 32% 68%;
+  --blob-shape:  38px 22px 40px 26px / 26px 40px 22px 38px;
 
   position: relative;
   display: block;
@@ -418,7 +418,7 @@ body {
 .bio-card:hover {
   transform: translateY(-4px) rotate(-0.3deg);
   box-shadow: var(--shadow-card-hi), 0 0 0 1px var(--card-tint) inset;
-  border-radius: 40% 60% 35% 65% / 60% 40% 65% 35%;
+  border-radius: 30px 42px 28px 40px / 40px 28px 42px 30px;
 }
 .bio-card:hover::after { transform: scale(1.18) translate(-12px, 12px); }
 .bio-card:focus-visible {
@@ -429,16 +429,18 @@ body {
 .bio-card:active { transform: translateY(-1px); }
 
 /* shape alterna pra parecer onda — 5 variações em ciclo */
-.bio-card:nth-child(5n+2) { --blob-shape: 32% 68% 40% 60% / 60% 40% 68% 32%; }
-.bio-card:nth-child(5n+3) { --blob-shape: 55% 45% 70% 30% / 30% 55% 45% 70%; }
-.bio-card:nth-child(5n+4) { --blob-shape: 45% 55% 30% 70% / 70% 30% 55% 45%; }
-.bio-card:nth-child(5n+5) { --blob-shape: 60% 40% 55% 45% / 45% 60% 40% 55%; }
+.bio-card:nth-child(5n+2) { --blob-shape: 24px 40px 26px 38px / 38px 26px 40px 24px; }
+.bio-card:nth-child(5n+3) { --blob-shape: 40px 26px 36px 30px / 30px 36px 26px 40px; }
+.bio-card:nth-child(5n+4) { --blob-shape: 30px 38px 24px 40px / 40px 24px 38px 30px; }
+.bio-card:nth-child(5n+5) { --blob-shape: 36px 28px 40px 24px / 24px 40px 28px 36px; }
 
-/* respiração lenta do shape — pequenas ondulações contínuas */
+/* respiração lenta do shape — ondulação contínua e VISÍVEL, mas em px
+   LIMITADOS (22–42px) pra morfar sem que a curva alcance título/CTA.
+   (Antes usava % de 50%+, que virava sweep gigante e comia o texto.) */
 @keyframes bio-wobble {
   0%, 100% { border-radius: var(--blob-shape); }
-  33%      { border-radius: 50% 50% 55% 45% / 45% 55% 50% 50%; }
-  66%      { border-radius: 58% 42% 48% 52% / 52% 48% 42% 58%; }
+  33%      { border-radius: 22px 42px 26px 40px / 40px 26px 42px 22px; }
+  66%      { border-radius: 42px 24px 40px 26px / 26px 40px 24px 42px; }
 }
 
 /* ---------- card simples (sem imagem) ---------- */
@@ -796,6 +798,23 @@ body {
     max-height: 62px;
   }
   .bio-card__body { padding: 14px 14px; }
+}
+
+/* ============================================================
+   MOBILE — DESEMPENHO
+   Congela as animações ambientes contínuas (mantém o visual estático)
+   e reduz os blurs/camadas. As animações de ENTRADA continuam.
+   ============================================================ */
+@media (max-width: 640px) {
+  .bio-mesh::before    { animation: none; }       /* mesh para de derivar */
+  .bio-mesh::after     { display: none; }         /* grão + mix-blend: caro no mobile */
+  .bio-petal           { animation: none; filter: blur(36px); } /* sem flutuar; blur menor */
+  .bio-petal--d,
+  .bio-petal--e        { display: none; }          /* 5 → 3 blobs desfocados */
+  .bio-flora__sprig    { animation: none; }        /* floras paradas */
+  .bio__avatar         { animation: none; }        /* sem box-shadow pulsando */
+  .bio__avatar::before { animation: none; }        /* halo cônico não gira */
+  .bio-wave path       { animation: none; }        /* onda estática */
 }
 
 /* desktop wide — flora aparece mais */
