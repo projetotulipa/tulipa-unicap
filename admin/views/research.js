@@ -4,6 +4,8 @@ import { icon } from '../icons.js';
 import * as data from '../research/data.js';
 import * as attData from '../attendance/data.js';
 import { renderResearchNav } from './research-nav.js';
+import { renderHelpBanner, wireHelpBanner } from './help-banner.js';
+import { helpDefault } from '../help/data.js';
 
 // página dobrada decorativa
 const PAGE_SVG = `
@@ -29,6 +31,8 @@ export async function renderResearchDashboard(ctx) {
   root.innerHTML = `
     <div class="view">
       ${renderResearchNav('dashboard')}
+
+      ${renderHelpBanner({ slot: 'pesquisa', title: helpDefault('pesquisa').title })}
 
       <header class="research-hero">
         <div class="research-hero__page">${PAGE_SVG}</div>
@@ -100,6 +104,8 @@ export async function renderResearchDashboard(ctx) {
       </section>
     </div>
   `;
+
+  wireHelpBanner(ctx, 'pesquisa').catch((err) => console.warn('[help-banner]', err));
 
   loadAll().catch((e) => { console.error(e); });
 }

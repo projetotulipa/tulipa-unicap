@@ -89,18 +89,50 @@ Cada grupo presencial deve ter **um responsável da Tesouraria** dedicado: organ
     body:
 `## O que a Pesquisa sustenta
 
-O Departamento de Pesquisa é o lugar da produção científica da TULIPA. Cuida da escrita, dos fichamentos teóricos, das publicações no Instagram e da articulação com os grupos de estudo.
+O Departamento de Pesquisa é o **núcleo intelectual, teórico e metodológico** da TULIPA. Cuida da produção de conhecimento, do rigor conceitual e da sustentação científica do projeto — pelos fichamentos, pelas revisões, pelo mapeamento de periódicos e por futuras publicações.
 
-## Atribuições contínuas
+## Estrutura interna (5 setores)
 
-- **Fichamentos** — registros teóricos (bibliográfico, citação, resumo, analítico) das aulas e encontros.
-- **Posts no Instagram** — converter fichamentos em conteúdo digerível, enviar à Mídia para arte, agendar publicação.
-- **Equipes de pesquisa** — sub-equipes com foco e ritmo próprios.
-- **Pipeline editorial** — rascunho → enviado à Mídia → agendado → publicado.
+- **Fichamentos** — elabora os fichamentos teóricos (um por encontro de cada grupo).
+- **Revisão Teórica** — revisa textos enviados pela Mídia antes da publicação.
+- **Artigos & Projetos** — organiza ideias, construção de manuscritos e núcleos de escrita.
+- **Sondagem de Periódicos** — mapeia revistas, editais e oportunidades de publicação.
+- **Mini-Secretaria da Pesquisa** — organiza o Drive próprio e o acesso às gravações.
+
+## Fichamento teórico (demanda central)
+
+Documento acadêmico que aprofunda, registra e fundamenta o que foi discutido em cada encontro.
+
+- **Conteúdo**: texto desenvolvido, 1-3 páginas (mais se necessário), referências bibliográficas obrigatórias, análise teórica, formatação ABNT ou APA.
+- **Distribuição**: cada grupo tem 2-3 membros responsáveis, podem se alternar semanalmente. Salvar no Drive (Pesquisa → Fichamentos → grupo). Pode usar gravação quando o membro não pôde estar presente.
+- **Prazo**: até **7 dias após o encontro** (norma — salvo raras exceções definidas pela diretoria).
+
+## Revisão teórica × Mídia
+
+**Nenhum post do Instagram sai sem checagem da Pesquisa.** Fluxo correto:
+
+1. Mídia sugere o post e envia o texto à Pesquisa.
+2. Pesquisa revisa teórica/conceitualmente (pode discutir no grupo geral).
+3. Pesquisa devolve o texto validado.
+4. Mídia produz a arte e publica.
+
+Norma de prazo: **revisão em até 48h (ideal 24h)**. Mídia só publica após o retorno.
+
+## Produção de conteúdo próprio
+
+A Pesquisa também sugere conteúdos: **1-2 ideias de post por mês** baseadas em fichamentos. Textos curtos ou carrosséis, com referências. Reduz a dependência de conteúdo genérico e valoriza a produção interna.
+
+## Sondagem de periódicos & editais
+
+Setor fundamental para o futuro da Liga Acadêmica. Para cada revista mapeada, verificar: Qualis, temáticas aceitas, periodicidade, regras de submissão, prazos, tipos de artigos. Avisar a Presidência quando edital relevante estiver aberto. Propor núcleos de escrita.
+
+## Drive da Pesquisa
+
+Pastas: fichamentos por grupo · revisões teóricas · artigos & projetos futuros · periódicos & editais · apontamento para gravações (Secretaria).
 
 ## Direção
 
-Mantém o ritmo dos fichamentos, qualidade da escrita, conexão com a Mídia (para arte) e com a Presidência (alinhamento institucional).`,
+**Nilo Fam** (Diretor) e **Pedro Emmanuel** (Coordenador Geral) mantêm a Pesquisa viva, organizada e produtiva: distribuição de fichamentos, cumprimento de prazos, comunicação com Mídia/Secretaria/Presidência, organização do Drive, núcleos de escrita, mobilização da equipe, feedback de qualidade teórica, ativação para editais.`,
   },
 
   midia: {
