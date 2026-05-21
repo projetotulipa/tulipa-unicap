@@ -12,10 +12,15 @@ import {
   HELP_SLOTS, helpSlotByKey, helpDefault,
   getHelpContent, setHelpContent, listAllHelpContent, resetHelpContent,
 } from './help/data.js';
+import {
+  BIO_DEFAULTS, BIO_SCOPE,
+  getBioContent, setBioContent, resetBioContent, uploadBioImage, removeBioImage,
+} from './bio/data.js';
 
 import { renderPages }      from './views/pages.js';
 import { renderPageEditor } from './views/page-editor.js';
 import { renderMembers }    from './views/members.js';
+import { renderBio }        from './views/bio.js';
 import { renderAttendanceDashboard } from './views/attendance.js';
 import { renderAttendanceGroups }    from './views/attendance-groups.js';
 import { renderAttendancePeople }    from './views/attendance-people.js';
@@ -129,6 +134,10 @@ function enterApp() {
   for (const el of $$('[data-admin-only]')) {
     el.hidden = state.role !== 'admin';
   }
+  // mostra "Bio" só pra admin
+  for (const el of $$('[data-bio-only]')) {
+    el.hidden = !canManageBio();
+  }
   // mostra "Presença" pra admin OR setor secretaria
   for (const el of $$('[data-secretaria-only]')) {
     el.hidden = !canManageAttendance();
@@ -178,6 +187,9 @@ function route() {
       listSnapshotsByScope, getSnapshotData, revertToSnapshot, diffSnapshotData,
       HELP_SLOTS, helpSlotByKey, helpDefault,
       getHelpContent, setHelpContent, listAllHelpContent, resetHelpContent,
+      BIO_DEFAULTS, BIO_SCOPE,
+      getBioContent, setBioContent, resetBioContent, uploadBioImage, removeBioImage,
+      canManageBio,
       SCOPES,
       navigate: (h) => { location.hash = h; },
       markDirty: (scope) => { state.dirty.add(scope); },
@@ -223,6 +235,9 @@ function route() {
         if (parts[1] === 'tarefas')     return renderMediaTasks(ctx);
         if (parts[1] === 'calendario')  return renderMediaCalendar(ctx);
         return renderMediaDashboard(ctx);
+      case 'bio':
+        if (!canManageBio()) { location.hash = defaultHashForUser(); return; }
+        return renderBio(ctx);
       case 'membros':
         if (state.role !== 'admin') {
           location.hash = defaultHashForUser(); return;
@@ -255,6 +270,11 @@ function canManageResearch() {
 function canManageMedia() {
   if (state.role === 'admin') return true;
   return state.sector === 'midia';
+}
+
+function canManageBio() {
+  // só admin edita a /bio (página pública compartilhada)
+  return state.role === 'admin';
 }
 
 // Setores cuja própria view substitui o CMS de páginas — vêem só sua aba.
