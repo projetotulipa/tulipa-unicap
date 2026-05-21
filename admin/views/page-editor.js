@@ -1,27 +1,39 @@
-// Editor visual de qualquer página (Home ou LPs).
+// Editor visual de página — Sprint 2 ("Folha Viva": hero signet + block-list editorial + toolbar).
 // Carrega a página num iframe escondido, obtém o schema (explícito ou auto)
-// e renderiza a lista de blocos editáveis.
+// e renderiza a lista de blocos editáveis como cartas refinadas.
 
 import { openBlockDrawer } from './block-drawer.js';
 import { loadIframe } from './editor-shared.js';
 import { icon } from '../icons.js';
-import { PAGES, scopeToSlug, slugToScope } from '../pages-meta.js';
+import { PAGES, slugToScope } from '../pages-meta.js';
 import { getSchema } from '../schemas/index.js';
+import { stampSeal, stampPage } from '../pages/signet.js';
 
-// estado da página atual (renovado a cada render)
 let currentScope = null;
 let currentSchema = null;
 let originalsByEditId = null;
+let activeBlockId = null;
+
+const viewState = {
+  filter: 'all', // all | visible | hidden
+};
 
 export async function renderPageEditor(ctx, slug) {
   const { root } = ctx;
-
-  // resolve scope a partir do slug da URL
   const scope = slug === 'home' ? 'global' : slugToScope(slug);
   const page = PAGES.find((p) => p.scope === scope);
 
   if (!page) {
-    root.innerHTML = `<div class="empty-state">Página “${escapeHtml(slug)}” não encontrada.</div>`;
+    root.innerHTML = `
+      <div class="view">
+        <p class="view__crumbs"><a href="#/paginas">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Páginas</span></a></p>
+        <div class="pages-empty-v2">
+          <div class="pages-empty-v2__art">${stampSeal({ size: 52 })}</div>
+          <h3>Página não encontrada</h3>
+          <p>"${escapeHtml(slug)}" não está catalogada nas folhas conhecidas.</p>
+        </div>
+      </div>
+    `;
     return;
   }
 
@@ -29,41 +41,63 @@ export async function renderPageEditor(ctx, slug) {
     root.innerHTML = `
       <div class="view">
         <p class="view__crumbs"><a href="#/paginas">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Páginas</span></a></p>
-        <div class="empty-state">Você não tem permissão para editar “${escapeHtml(page.label)}”.</div>
+        <div class="pages-empty-v2">
+          <div class="pages-empty-v2__art">${icon('eye-off', { size: 52 })}</div>
+          <h3>Sem permissão</h3>
+          <p>Você não tem permissão para editar "${escapeHtml(page.label)}".</p>
+        </div>
       </div>
     `;
     return;
   }
 
   currentScope = scope;
+  activeBlockId = null;
+  const isHome = page.isHome;
+  const pathLabel = page.path.replace('../', '/');
 
   root.innerHTML = `
-    <div class="view view--home-editor">
-      <header class="editor-head">
-        <div>
-          <p class="view__crumbs"><a href="#/paginas">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Páginas</span></a></p>
-          <h1>
-            <span class="editor-head__icon" id="pageEditorIcon"></span>
-            ${escapeHtml(page.label)}
-          </h1>
-          <p class="view__lede">Reorganize, oculte ou edite cada seção. As alterações aparecem na hora no preview.</p>
+    <div class="view view--page-editor">
+      <header class="pages-editor-hero">
+        <div class="pages-editor-hero__seal-wrap">
+          <span class="pages-signet">${stampSeal({ size: 30 })}</span>
         </div>
-        <div class="editor-head__actions">
-          <a class="btn btn--ghost btn--small" href="${escapeAttr(page.path)}" target="_blank" rel="noopener">${icon('external', { size: 14 })}<span style="margin-left:6px;">Ver no site</span></a>
+        <div class="pages-editor-hero__inner">
+          <p class="pages-editor-hero__crumbs">
+            <a href="#/paginas">${icon('arrow-left', { size: 12 })}<span style="margin-left:6px;">Páginas</span></a>
+          </p>
+          <p class="pages-editor-hero__eyebrow">${escapeHtml(pathLabel)}</p>
+          <h1>${escapeHtml(page.label)}</h1>
+          <p class="pages-editor-hero__lede">
+            Reorganize, oculte ou edite cada bloco. As alterações aparecem no <strong>preview do site</strong> imediatamente.
+          </p>
         </div>
+        <div class="pages-editor-hero__actions">
+          <a class="btn btn--ghost btn--small" href="${escapeAttr(page.path)}" target="_blank" rel="noopener">
+            ${icon('external', { size: 14 })}<span style="margin-left:6px;">Ver no site</span>
+          </a>
+        </div>
+        <div class="pages-editor-hero__page">${stampPage({ size: 180 })}</div>
       </header>
 
       <iframe id="pagePreview" src="${escapeAttr(page.path)}"
-              style="position:fixed;top:-9999px;left:-9999px;width:1200px;height:800px;"
+              style="position:fixed;top:-9999px;left:-9999px;width:1200px;height:800px;border:0;"
               aria-hidden="true"></iframe>
 
-      <div id="blockList" class="block-list">
-        <div class="empty-state">carregando blocos…</div>
+      <div id="editorStats" class="pages-editor-stats" hidden></div>
+      <div id="editorToolbar"></div>
+
+      <div id="blockList" class="pages-block-list">
+        <div class="pages-loading-wrap">
+          <span class="pages-bloom"><span class="pages-signet">${stampSeal({ size: 24 })}</span></span>
+          <p>Abrindo a folha…</p>
+        </div>
       </div>
 
-      <div class="publish-bar publish-bar--editor">
-        <span id="publishStatus" class="publish-bar__status">tudo publicado</span>
-        <button id="resetBtn" class="btn btn--ghost btn--small">Descartar alterações</button>
+      <div class="pages-publish-bar" id="publishBar">
+        <span class="pages-publish-bar__seal" id="publishSeal">${icon('check-circle', { size: 14 })}</span>
+        <span id="publishStatus" class="pages-publish-bar__status">tudo publicado</span>
+        <button id="resetBtn" class="btn btn--ghost btn--small">Descartar</button>
         <button id="publishBtn" class="btn btn--primary">Publicar alterações</button>
       </div>
     </div>
@@ -75,20 +109,16 @@ export async function renderPageEditor(ctx, slug) {
     iframeDoc = await loadIframe(iframe);
   } catch (e) {
     document.getElementById('blockList').innerHTML =
-      `<div class="empty-state">Não foi possível carregar a preview: ${escapeHtml(e.message)}</div>`;
+      `<div class="pages-empty-v2"><div class="pages-empty-v2__art">${icon('alert', { size: 52 })}</div><h3>Preview não carregou</h3><p>${escapeHtml(e.message)}</p></div>`;
     return;
   }
 
-  // gera schema (explícito pra global, auto pras LPs)
   currentSchema = getSchema(scope, iframeDoc);
-
-  // pinta o ícone do header agora que temos schema
-  const iconEl = document.getElementById('pageEditorIcon');
-  if (iconEl) iconEl.innerHTML = icon(currentSchema.iconName || 'page', { size: 30 });
-
   originalsByEditId = collectOriginals(iframeDoc);
 
   notifyPreview();
+  renderStats(ctx);
+  renderToolbar(ctx);
   draw(ctx);
   bindPublishBar(ctx);
 }
@@ -103,6 +133,76 @@ function collectOriginals(doc) {
 
 export function getOriginalFor(editId) {
   return originalsByEditId?.[editId] ?? '';
+}
+
+function renderStats(ctx) {
+  const slot = document.getElementById('editorStats');
+  if (!slot || !currentSchema?.blocks?.length) return;
+  const data = ctx.api.getScope(currentScope);
+  const total = currentSchema.blocks.length;
+  let visible = 0, hidden = 0, fieldCount = 0;
+  for (const b of currentSchema.blocks) {
+    if (data.hidden?.[b.sectionId]) hidden++;
+    else visible++;
+    fieldCount += (b.fields?.length || 0);
+  }
+  slot.hidden = false;
+  slot.innerHTML = `
+    <div class="pages-editor-stats__cell">
+      <strong>${total}</strong>
+      <span>${total === 1 ? 'bloco' : 'blocos'}</span>
+    </div>
+    <div class="pages-editor-stats__cell">
+      <strong>${visible}</strong>
+      <span>${visible === 1 ? 'visível' : 'visíveis'}</span>
+    </div>
+    <div class="pages-editor-stats__cell pages-editor-stats__cell--rose">
+      <strong>${hidden}</strong>
+      <span>${hidden === 1 ? 'oculto' : 'ocultos'}</span>
+    </div>
+    <div class="pages-editor-stats__cell pages-editor-stats__cell--gold">
+      <strong>${fieldCount}</strong>
+      <span>campos editáveis</span>
+    </div>
+  `;
+}
+
+function renderToolbar(ctx) {
+  const slot = document.getElementById('editorToolbar');
+  if (!slot || !currentSchema?.blocks?.length) return;
+  const data = ctx.api.getScope(currentScope);
+  let visible = 0, hidden = 0;
+  for (const b of currentSchema.blocks) {
+    if (data.hidden?.[b.sectionId]) hidden++;
+    else visible++;
+  }
+  const total = currentSchema.blocks.length;
+
+  slot.innerHTML = `
+    <div class="pages-editor-toolbar">
+      <div class="pages-editor-toolbar__group">
+        <span class="pages-editor-toolbar__label">mostrar</span>
+        ${chip('all', 'todos', total)}
+        ${chip('visible', 'visíveis', visible)}
+        ${chip('hidden', 'ocultos', hidden)}
+      </div>
+    </div>
+  `;
+  slot.querySelectorAll('[data-chip]').forEach((el) => {
+    el.addEventListener('click', () => {
+      viewState.filter = el.dataset.chip;
+      renderToolbar(ctx);
+      draw(ctx);
+    });
+  });
+}
+
+function chip(key, label, count) {
+  const active = viewState.filter === key ? ' is-active' : '';
+  return `<button class="pages-editor-toolbar__chip${active}" data-chip="${key}">
+    <span>${escapeHtml(label)}</span>
+    <span class="pages-editor-toolbar__count">${count}</span>
+  </button>`;
 }
 
 function currentBlockOrder(api) {
@@ -125,9 +225,10 @@ function draw(ctx) {
 
   if (!currentSchema.blocks.length) {
     list.innerHTML = `
-      <div class="empty-state empty-state--soft">
-        <p>Esta página ainda não tem elementos marcados como editáveis.</p>
-        <p class="muted">Peça pro time técnico marcar os blocos com <code>data-edit-id</code>.</p>
+      <div class="pages-empty-v2">
+        <div class="pages-empty-v2__art">${stampSeal({ size: 52 })}</div>
+        <h3>Sem blocos editáveis</h3>
+        <p>Esta página ainda não tem elementos marcados como editáveis. Peça pro time técnico marcar os blocos com <code>data-edit-id</code>.</p>
       </div>
     `;
     return;
@@ -135,55 +236,70 @@ function draw(ctx) {
 
   const order = currentBlockOrder(ctx.api);
   const blocksById = new Map(currentSchema.blocks.map((b) => [b.sectionId, b]));
+  const data = ctx.api.getScope(currentScope);
 
+  let shown = 0;
   for (const sectionId of order) {
     const block = blocksById.get(sectionId);
     if (!block) continue;
-    list.appendChild(buildCard(ctx, block));
+    const isHidden = !!data.hidden?.[block.sectionId];
+    if (viewState.filter === 'visible' && isHidden) continue;
+    if (viewState.filter === 'hidden' && !isHidden) continue;
+    list.appendChild(buildCard(ctx, block, isHidden));
+    shown++;
+  }
+
+  if (shown === 0) {
+    list.innerHTML = `<div class="pages-no-results">
+      <span>Nada por aqui</span>
+      <p>nenhum bloco corresponde ao filtro atual.</p>
+    </div>`;
+    return;
   }
 
   bindDragDrop(ctx, list);
   syncPublishStatus(ctx);
 }
 
-function buildCard(ctx, block) {
-  const { api } = ctx;
-  const data = api.getScope(currentScope);
-  const isHidden = !!data.hidden?.[block.sectionId];
-
+function buildCard(ctx, block, isHidden) {
   const summaryText = (block.summaryFields || [])
     .map((fid) => extractPlainText(getEffectiveValue(ctx, fid)))
     .filter(Boolean)
     .join(' · ');
 
   const fieldCount = block.fields.length;
+  const isActive = activeBlockId === block.sectionId;
 
   const card = document.createElement('article');
-  card.className = `block-card ${isHidden ? 'block-card--hidden' : ''}`;
+  card.className = `pages-block-letter ${isHidden ? 'is-hidden' : ''} ${isActive ? 'is-active' : ''}`;
   card.draggable = true;
   card.dataset.sectionId = block.sectionId;
   card.dataset.blockId = block.id;
 
   card.innerHTML = `
-    <div class="block-card__handle" title="Arraste para reordenar" aria-hidden="true">${icon('drag', { size: 18 })}</div>
-    <div class="block-card__main">
-      <header class="block-card__head">
-        <span class="block-card__icon">${icon(block.iconName || 'page', { size: 22 })}</span>
+    <div class="pages-block-letter__handle" title="Arraste para reordenar" aria-hidden="true">${icon('drag', { size: 18 })}</div>
+    <div class="pages-block-letter__icon">${icon(block.iconName || 'page', { size: 20 })}</div>
+    <div class="pages-block-letter__main">
+      <div class="pages-block-letter__title">
         <h3>${escapeHtml(block.label)}</h3>
-        <span class="block-card__badge ${isHidden ? 'is-hidden' : 'is-visible'}">${isHidden ? 'oculto' : 'visível'}</span>
-      </header>
-      <p class="block-card__desc">${escapeHtml(block.description || '')}</p>
-      ${summaryText ? `<p class="block-card__preview">${escapeHtml(truncate(summaryText, 160))}</p>` : ''}
-      <p class="block-card__meta">${fieldCount > 0 ? `${fieldCount} campo${fieldCount === 1 ? '' : 's'} editável${fieldCount === 1 ? '' : 'is'}` : 'sem campos — apenas reordenar ou ocultar'}</p>
+        <span class="${isHidden ? 'pages-pill-v2 pages-pill-v2--rose' : 'pages-pill-v2 pages-pill-v2--sage'}">
+          ${icon(isHidden ? 'eye-off' : 'eye', { size: 10 })}<span style="margin-left:4px;">${isHidden ? 'oculto' : 'visível'}</span>
+        </span>
+      </div>
+      ${block.description ? `<p class="pages-block-letter__desc">${escapeHtml(block.description)}</p>` : ''}
+      ${summaryText
+        ? `<p class="pages-block-letter__preview">${escapeHtml(truncate(summaryText, 160))}</p>`
+        : `<p class="pages-block-letter__preview pages-block-letter__preview--empty">sem preview de texto</p>`}
+      <p class="pages-block-letter__meta">${fieldCount > 0 ? `${fieldCount} campo${fieldCount === 1 ? '' : 's'} editável${fieldCount === 1 ? '' : 'is'}` : 'sem campos — apenas reordenar ou ocultar'}</p>
     </div>
-    <div class="block-card__actions">
-      <button class="icon-btn" data-action="move-up" title="Mover para cima" aria-label="Mover para cima">${icon('arrow-up', { size: 16 })}</button>
-      <button class="icon-btn" data-action="move-down" title="Mover para baixo" aria-label="Mover para baixo">${icon('arrow-down', { size: 16 })}</button>
+    <div class="pages-block-letter__actions">
+      <button class="icon-btn" data-action="move-up" title="Mover para cima" aria-label="Mover para cima">${icon('arrow-up', { size: 14 })}</button>
+      <button class="icon-btn" data-action="move-down" title="Mover para baixo" aria-label="Mover para baixo">${icon('arrow-down', { size: 14 })}</button>
       <button class="icon-btn ${isHidden ? 'is-active' : ''}" data-action="toggle-hide"
               title="${isHidden ? 'Mostrar no site' : 'Ocultar do site'}"
-              aria-label="${isHidden ? 'Mostrar' : 'Ocultar'}">${icon(isHidden ? 'eye-off' : 'eye', { size: 16 })}</button>
+              aria-label="${isHidden ? 'Mostrar' : 'Ocultar'}">${icon(isHidden ? 'eye-off' : 'eye', { size: 14 })}</button>
       ${fieldCount > 0
-        ? `<button class="btn btn--ghost btn--small" data-action="edit">${icon('edit', { size: 14 })}<span style="margin-left:6px;">Editar textos</span></button>`
+        ? `<button class="btn btn--ghost btn--small" data-action="edit" aria-label="Editar textos do bloco">${icon('edit', { size: 12 })}<span style="margin-left:6px;">Editar</span></button>`
         : ''
       }
     </div>
@@ -214,14 +330,22 @@ function handleAction(ctx, action, block) {
       api.patchEdit(currentScope, 'hidden', block.sectionId, currentlyHidden ? null : true);
       api.markDirty(currentScope);
       notifyPreview();
+      renderStats(ctx);
+      renderToolbar(ctx);
       draw(ctx);
       break;
     }
     case 'edit':
+      activeBlockId = block.sectionId;
+      draw(ctx);
       openBlockDrawer(ctx, block, {
         scope: currentScope,
         onChange: () => draw(ctx),
         notifyPreview,
+        onClose: () => {
+          activeBlockId = null;
+          draw(ctx);
+        },
       });
       break;
   }
@@ -247,7 +371,7 @@ function bindDragDrop(ctx, container) {
   let dragged = null;
 
   container.addEventListener('dragstart', (e) => {
-    const card = e.target.closest('.block-card');
+    const card = e.target.closest('.pages-block-letter');
     if (!card) return;
     dragged = card;
     card.classList.add('is-dragging');
@@ -258,7 +382,7 @@ function bindDragDrop(ctx, container) {
   container.addEventListener('dragover', (e) => {
     if (!dragged) return;
     e.preventDefault();
-    const target = e.target.closest('.block-card');
+    const target = e.target.closest('.pages-block-letter');
     if (!target || target === dragged) return;
     const rect = target.getBoundingClientRect();
     const before = (e.clientY - rect.top) < rect.height / 2;
@@ -271,8 +395,10 @@ function bindDragDrop(ctx, container) {
     container.querySelectorAll('.is-drop-target').forEach((el) => el.classList.remove('is-drop-target'));
     if (!dragged) return;
     dragged.classList.remove('is-dragging');
+    dragged.classList.add('is-dropped');
+    setTimeout(() => dragged && dragged.classList.remove('is-dropped'), 600);
     const newOrder = Array.from(container.children)
-      .filter((c) => c.classList.contains('block-card'))
+      .filter((c) => c.classList.contains('pages-block-letter'))
       .map((c) => c.dataset.sectionId);
     api.setBlockOrder(currentScope, newOrder);
     api.markDirty(currentScope);
@@ -313,18 +439,23 @@ function notifyPreview() {
 }
 
 function syncPublishStatus(ctx) {
+  const bar = document.getElementById('publishBar');
   const status = document.getElementById('publishStatus');
-  if (!status) return;
+  if (!status || !bar) return;
   if (ctx.state.dirty.has(currentScope)) {
     status.textContent = 'Alterações pendentes — clique em "Publicar"';
-    status.className = 'publish-bar__status is-dirty';
+    status.className = 'pages-publish-bar__status is-dirty';
+    bar.classList.add('is-dirty');
+    bar.classList.remove('is-success');
   } else {
     status.textContent = 'tudo publicado';
-    status.className = 'publish-bar__status';
+    status.className = 'pages-publish-bar__status';
+    bar.classList.remove('is-dirty', 'is-success');
   }
 }
 
 function bindPublishBar(ctx) {
+  const bar = document.getElementById('publishBar');
   const btn = document.getElementById('publishBtn');
   const resetBtn = document.getElementById('resetBtn');
   const status = document.getElementById('publishStatus');
@@ -336,12 +467,15 @@ function bindPublishBar(ctx) {
     try {
       await ctx.api.publish(currentScope, `edição: ${currentScope}`);
       ctx.api.clearDirty(currentScope);
-      status.textContent = 'Publicado com sucesso';
-      status.className = 'publish-bar__status is-success';
+      status.textContent = 'Publicado com sucesso · folha selada';
+      status.className = 'pages-publish-bar__status is-success';
+      bar.classList.remove('is-dirty');
+      bar.classList.add('is-success');
       setTimeout(() => syncPublishStatus(ctx), 2500);
     } catch (e) {
       status.textContent = `Erro: ${e.message}`;
-      status.className = 'publish-bar__status is-error';
+      status.className = 'pages-publish-bar__status is-error';
+      bar.classList.remove('is-dirty', 'is-success');
     } finally {
       btn.disabled = false;
       btn.textContent = orig;
