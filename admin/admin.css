@@ -1409,6 +1409,123 @@ body[data-state="app"] .admin-app { display: flex; }
 }
 
 /* =========================================================
+   ===== Sticky behaviors + safe-area-inset (notch/home bar) =====
+   Em mobile a bottom-tab tem ~64px + safe-area; tudo sticky
+   inferior precisa "subir" pra não ser sobreposto.
+   ========================================================= */
+
+@media (max-width: 720px) {
+  /* counter sticky do fólio: ajusta top pra ficar abaixo do brand mobile */
+  .att-fol-counter,
+  .att-counter {
+    top: 56px; /* altura do brand sticky header */
+    border-radius: 0;
+    margin-left: -14px;
+    margin-right: -14px;
+    padding-left: 14px;
+    padding-right: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+  }
+
+  /* publish bar v2 (pages): bottom 80px (acima do tab) + safe area */
+  .pages-publish-bar {
+    bottom: calc(80px + env(safe-area-inset-bottom));
+    margin-left: -14px;
+    margin-right: -14px;
+    padding-left: 16px;
+    padding-right: 16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid var(--border);
+  }
+  .pages-publish-bar.is-dirty,
+  .pages-publish-bar.is-success {
+    border-left: none;
+  }
+
+  /* publish bar legado (publish-bar--editor) */
+  .publish-bar--editor {
+    bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+    margin-left: -14px;
+    margin-right: -14px;
+    border-radius: 0;
+  }
+
+  /* drawers (block-drawer, fin-cell-drawer, pages-timeline-drawer) com
+     footer respeitando safe-area-inset-bottom */
+  .block-drawer__foot,
+  .pages-drawer-foot,
+  .fin-cell-drawer__foot,
+  .pages-snap-modal__foot {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+  /* drawer head sticky no topo (acessibilidade — botão fechar sempre acessível) */
+  .block-drawer__head,
+  .pages-drawer-head {
+    position: sticky;
+    top: 0;
+    background: var(--bg-elev);
+    z-index: 10;
+  }
+  /* drawer body precisa respeitar área visível */
+  .block-drawer {
+    height: 100dvh;
+    height: 100vh;
+  }
+
+  /* toast: sobe acima da bottom-tab + safe-area, ocupa quase toda largura */
+  .toast-stack {
+    right: 12px;
+    left: 12px;
+    bottom: calc(80px + env(safe-area-inset-bottom));
+    max-width: none;
+    align-items: stretch;
+  }
+  .toast {
+    width: 100%;
+  }
+
+  /* timeline drawer das páginas — wide → fullscreen com header sticky */
+  .pages-timeline-drawer__panel {
+    height: 100dvh;
+    height: 100vh;
+  }
+  .pages-timeline-head {
+    position: sticky;
+    top: 0;
+    background: var(--bg-elev);
+    z-index: 10;
+  }
+  .pages-timeline-body {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  /* dues bar (financeiro) é sticky? não, mas garante padding bottom */
+  .fin-dues-bar-v2 {
+    padding: 14px 16px;
+  }
+
+  /* snap modal — diff visual em mobile */
+  .pages-snap-modal {
+    padding: 0;
+  }
+  .pages-snap-modal__box {
+    width: 100%;
+    max-height: 100dvh;
+    max-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+  .pages-snap-modal__body {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom) + 20px);
+  }
+}
+
+/* respeitar safe-area em tudo que é fixed bottom (incluindo desktop com taskbar) */
+.toast-stack { bottom: calc(24px + env(safe-area-inset-bottom)); }
+
+/* =========================================================
    ===== Help banner — pílula discreta com "como funciona este módulo"
    Aparece entre subnav e hero. Fechado por padrão; não atrapalha o fluxo.
    ========================================================= */
