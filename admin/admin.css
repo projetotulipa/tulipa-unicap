@@ -1526,6 +1526,62 @@ body[data-state="app"] .admin-app { display: flex; }
 .toast-stack { bottom: calc(24px + env(safe-area-inset-bottom)); }
 
 /* =========================================================
+   ===== Form inputs touch-friendly (evita zoom iOS) =====
+   iOS faz zoom automaticamente quando input.font-size < 16px.
+   max(16px, 1em) mantém Cormorant grande quando há, força 16 nos pequenos.
+   ========================================================= */
+
+@media (max-width: 720px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  input[type="password"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+
+  /* exceções: dues bar do financeiro usa Cormorant 24px italic — manter */
+  .fin-dues-bar-v2__input { font-size: 24px !important; }
+
+  /* preview Cormorant em campos de edição (block-drawer/help-drawer) — manter italic preview */
+  .pages-field__preview { font-size: 15px; }
+
+  /* search bar genérica — touch friendly */
+  .search-bar { max-width: none; }
+  .search-bar input { font-size: max(16px, 1em); }
+}
+
+/* PWA standalone mode: ajustes pra quando rodar como app instalado */
+@media (display-mode: standalone) {
+  /* esconde header de browser fictício se houver (precaução) */
+  .admin-login__form { padding-top: max(20px, env(safe-area-inset-top)); }
+  /* sidebar topo respeita notch */
+  .admin-sidebar__brand {
+    padding-top: max(10px, calc(10px + env(safe-area-inset-top)));
+  }
+}
+
+/* tap-highlight discreto (evita azul brusco do iOS/Android) */
+* {
+  -webkit-tap-highlight-color: rgba(159, 90, 107, 0.15);
+}
+
+/* overscroll behavior: bloqueia bounce-back que mostra fundo branco */
+html, body {
+  overscroll-behavior-y: none;
+}
+.admin-main {
+  overscroll-behavior-y: contain;
+}
+
+/* =========================================================
    ===== Help banner — pílula discreta com "como funciona este módulo"
    Aparece entre subnav e hero. Fechado por padrão; não atrapalha o fluxo.
    ========================================================= */
