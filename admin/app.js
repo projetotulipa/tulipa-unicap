@@ -40,6 +40,9 @@ import { renderMediaPosts }          from './views/media-posts.js';
 import { renderMediaTeams }          from './views/media-teams.js';
 import { renderMediaTasks }          from './views/media-tasks.js';
 import { renderMediaCalendar }       from './views/media-calendar.js';
+import { renderFormsDashboard }      from './views/forms.js';
+import { renderFormsBuilder }        from './views/forms-builder.js';
+import { renderFormsResponses }      from './views/forms-responses.js';
 
 // ---------- estado ----------
 const state = {
@@ -154,6 +157,10 @@ function enterApp() {
   for (const el of $$('[data-midia-only]')) {
     el.hidden = !canManageMedia();
   }
+  // mostra "Formulários" só pra admin
+  for (const el of $$('[data-forms-only]')) {
+    el.hidden = !canManageForms();
+  }
 
   setBodyState('app');
   const initialHash = defaultHashForUser();
@@ -235,6 +242,11 @@ function route() {
         if (parts[1] === 'tarefas')     return renderMediaTasks(ctx);
         if (parts[1] === 'calendario')  return renderMediaCalendar(ctx);
         return renderMediaDashboard(ctx);
+      case 'forms':
+        if (!canManageForms()) { location.hash = defaultHashForUser(); return; }
+        if (parts[1] === 'editar' && parts[2])    return renderFormsBuilder(ctx, parts[2]);
+        if (parts[1] === 'respostas' && parts[2]) return renderFormsResponses(ctx, parts[2]);
+        return renderFormsDashboard(ctx);
       case 'bio':
         if (!canManageBio()) { location.hash = defaultHashForUser(); return; }
         return renderBio(ctx);
@@ -274,6 +286,11 @@ function canManageMedia() {
 
 function canManageBio() {
   // só admin edita a /bio (página pública compartilhada)
+  return state.role === 'admin';
+}
+
+function canManageForms() {
+  // só admin gerencia formulários e vê as respostas
   return state.role === 'admin';
 }
 
