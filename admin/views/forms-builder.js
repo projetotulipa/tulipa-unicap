@@ -37,6 +37,7 @@ export async function renderFormsBuilder(ctx, formId) {
   form.settings = { ...defaultFormSettings(), ...(form.settings || {}) };
 
   const S = { form, pageIdx: 0, selected: 'form', dirty: false };
+  let dragId = null;
 
   root.innerHTML = `
     <div class="fb">
@@ -166,6 +167,25 @@ export async function renderFormsBuilder(ctx, formId) {
         if (S.selected === id) S.selected = 'form';
         markDirty(); renderCanvas(); renderInspector();
       };
+      // arrastar-soltar pra reordenar
+      card.setAttribute('draggable', 'true');
+      card.addEventListener('dragstart', (e) => { dragId = id; card.classList.add('fb-drag'); e.dataTransfer.effectAllowed = 'move'; });
+      card.addEventListener('dragend', () => { dragId = null; c.querySelectorAll('.fb-field').forEach((x) => x.classList.remove('fb-drag', 'fb-over')); });
+      card.addEventListener('dragover', (e) => { if (dragId && dragId !== id) { e.preventDefault(); card.classList.add('fb-over'); } });
+      card.addEventListener('dragleave', () => card.classList.remove('fb-over'));
+      card.addEventListener('drop', (e) => {
+        e.preventDefault(); card.classList.remove('fb-over');
+        if (!dragId || dragId === id) return;
+        const arr = curPage().fields;
+        const from = arr.findIndex((f) => f.id === dragId);
+        if (from < 0) return;
+        const before = (e.clientY - card.getBoundingClientRect().top) < card.offsetHeight / 2;
+        const [moved] = arr.splice(from, 1);
+        let to = arr.findIndex((f) => f.id === id);
+        if (!before) to += 1;
+        arr.splice(to, 0, moved);
+        markDirty(); renderCanvas();
+      });
     });
   }
 
