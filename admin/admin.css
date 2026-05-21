@@ -872,3 +872,177 @@ body[data-state="app"] .admin-app { display: flex; }
   .admin-main { padding: 20px; }
   .publish-bar { margin: 20px -20px -20px; padding: 12px 20px; }
 }
+
+/* =========================================================
+   ===== Help banner — pílula discreta com "como funciona este módulo"
+   Aparece entre subnav e hero. Fechado por padrão; não atrapalha o fluxo.
+   ========================================================= */
+
+.help-banner {
+  margin: 0 0 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: linear-gradient(90deg, rgba(74, 92, 54, 0.06), rgba(74, 92, 54, 0.02) 60%);
+  overflow: hidden;
+  transition: border-color 0.18s, background 0.18s;
+}
+.help-banner[data-open="1"] {
+  border-color: rgba(74, 92, 54, 0.35);
+  background: linear-gradient(90deg, rgba(74, 92, 54, 0.08), var(--bg-card) 60%);
+}
+
+.help-banner__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: left;
+  letter-spacing: 0.02em;
+  transition: color 0.18s, background 0.18s;
+}
+.help-banner__toggle:hover {
+  color: var(--cream);
+  background: rgba(74, 92, 54, 0.06);
+}
+.help-banner__signet {
+  width: 22px; height: 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 6px;
+  background: rgba(74, 92, 54, 0.18);
+  color: var(--sage);
+  flex-shrink: 0;
+  transition: background 0.18s;
+}
+.help-banner__label {
+  flex: 1;
+  min-width: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 14.5px;
+  color: var(--cream);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.help-banner__chev {
+  color: var(--text-dimer);
+  display: inline-flex;
+  align-items: center;
+  transform: rotate(90deg);
+  transition: transform 0.22s ease, color 0.22s ease;
+}
+.help-banner[data-open="1"] .help-banner__chev {
+  transform: rotate(-90deg);
+  color: var(--sage);
+}
+.help-banner[data-open="1"] .help-banner__signet {
+  background: rgba(74, 92, 54, 0.30);
+}
+
+.help-banner__body {
+  padding: 4px 22px 18px 22px;
+  border-top: 1px dashed var(--border);
+  margin: 0 16px;
+}
+.help-banner__loading {
+  padding: 20px 0;
+  display: flex;
+  justify-content: center;
+  color: var(--text-mute);
+}
+.help-banner__bloom .help-banner__signet {
+  animation: media-bloom 1.6s ease-in-out infinite;
+  width: 28px; height: 28px;
+}
+.help-banner__error {
+  margin: 12px 0;
+  color: var(--danger-soft);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.help-banner__content {
+  padding: 12px 0 4px;
+  color: var(--text);
+  font-family: 'Lora', Georgia, serif;
+  font-size: 14px;
+  line-height: 1.65;
+  max-width: 760px;
+}
+.help-banner__content h3 {
+  margin: 18px 0 6px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--sage);
+  letter-spacing: 0.005em;
+}
+.help-banner__content h3:first-child { margin-top: 4px; }
+.help-banner__content h4 {
+  margin: 14px 0 4px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 15.5px;
+  color: var(--gold-soft);
+}
+.help-banner__content h5 {
+  margin: 10px 0 4px;
+  font-size: 13px;
+  color: var(--cream);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.help-banner__content p {
+  margin: 0 0 10px;
+}
+.help-banner__content p strong { color: var(--cream); font-weight: 600; }
+.help-banner__content p em {
+  color: var(--gold-soft);
+  font-style: italic;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+}
+.help-banner__content ul {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.help-banner__content li {
+  position: relative;
+  padding: 4px 0 4px 18px;
+  font-size: 13.5px;
+}
+.help-banner__content li::before {
+  content: '·';
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  color: var(--sage);
+  font-weight: 700;
+}
+.help-banner__content li strong {
+  color: var(--cream);
+  font-weight: 600;
+}
+.help-banner__content hr {
+  border: none;
+  border-top: 1px dashed var(--border);
+  margin: 14px 0;
+}
+
+@media (max-width: 720px) {
+  .help-banner__toggle { padding: 10px 14px; font-size: 12px; }
+  .help-banner__body { padding: 4px 14px 14px; margin: 0 8px; }
+  .help-banner__content { font-size: 13px; }
+  .help-banner__label { font-size: 13.5px; }
+}

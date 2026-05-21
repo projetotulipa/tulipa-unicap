@@ -9,6 +9,8 @@ import { JUSTIFICATION_CATEGORIES, categoryLabel, categoryIcon } from '../attend
 import { renderSubNav } from './attendance-nav.js';
 import { avatarHtml } from '../avatar.js';
 import { codexSeal, codexPage, codexEmblem } from '../attendance/codex.js';
+import { renderHelpBanner, wireHelpBanner } from './help-banner.js';
+import { helpDefault } from '../help/data.js';
 
 const WEEKDAY_LABELS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const MONTH_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -35,6 +37,8 @@ export async function renderAttendanceDashboard(ctx) {
   root.innerHTML = `
     <div class="view">
       ${renderSubNav('dashboard', { isAdmin: state.role === 'admin' })}
+
+      ${renderHelpBanner({ slot: 'presenca', title: helpDefault('presenca').title })}
 
       <header class="att-hero-v2">
         <div class="att-hero-v2__seal-wrap">
@@ -152,6 +156,8 @@ export async function renderAttendanceDashboard(ctx) {
       </section>
     </div>
   `;
+
+  wireHelpBanner(ctx, 'presenca').catch((err) => console.warn('[help-banner]', err));
 
   loadEverything({ year, month, from, to, today, range }).catch((err) => {
     console.error('[attendance dashboard] erro carregando:', err);

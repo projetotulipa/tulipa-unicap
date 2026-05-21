@@ -8,6 +8,10 @@ import {
   bootstrap, publish, onChange, listRecentSnapshots,
   listSnapshotsByScope, getSnapshotData, revertToSnapshot, diffSnapshotData,
 } from '../js/site-data.js';
+import {
+  HELP_SLOTS, helpSlotByKey, helpDefault,
+  getHelpContent, setHelpContent, listAllHelpContent, resetHelpContent,
+} from './help/data.js';
 
 import { renderPages }      from './views/pages.js';
 import { renderPageEditor } from './views/page-editor.js';
@@ -172,6 +176,8 @@ function route() {
       setBlockOrder, getBlockOrder,
       publish, onChange, listRecentSnapshots,
       listSnapshotsByScope, getSnapshotData, revertToSnapshot, diffSnapshotData,
+      HELP_SLOTS, helpSlotByKey, helpDefault,
+      getHelpContent, setHelpContent, listAllHelpContent, resetHelpContent,
       SCOPES,
       navigate: (h) => { location.hash = h; },
       markDirty: (scope) => { state.dirty.add(scope); },

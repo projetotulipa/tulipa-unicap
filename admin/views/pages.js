@@ -6,6 +6,7 @@ import { PAGES } from '../pages-meta.js';
 import { HOME_SCHEMA } from '../schemas/home.js';
 import { icon } from '../icons.js';
 import { stampSeal, stampPage } from '../pages/signet.js';
+import { openHelpDrawer } from './help-drawer.js';
 
 const MONTH_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 
@@ -91,6 +92,15 @@ export function renderPages(ctx) {
         </header>
         <div id="pagesMural" class="pages-mural"></div>
       </section>
+
+      <section class="pages-pane-v2 pages-pane-v2--full" style="margin-top: 14px;">
+        <header class="pages-pane-v2__head">
+          <span class="pages-pane-v2__icon">${icon('attendance', { size: 18 })}</span>
+          <h2>Textos do admin</h2>
+          <p class="pages-pane-v2__hint">"Como funciona este módulo" — explicações internas que vivem no banner colapsável de cada painel.</p>
+        </header>
+        <div id="pagesHelpGrid" class="pages-help-grid"></div>
+      </section>
     </div>
   `;
 
@@ -102,6 +112,60 @@ export function renderPages(ctx) {
   renderGallery();
   setupThumbObserver();
   loadEditionsTimeline();
+  renderHelpSection();
+}
+
+// ---------- help section: textos do admin ----------
+async function renderHelpSection() {
+  const box = document.getElementById('pagesHelpGrid');
+  if (!box) return;
+  const ctx = cached.ctx;
+  if (!ctx.api.HELP_SLOTS || !ctx.api.listAllHelpContent) {
+    box.innerHTML = '<p class="muted" style="font-size: 12px; font-style: italic;">indisponível.</p>';
+    return;
+  }
+  box.innerHTML = `<div class="pages-loading-wrap"><span class="pages-bloom"><span class="pages-signet">${stampSeal({ size: 22 })}</span></span></div>`;
+  const all = await ctx.api.listAllHelpContent();
+  box.innerHTML = ctx.api.HELP_SLOTS.map((meta) => helpCardHtml(meta, all[meta.slot])).join('');
+  box.querySelectorAll('[data-help-slot]').forEach((card) => {
+    card.addEventListener('click', (ev) => {
+      if (ev.target.closest('a')) return;
+      openHelpDrawer(ctx, card.dataset.helpSlot, {
+        onSaved: () => renderHelpSection(),
+      });
+    });
+    card.querySelectorAll('[data-action="edit-help"]').forEach((btn) => {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        openHelpDrawer(ctx, card.dataset.helpSlot, {
+          onSaved: () => renderHelpSection(),
+        });
+      });
+    });
+  });
+}
+
+function helpCardHtml(meta, content) {
+  const isDefault = content?.isDefault !== false;
+  const statusPill = isDefault
+    ? `<span class="pages-pill-v2 pages-pill-v2--cream">${icon('page', { size: 11 })}<span style="margin-left:4px;">padrão</span></span>`
+    : `<span class="pages-pill-v2 pages-pill-v2--sage">${icon('check', { size: 11 })}<span style="margin-left:4px;">editado</span></span>`;
+  return `
+    <article class="pages-help-card" data-help-slot="${escapeAttr(meta.slot)}">
+      <span class="pages-help-card__signet" aria-hidden="true">${stampSeal({ size: 18 })}</span>
+      <div class="pages-help-card__main">
+        <p class="pages-help-card__eyebrow">painel ${escapeHtml(meta.adminHash)}</p>
+        <h3 class="pages-help-card__title">${escapeHtml(content?.title || meta.label)}</h3>
+        <p class="pages-help-card__module">${escapeHtml(meta.label)}</p>
+      </div>
+      <div class="pages-help-card__foot">
+        ${statusPill}
+        <button class="pages-help-card__cta" data-action="edit-help" aria-label="Editar texto de ${escapeAttr(meta.label)}">
+          ${icon('edit', { size: 12 })}<span>editar</span>
+        </button>
+      </div>
+    </article>
+  `;
 }
 
 // ---------- pipeline 4 nós ----------
