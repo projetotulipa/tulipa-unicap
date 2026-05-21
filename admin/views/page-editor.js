@@ -73,6 +73,9 @@ export async function renderPageEditor(ctx, slug) {
           </p>
         </div>
         <div class="pages-editor-hero__actions">
+          <button class="pages-history-btn" id="historyBtn" aria-label="Ver histórico de edições">
+            ${icon('refresh', { size: 12 })}<span>histórico</span>
+          </button>
           <a class="btn btn--ghost btn--small" href="${escapeAttr(page.path)}" target="_blank" rel="noopener">
             ${icon('external', { size: 14 })}<span style="margin-left:6px;">Ver no site</span>
           </a>
@@ -121,6 +124,263 @@ export async function renderPageEditor(ctx, slug) {
   renderToolbar(ctx);
   draw(ctx);
   bindPublishBar(ctx);
+  bindHistoryBtn(ctx);
+}
+
+// ---------- timeline drawer ----------
+function bindHistoryBtn(ctx) {
+  const btn = document.getElementById('historyBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => openTimelineDrawer(ctx));
+}
+
+async function openTimelineDrawer(ctx) {
+  document.querySelectorAll('.pages-timeline-drawer').forEach((el) => el.remove());
+
+  const overlay = document.createElement('div');
+  overlay.className = 'pages-timeline-drawer';
+  overlay.innerHTML = `
+    <div class="pages-timeline-drawer__panel">
+      <header class="pages-timeline-head">
+        <div class="pages-timeline-head__main">
+          <p class="pages-timeline-head__crumb">histórico de edições</p>
+          <div class="pages-timeline-head__title">
+            <span class="pages-timeline-head__signet">${stampSeal({ size: 18 })}</span>
+            <h3>Últimas versões</h3>
+          </div>
+          <p class="pages-timeline-head__desc">Clique numa versão para ver o que mudou e (se quiser) reverter para ela.</p>
+        </div>
+        <button class="icon-btn" data-action="close" aria-label="Fechar histórico">${icon('x', { size: 16 })}</button>
+      </header>
+      <div class="pages-timeline-body" id="timelineBody">
+        <div class="pages-timeline-loading">
+          <span class="pages-bloom"><span class="pages-signet">${stampSeal({ size: 24 })}</span></span>
+          <p>Carregando histórico…</p>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('is-open'));
+
+  let closed = false;
+  function close() {
+    if (closed) return;
+    closed = true;
+    overlay.classList.remove('is-open');
+    setTimeout(() => overlay.remove(), 220);
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', onKey);
+
+  overlay.addEventListener('click', (ev) => {
+    if (ev.target === overlay) return close();
+    if (ev.target.closest('[data-action="close"]')) return close();
+  });
+
+  // carrega snapshots
+  if (!ctx.api.listSnapshotsByScope) {
+    document.getElementById('timelineBody').innerHTML = `<div class="pages-timeline-empty">histórico indisponível.</div>`;
+    return;
+  }
+  const { data: snaps, error } = await ctx.api.listSnapshotsByScope(currentScope, { limit: 20 });
+  const body = document.getElementById('timelineBody');
+  if (error) {
+    body.innerHTML = `<div class="pages-timeline-empty">erro: ${escapeHtml(error.message || String(error))}</div>`;
+    return;
+  }
+  if (!snaps?.length) {
+    body.innerHTML = `<div class="pages-timeline-empty">nenhuma publicação registrada ainda.</div>`;
+    return;
+  }
+  body.innerHTML = snaps.map((s, idx) => snapshotRow(s, idx === 0)).join('');
+  body.querySelectorAll('.pages-timeline-row').forEach((row) => {
+    row.addEventListener('click', () => {
+      const version = Number(row.dataset.version);
+      openSnapshotModal(ctx, snaps, version, () => {
+        // após reverter ou fechar, recarrega o editor pra refletir
+        if (row.dataset.justReverted === '1') {
+          setTimeout(() => location.reload(), 500);
+        }
+      });
+    });
+  });
+}
+
+function snapshotRow(s, isCurrent) {
+  const when = s.created_at ? new Date(s.created_at) : new Date(Number(s.version));
+  const dateStr = when.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+  const timeStr = when.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return `
+    <article class="pages-timeline-row ${isCurrent ? 'is-current' : ''}" data-version="${escapeAttr(s.version)}" tabindex="0">
+      <header class="pages-timeline-row__head">
+        <span class="pages-timeline-row__date">${escapeHtml(dateStr)}</span>
+        <span class="pages-timeline-row__time">${escapeHtml(timeStr)}</span>
+        ${isCurrent ? `<span class="pages-timeline-row__current-badge">atual</span>` : ''}
+      </header>
+      ${s.note
+        ? `<p class="pages-timeline-row__note">${escapeHtml(s.note)}</p>`
+        : `<p class="pages-timeline-row__note pages-timeline-row__note--empty">sem anotação</p>`}
+    </article>
+  `;
+}
+
+async function openSnapshotModal(ctx, snaps, version, onClose) {
+  document.querySelectorAll('.pages-snap-modal').forEach((el) => el.remove());
+
+  const target = snaps.find((s) => Number(s.version) === Number(version));
+  if (!target) return;
+  const isCurrent = snaps[0] && Number(snaps[0].version) === Number(version);
+
+  const when = target.created_at ? new Date(target.created_at) : new Date(Number(target.version));
+  const whenLabel = when.toLocaleString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+  const overlay = document.createElement('div');
+  overlay.className = 'pages-snap-modal';
+  overlay.innerHTML = `
+    <div class="pages-snap-modal__box">
+      <header class="pages-snap-modal__head">
+        <div style="min-width: 0;">
+          <p class="pages-snap-modal__crumb">versão · ${escapeHtml(whenLabel)}</p>
+          <h3 class="pages-snap-modal__title">${isCurrent ? 'Versão atual' : 'Versão antiga'}</h3>
+          ${target.note ? `<p class="pages-snap-modal__note">${escapeHtml(target.note)}</p>` : ''}
+        </div>
+        <button class="icon-btn" data-action="close" aria-label="Fechar">${icon('x', { size: 16 })}</button>
+      </header>
+      <div class="pages-snap-modal__body" id="snapBody">
+        <p class="pages-snap-modal__diff-title">Comparando com a versão atual</p>
+        <div class="pages-snap-modal__diff" id="snapDiff">
+          <div class="pages-timeline-loading">
+            <span class="pages-bloom"><span class="pages-signet">${stampSeal({ size: 22 })}</span></span>
+            <p>Carregando diff…</p>
+          </div>
+        </div>
+      </div>
+      <footer class="pages-snap-modal__foot">
+        <button class="btn btn--ghost btn--small" data-action="close">Fechar</button>
+        ${!isCurrent ? `<button class="btn btn--primary" data-action="revert">${icon('refresh', { size: 14 })}<span style="margin-left:6px;">Reverter para esta versão</span></button>` : ''}
+      </footer>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('is-open'));
+
+  let closed = false;
+  function close() {
+    if (closed) return;
+    closed = true;
+    overlay.classList.remove('is-open');
+    setTimeout(() => overlay.remove(), 220);
+    document.removeEventListener('keydown', onKey);
+    onClose?.();
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', onKey);
+
+  // carrega diff
+  const [snapResult, currentResult] = await Promise.all([
+    ctx.api.getSnapshotData ? ctx.api.getSnapshotData(currentScope, version) : Promise.resolve({ data: null }),
+    isCurrent
+      ? Promise.resolve({ data: null })
+      : (ctx.api.getSnapshotData ? ctx.api.getSnapshotData(currentScope, snaps[0].version) : Promise.resolve({ data: null })),
+  ]);
+
+  const diffBox = document.getElementById('snapDiff');
+  if (!snapResult?.data) {
+    diffBox.innerHTML = `<div class="pages-diff-empty">snapshot indisponível.</div>`;
+  } else if (isCurrent) {
+    diffBox.innerHTML = `<div class="pages-diff-empty">esta é a versão atual — sem comparação.</div>`;
+  } else {
+    const oldData = snapResult.data.data || {};
+    const newData = currentResult.data?.data || ctx.api.getScope(currentScope) || {};
+    const changes = ctx.api.diffSnapshotData ? ctx.api.diffSnapshotData(oldData, newData) : [];
+    if (changes.length === 0) {
+      diffBox.innerHTML = `<div class="pages-diff-empty">sem diferenças detectadas.</div>`;
+    } else {
+      diffBox.innerHTML = changes.slice(0, 30).map(diffRowHtml).join('') +
+        (changes.length > 30 ? `<p class="muted" style="font-size: 11px; text-align: center; font-style: italic; margin: 8px 0 0;">+ ${changes.length - 30} mudanças</p>` : '');
+    }
+  }
+
+  overlay.addEventListener('click', async (ev) => {
+    if (ev.target === overlay) return close();
+    const action = ev.target.closest('[data-action]')?.dataset?.action;
+    if (action === 'close') return close();
+    if (action === 'revert') {
+      if (!confirm('Reverter a página inteira para esta versão antiga?\n\nIsso cria uma nova publicação com os dados antigos. Os dados atuais não são apagados — ficam no histórico e podem ser recuperados.')) return;
+      if (!confirm('Tem certeza? A página vai voltar para a versão escolhida agora.')) return;
+      const btn = ev.target.closest('[data-action="revert"]');
+      btn.disabled = true;
+      btn.textContent = 'revertendo…';
+      try {
+        const { error } = await ctx.api.revertToSnapshot(currentScope, version);
+        if (error) throw error;
+        ctx.api.clearDirty?.(currentScope);
+        close();
+        // marca pra reload no fechamento do drawer/recarrega direto
+        setTimeout(() => location.reload(), 350);
+      } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = `${icon('refresh', { size: 14 })}<span style="margin-left:6px;">Reverter para esta versão</span>`;
+        alert(`Erro ao reverter: ${e.message || e}`);
+      }
+    }
+  });
+}
+
+function diffRowHtml(c) {
+  const bucketLabel = {
+    text: 'texto',
+    labels: 'rótulo',
+    hidden: 'visibilidade',
+    blockOrder: 'ordem dos blocos',
+  }[c.bucket] || c.bucket;
+
+  let beforeHtml = '';
+  let afterHtml = '';
+  if (c.bucket === 'blockOrder') {
+    beforeHtml = formatOrderForDiff(c.before);
+    afterHtml = formatOrderForDiff(c.after);
+  } else if (c.bucket === 'hidden') {
+    beforeHtml = c.before ? 'oculto' : 'visível';
+    afterHtml = c.after ? 'oculto' : 'visível';
+  } else {
+    beforeHtml = c.before == null ? '(vazio)' : truncatePlain(stripHtml(String(c.before)), 200);
+    afterHtml = c.after == null ? '(vazio)' : truncatePlain(stripHtml(String(c.after)), 200);
+  }
+
+  return `
+    <div class="pages-diff-row pages-diff-row--${c.kind}">
+      <div class="pages-diff-row__main">
+        <div class="pages-diff-row__head">
+          <span class="pages-diff-row__bucket pages-diff-row__bucket--${c.bucket}">${escapeHtml(bucketLabel)}</span>
+          <span class="pages-diff-row__key">${escapeHtml(c.key === '_order_' ? 'reordenação' : c.key)}</span>
+        </div>
+        <div class="pages-diff-row__values">
+          ${c.kind !== 'add' ? `<div class="pages-diff-row__before">${escapeHtml(beforeHtml)}</div>` : ''}
+          ${c.kind !== 'remove' ? `<div class="pages-diff-row__after">${escapeHtml(afterHtml)}</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function formatOrderForDiff(order) {
+  if (!Array.isArray(order)) return '(vazio)';
+  if (!order.length) return '(vazio)';
+  return order.slice(0, 8).join(' · ') + (order.length > 8 ? ` · +${order.length - 8}` : '');
+}
+
+function stripHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = String(html);
+  return tmp.textContent.replace(/\s+/g, ' ').trim();
+}
+
+function truncatePlain(s, n) {
+  if (s.length <= n) return s;
+  return s.slice(0, n - 1) + '…';
 }
 
 function collectOriginals(doc) {

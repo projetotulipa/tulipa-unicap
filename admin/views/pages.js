@@ -202,17 +202,15 @@ function renderQuickToggle() {
         renderStats();
         renderPipeline();
         renderMural();
-        // atualiza card correspondente na galeria
-        const card = document.querySelector(`.pages-letter[data-hidden-key="${cssEscape(key)}"]`);
+        // atualiza row correspondente na galeria
+        const card = document.querySelector(`.pages-row-v2[data-hidden-key="${cssEscape(key)}"]`);
         if (card) {
           card.classList.toggle('is-hidden', shouldHide);
-          const labelEl = card.querySelector('.pages-letter__switch-status');
-          if (labelEl) labelEl.textContent = shouldHide ? 'oculta' : 'no ar';
           const cardSw = card.querySelector('[data-action="toggle-visibility"]');
           if (cardSw) cardSw.checked = !shouldHide;
-          const thumbStatus = card.querySelector('.pages-letter__thumb-status');
-          if (thumbStatus) {
-            thumbStatus.innerHTML = shouldHide
+          const statusPill = card.querySelector('.pages-row-v2__status');
+          if (statusPill) {
+            statusPill.innerHTML = shouldHide
               ? `<span class="pages-pill-v2 pages-pill-v2--rose">${icon('eye-off', { size: 11 })}<span style="margin-left:4px;">oculta</span></span>`
               : `<span class="pages-pill-v2 pages-pill-v2--sage">${icon('eye', { size: 11 })}<span style="margin-left:4px;">no ar</span></span>`;
           }
@@ -472,8 +470,8 @@ function renderGallery() {
         <header class="pages-section-v2__head">
           <h2>Página inicial</h2>
         </header>
-        <div class="pages-letter-grid">
-          ${renderLetter(home, { featured: true })}
+        <div class="pages-row-list">
+          ${renderRow(home, { featured: true })}
         </div>
       </section>
     `);
@@ -486,8 +484,8 @@ function renderGallery() {
           <header class="pages-section-v2__head">
             <h2>Departamentos &amp; cargos <span class="pages-section-v2__count">${depts.length}</span></h2>
           </header>
-          <div class="pages-letter-grid">
-            ${depts.map((p) => renderLetter(p)).join('')}
+          <div class="pages-row-list">
+            ${depts.map((p) => renderRow(p)).join('')}
           </div>
         </section>
       `);
@@ -498,8 +496,8 @@ function renderGallery() {
           <header class="pages-section-v2__head">
             <h2>Atividades <span class="pages-section-v2__count">${acts.length}</span></h2>
           </header>
-          <div class="pages-letter-grid">
-            ${acts.map((p) => renderLetter(p)).join('')}
+          <div class="pages-row-list">
+            ${acts.map((p) => renderRow(p)).join('')}
           </div>
         </section>
       `);
@@ -510,8 +508,8 @@ function renderGallery() {
         <header class="pages-section-v2__head">
           <h2>Todas <span class="pages-section-v2__count">${depts.length}</span></h2>
         </header>
-        <div class="pages-letter-grid">
-          ${depts.map((p) => renderLetter(p)).join('')}
+        <div class="pages-row-list">
+          ${depts.map((p) => renderRow(p)).join('')}
         </div>
       </section>
     `);
@@ -521,7 +519,7 @@ function renderGallery() {
   bindCards();
 }
 
-function renderLetter(page, opts = {}) {
+function renderRow(page, opts = {}) {
   const featured = !!opts.featured;
   const { data } = cached;
   const slug = pageSlug(page);
@@ -534,51 +532,35 @@ function renderLetter(page, opts = {}) {
   const pathLabel = page.path.replace('../', '/');
 
   return `
-    <article class="pages-letter ${featured ? 'pages-letter--featured' : ''} ${isHidden ? 'is-hidden' : ''}"
+    <article class="pages-row-v2 ${featured ? 'pages-row-v2--featured' : ''} ${isHidden ? 'is-hidden' : ''}"
              data-page-scope="${escapeAttr(page.scope)}"
              data-hidden-key="${escapeAttr(hiddenKey)}"
-             data-page-path="${escapeAttr(page.path)}"
              data-slug="${escapeAttr(slug)}">
-      <div class="pages-letter__thumb-wrap">
-        <span class="pages-letter__thumb-mono" aria-hidden="true">${escapeHtml(monogram)}</span>
-        <iframe class="pages-letter__thumb-iframe" data-src="${escapeAttr(page.path)}" aria-hidden="true" loading="lazy" sandbox="allow-same-origin allow-scripts"></iframe>
-        <span class="pages-letter__thumb-status">
-          ${isHidden
-            ? `<span class="pages-pill-v2 pages-pill-v2--rose">${icon('eye-off', { size: 11 })}<span style="margin-left:4px;">oculta</span></span>`
-            : `<span class="pages-pill-v2 pages-pill-v2--sage">${icon('eye', { size: 11 })}<span style="margin-left:4px;">no ar</span></span>`}
-        </span>
-        <span class="pages-letter__thumb-signet" aria-hidden="true">${isHome ? icon('brand', { size: 18 }) : stampSeal({ size: 16 })}</span>
-      </div>
-
-      <div class="pages-letter__body">
-        <div class="pages-letter__head">
-          <div class="pages-letter__title">
-            <p class="pages-letter__eyebrow">${escapeHtml(pathLabel)}</p>
-            <h3>${escapeHtml(page.label)}</h3>
-          </div>
-        </div>
-
+      <span class="pages-row-v2__mono" aria-hidden="true">${escapeHtml(monogram)}</span>
+      <div class="pages-row-v2__main">
+        <p class="pages-row-v2__eyebrow">${escapeHtml(pathLabel)}</p>
+        <h3 class="pages-row-v2__name">${escapeHtml(page.label)}</h3>
         ${page.description
-          ? `<p class="pages-letter__desc">${escapeHtml(page.description)}</p>`
-          : `<p class="pages-letter__desc pages-letter__desc--empty">sem descrição catalogada</p>`}
-
-        <div class="pages-letter__foot">
-          <a class="pages-letter__cta" href="#/paginas/${escapeAttr(slug)}">
-            <span>${icon('edit', { size: 12 })}<span style="margin-left:6px;">editar página</span></span>
-            ${icon('arrow-right', { size: 12 })}
-          </a>
-          ${!isHome ? `
-            <label class="pages-letter__switch" title="${isHidden ? 'Oculta — clique para mostrar' : 'No ar — clique para ocultar'}">
-              <input type="checkbox" data-action="toggle-visibility" ${!isHidden ? 'checked' : ''} aria-label="${isHidden ? 'Mostrar página no site' : 'Ocultar página do site'}" />
-              <span class="pages-letter__switch-track">
-                <span class="pages-letter__switch-thumb"></span>
-              </span>
-              <span class="pages-letter__switch-status">${isHidden ? 'oculta' : 'no ar'}</span>
-            </label>
-          ` : ''}
-          <span class="pages-letter__publish-status" data-publish-status></span>
-        </div>
+          ? `<p class="pages-row-v2__desc">${escapeHtml(page.description)}</p>`
+          : ''}
       </div>
+      <span class="pages-row-v2__status">
+        ${isHidden
+          ? `<span class="pages-pill-v2 pages-pill-v2--rose">${icon('eye-off', { size: 11 })}<span style="margin-left:4px;">oculta</span></span>`
+          : `<span class="pages-pill-v2 pages-pill-v2--sage">${icon('eye', { size: 11 })}<span style="margin-left:4px;">no ar</span></span>`}
+      </span>
+      ${!isHome ? `
+        <label class="pages-row-v2__switch" title="${isHidden ? 'Oculta — clique para mostrar' : 'No ar — clique para ocultar'}">
+          <input type="checkbox" data-action="toggle-visibility" ${!isHidden ? 'checked' : ''} aria-label="${isHidden ? 'Mostrar página no site' : 'Ocultar página do site'}" />
+          <span class="pages-row-v2__switch-track">
+            <span class="pages-row-v2__switch-thumb"></span>
+          </span>
+        </label>
+      ` : '<span></span>'}
+      <a class="pages-row-v2__cta" href="#/paginas/${escapeAttr(slug)}" aria-label="Editar ${escapeAttr(page.label)}">
+        ${icon('edit', { size: 12 })}<span>editar</span>${icon('arrow-right', { size: 12 })}
+      </a>
+      <span class="pages-row-v2__publish-status" data-publish-status></span>
     </article>
   `;
 }
@@ -586,9 +568,16 @@ function renderLetter(page, opts = {}) {
 function bindCards() {
   const { ctx } = cached;
   const { api } = ctx;
-  document.querySelectorAll('.pages-letter').forEach((card) => {
+  document.querySelectorAll('.pages-row-v2').forEach((card) => {
     const toggle = card.querySelector('[data-action="toggle-visibility"]');
-    if (!toggle) return;
+    if (!toggle) {
+      // home: click vai pro editor
+      card.addEventListener('click', () => {
+        const slug = card.dataset.slug;
+        if (slug) location.hash = `#/paginas/${slug}`;
+      });
+      return;
+    }
     const statusEl = card.querySelector('[data-publish-status]');
     const hiddenKey = card.dataset.hiddenKey;
 
@@ -598,13 +587,9 @@ function bindCards() {
       api.patchEdit('global', 'hidden', hiddenKey, shouldHide ? true : null);
 
       card.classList.toggle('is-hidden', shouldHide);
-      const label = card.querySelector('.pages-letter__switch-status');
-      if (label) label.textContent = shouldHide ? 'oculta' : 'no ar';
-
-      // atualiza pill no thumb
-      const thumbStatus = card.querySelector('.pages-letter__thumb-status');
-      if (thumbStatus) {
-        thumbStatus.innerHTML = shouldHide
+      const statusPill = card.querySelector('.pages-row-v2__status');
+      if (statusPill) {
+        statusPill.innerHTML = shouldHide
           ? `<span class="pages-pill-v2 pages-pill-v2--rose">${icon('eye-off', { size: 11 })}<span style="margin-left:4px;">oculta</span></span>`
           : `<span class="pages-pill-v2 pages-pill-v2--sage">${icon('eye', { size: 11 })}<span style="margin-left:4px;">no ar</span></span>`;
       }
@@ -615,21 +600,35 @@ function bindCards() {
         await api.publish('global', `toggle ${hiddenKey} -> ${shouldHide ? 'oculta' : 'no ar'}`);
         statusEl.innerHTML = `${icon('check', { size: 12 })} <span style="margin-left:4px;">${shouldHide ? 'oculta' : 'no ar'}</span>`;
         statusEl.dataset.state = 'success';
-        // atualiza stats com novo cache
         cached.data = api.getData();
         renderStats();
+        renderPipeline();
+        renderMural();
+        // sincroniza quick-toggle correspondente
+        const qtItem = document.querySelector(`.pages-quick-toggle__item[data-hidden-key="${cssEscape(hiddenKey)}"]`);
+        if (qtItem) {
+          qtItem.classList.toggle('is-hidden', shouldHide);
+          const qtSw = qtItem.querySelector('[data-action="quick-toggle"]');
+          if (qtSw) qtSw.checked = !shouldHide;
+          const qtStatus = qtItem.querySelector('.pages-quick-toggle__status');
+          if (qtStatus) qtStatus.textContent = shouldHide ? 'oculta · sumiu da nav' : 'no ar · visível';
+        }
         setTimeout(() => { statusEl.textContent = ''; statusEl.dataset.state = ''; }, 2500);
       } catch (e) {
         statusEl.textContent = `erro: ${e.message}`;
         statusEl.dataset.state = 'error';
         toggle.checked = !shouldHide;
         card.classList.toggle('is-hidden', !shouldHide);
-        if (label) label.textContent = !shouldHide ? 'oculta' : 'no ar';
+        if (statusPill) {
+          statusPill.innerHTML = !shouldHide
+            ? `<span class="pages-pill-v2 pages-pill-v2--rose">${icon('eye-off', { size: 11 })}<span style="margin-left:4px;">oculta</span></span>`
+            : `<span class="pages-pill-v2 pages-pill-v2--sage">${icon('eye', { size: 11 })}<span style="margin-left:4px;">no ar</span></span>`;
+        }
         api.patchEdit('global', 'hidden', hiddenKey, !shouldHide ? true : null);
       }
     });
 
-    // click no card (não em controles) → ir pro editor
+    // click na row (não em controles) → ir pro editor
     card.addEventListener('click', (ev) => {
       if (ev.target.closest('button, a, input, label')) return;
       const slug = card.dataset.slug;
@@ -638,26 +637,8 @@ function bindCards() {
   });
 }
 
-// IntersectionObserver pra carregar thumbs só quando visíveis
-function setupThumbObserver() {
-  if (thumbObserver) thumbObserver.disconnect();
-  thumbObserver = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      const iframe = entry.target;
-      const src = iframe.dataset.src;
-      if (src && !iframe.src) {
-        iframe.src = src;
-        iframe.addEventListener('load', () => iframe.classList.add('is-loaded'), { once: true });
-      }
-      thumbObserver.unobserve(iframe);
-    }
-  }, { rootMargin: '300px' });
-
-  document.querySelectorAll('.pages-letter__thumb-iframe').forEach((el) => {
-    thumbObserver.observe(el);
-  });
-}
+// stub mantido pra não quebrar callers (thumbs iframe foram removidos por perf)
+function setupThumbObserver() { /* no-op */ }
 
 function pageSlug(page) {
   if (page.isHome) return 'home';

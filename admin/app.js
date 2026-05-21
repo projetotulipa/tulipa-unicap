@@ -6,6 +6,7 @@ import { icon } from './icons.js';
 import {
   getData, getScope, patchEdit, setOrder, setBlockOrder, getBlockOrder,
   bootstrap, publish, onChange, listRecentSnapshots,
+  listSnapshotsByScope, getSnapshotData, revertToSnapshot, diffSnapshotData,
 } from '../js/site-data.js';
 
 import { renderPages }      from './views/pages.js';
@@ -170,6 +171,7 @@ function route() {
       supabase, getData, getScope, patchEdit, setOrder,
       setBlockOrder, getBlockOrder,
       publish, onChange, listRecentSnapshots,
+      listSnapshotsByScope, getSnapshotData, revertToSnapshot, diffSnapshotData,
       SCOPES,
       navigate: (h) => { location.hash = h; },
       markDirty: (scope) => { state.dirty.add(scope); },

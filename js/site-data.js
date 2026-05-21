@@ -171,6 +171,110 @@ export async function listRecentSnapshots({ limit = 200 } = {}) {
   }
 }
 
+// histórico de UM scope (pra timeline no editor)
+export async function listSnapshotsByScope(scope, { limit = 20 } = {}) {
+  try {
+    const { data, error } = await supabase
+      .from('site_content')
+      .select('scope, version, note, published_by, created_at')
+      .eq('scope', scope)
+      .order('version', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (e) {
+    return { data: [], error: e };
+  }
+}
+
+// pega dados completos de um snapshot (pra preview/diff/revert)
+export async function getSnapshotData(scope, version) {
+  try {
+    const { data, error } = await supabase
+      .from('site_content')
+      .select('scope, version, data, note, published_by, created_at')
+      .eq('scope', scope)
+      .eq('version', version)
+      .maybeSingle();
+    if (error) throw error;
+    return { data, error: null };
+  } catch (e) {
+    return { data: null, error: e };
+  }
+}
+
+// reverte um scope para os dados de uma versão antiga (insere nova versão com data antiga)
+export async function revertToSnapshot(scope, version, { note } = {}) {
+  try {
+    const { data: snap, error: e1 } = await getSnapshotData(scope, version);
+    if (e1) throw e1;
+    if (!snap) throw new Error('snapshot não encontrado');
+
+    const { data: userResp } = await supabase.auth.getUser();
+    if (!userResp?.user) throw new Error('não autenticado');
+
+    const newVersion = Date.now();
+    const whenLabel = snap.created_at
+      ? new Date(snap.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+      : `versão ${snap.version}`;
+    const noteText = note || `reverter para versão de ${whenLabel}`;
+
+    const { error: e2 } = await supabase
+      .from('site_content')
+      .insert({
+        scope,
+        version: newVersion,
+        data: snap.data,
+        note: noteText,
+        published_by: userResp.user.id,
+      });
+    if (e2) throw e2;
+
+    // atualiza estado local com os dados restaurados
+    currentData[scope] = { ...EMPTY_SCOPE(), ...(snap.data || {}) };
+    const lastLoad = readLS(LAST_LOAD_KEY, {});
+    lastLoad[scope] = newVersion;
+    currentData = ensureShape(currentData);
+    writeLS(LS_DATA, currentData);
+    writeLS(LAST_LOAD_KEY, lastLoad);
+    emit();
+
+    return { data: { version: newVersion }, error: null };
+  } catch (e) {
+    return { data: null, error: e };
+  }
+}
+
+// diff resumido entre dois snapshots de dados (objects). Retorna lista de mudanças.
+// Compara: text/hidden/labels (chaves modificadas/adicionadas/removidas) e blockOrder (mudança).
+export function diffSnapshotData(oldData, newData) {
+  const changes = [];
+  const buckets = ['text', 'labels', 'hidden'];
+  for (const b of buckets) {
+    const o = oldData?.[b] || {};
+    const n = newData?.[b] || {};
+    const keys = new Set([...Object.keys(o), ...Object.keys(n)]);
+    for (const k of keys) {
+      const ov = o[k];
+      const nv = n[k];
+      if (JSON.stringify(ov) === JSON.stringify(nv)) continue;
+      changes.push({
+        bucket: b,
+        key: k,
+        before: ov,
+        after: nv,
+        kind: ov === undefined ? 'add' : nv === undefined ? 'remove' : 'change',
+      });
+    }
+  }
+  const oOrder = JSON.stringify(oldData?.blockOrder || []);
+  const nOrder = JSON.stringify(newData?.blockOrder || []);
+  if (oOrder !== nOrder) {
+    changes.push({ bucket: 'blockOrder', key: '_order_', kind: 'change', before: oldData?.blockOrder, after: newData?.blockOrder });
+  }
+  return changes;
+}
+
 // ---------- Publish (usado pelo admin) ----------
 export async function publish(scope, note = '') {
   const { data: user } = await supabase.auth.getUser();
