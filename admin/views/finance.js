@@ -8,6 +8,8 @@ import { brl, brlCompact, currentMonth, monthLabel, isoMonthRange } from '../fin
 import { EXPENSE_CATEGORIES, categoryById, categoryIconHtml, categoryLabel } from '../finance/categories.js';
 import { stampSeal, stampPage } from '../finance/seal.js';
 import { renderFinanceNav } from './finance-nav.js';
+import { renderHelpBanner, wireHelpBanner } from './help-banner.js';
+import { helpDefault } from '../help/data.js';
 
 const MONTH_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 
@@ -19,6 +21,8 @@ export async function renderFinanceDashboard(ctx) {
   root.innerHTML = `
     <div class="view">
       ${renderFinanceNav('dashboard')}
+
+      ${renderHelpBanner({ slot: 'financeiro', title: helpDefault('financeiro').title })}
 
       <header class="fin-hero-v2">
         <div class="fin-hero-v2__seal-wrap">
@@ -115,6 +119,8 @@ export async function renderFinanceDashboard(ctx) {
       </section>
     </div>
   `;
+
+  wireHelpBanner(ctx, 'financeiro').catch((err) => console.warn('[help-banner]', err));
 
   loadAll(year, month, from, to).catch((err) => {
     console.error('[finance dashboard] erro carregando:', err);

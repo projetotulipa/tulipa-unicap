@@ -46,18 +46,42 @@ Resumos no prazo · precisão das presenças · regularidade quinzenal · organi
     body:
 `## O que a Tesouraria sustenta
 
-A Tesouraria é o cuidado material do projeto. Cada moeda contada, cada balanço selado. Junto com a Secretaria, mantém a saúde estrutural da TULIPA.
+A Tesouraria administra os **recursos financeiros e materiais** do projeto. Embora a iniciativa seja voluntária, sua execução depende de organização para encontros, eventos e ações acadêmicas. Junto com a Secretaria, é o departamento estrutural.
 
-## Atribuições contínuas
+## Funções centrais
 
-- **Mensalidades** — acompanhar quem pagou no mês, registrar valor padrão e individual quando aplicável.
-- **Gastos** — registrar cada gasto com categoria (alimentação, materiais, excepcionais, investimentos), data e valor. Excepcionais exigem descrição.
-- **Planejamento** — anotar destinos previstos e marcar como concluído quando virar gasto real.
-- **Relatórios** — síntese mensal e fechamento de balanço.
+- **Contribuição mensal** — cobrança voluntária de R$ 5,00 no início de cada mês, com mensagem padrão + chave PIX no grupo geral. Não é obrigatória; o extensionista comunica se não puder.
+- **Cobrança de inadimplentes** — primeiro no grupo geral (marca quem não pagou); ~1 mês depois, no privado, tom respeitoso. A contribuição é voluntária — manter acolhimento.
+- **Gestão de caixa** — planilha de entradas/saídas/saldo sempre atualizada; notas fiscais e comprovantes arquivados no Drive. Toda movimentação registrada.
+- **Fundo de reserva** — valor mínimo sugerido R$ 50/mês investido em aplicação segura (poupança/CDB). Decisão conjunta com a Presidência.
+
+## Tesouros materiais
+
+A Tesouraria cuida da logística dos encontros presenciais:
+- **Lanches** — bolos, biscoitos, café e chá conforme o encontro.
+- **Descartáveis** — copos, pratinhos, guardanapos, talheres.
+- **Banner & porta-banner** — podem ficar com a Presidência ou membros com carro.
+- **Materiais de apoio** — itens específicos pedidos pelos facilitadores.
+
+*Grupos online não têm demanda material.*
+
+## Eventos, jornadas & simpósios
+
+Processo logístico em 5 etapas:
+
+1. **Levantar fornecedores** — pesquisar opções, comparar qualidade e custo.
+2. **Solicitar orçamentos** — por escrito, manter histórico.
+3. **Coordenar compras aprovadas** — após validação da Presidência.
+4. **Armazenar notas e comprovantes** — toda movimentação documentada.
+5. **Entregar materiais** — no local, no horário, em quantidade certa.
+
+## Responsáveis por grupo
+
+Cada grupo presencial deve ter **um responsável da Tesouraria** dedicado: organiza o lanche, verifica materiais, coordena o banner quando necessário, comunica demandas extras ao diretor.
 
 ## Direção
 
-Mantém visão geral das contas, controle do fluxo (entradas vs despesas), comunicação com a Presidência quando houver pendência ou sobra excepcional.`,
+**Fabrício** coordena o fluxo financeiro: revisão de planilhas, envio mensal de cobranças, acompanhamento de inadimplência, fundo de reserva (com Presidência), coordenação de compras, supervisão logística dos encontros, finanças de eventos, organização do Drive, recrutamento de novos membros.`,
   },
 
   pesquisa: {
