@@ -1126,6 +1126,289 @@ body[data-state="app"] .admin-app { display: flex; }
 }
 
 /* =========================================================
+   ===== Layouts adaptativos mobile (heros, stats, heatmap) =====
+   Compactam pra caber bem em 360-414px de largura.
+   ========================================================= */
+
+@media (max-width: 720px) {
+  /* heros: padding + h1 menores, watermarks comportadas */
+  .att-hero-v2,
+  .fin-hero-v2,
+  .pages-hero-v2,
+  .research-hero,
+  .media-hero,
+  .att-group-hero,
+  .pages-editor-hero {
+    padding: 18px 16px;
+    margin-bottom: 16px;
+    gap: 14px;
+  }
+  .att-hero-v2 h1,
+  .fin-hero-v2 h1,
+  .pages-hero-v2 h1,
+  .research-hero h1,
+  .media-hero h1,
+  .att-group-hero h1,
+  .pages-editor-hero h1 {
+    font-size: 24px;
+    line-height: 1.1;
+  }
+  .att-hero-v2__lede,
+  .fin-hero-v2__lede,
+  .pages-hero-v2__lede,
+  .research-hero__lede,
+  .media-hero__lede {
+    font-size: 13px;
+  }
+  /* watermarks ficam discretos no mobile (não chamam atenção) */
+  .att-hero-v2__page,
+  .fin-hero-v2__page,
+  .pages-hero-v2__page,
+  .research-hero__page,
+  .media-hero__petal,
+  .att-group-hero__page,
+  .pages-editor-hero__page {
+    width: 120px !important;
+    height: 120px !important;
+    opacity: 0.05;
+  }
+  /* selos do hero menores */
+  .att-codex-seal,
+  .fin-seal,
+  .pages-signet,
+  .research-seal {
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  /* stats grids: mais densos em mobile (2 cols garantidas) */
+  .att-stats-v2,
+  .fin-stats-v2,
+  .pages-stats-v2,
+  .research-stats,
+  .media-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 16px;
+  }
+  .att-stat-v2,
+  .fin-stat-v2,
+  .pages-stat-v2,
+  .research-stat,
+  .media-stat {
+    padding: 14px 14px 12px;
+    min-height: 90px;
+    gap: 8px;
+  }
+  .att-stat-v2__num,
+  .fin-stat-v2__num,
+  .pages-stat-v2__num,
+  .research-stat__num,
+  .media-stat__num {
+    font-size: 26px !important;
+    line-height: 1;
+  }
+  .att-stat-v2__icon,
+  .fin-stat-v2__icon,
+  .pages-stat-v2__icon,
+  .research-stat__icon,
+  .media-stat__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+  }
+  .att-stat-v2__hint,
+  .fin-stat-v2__hint,
+  .pages-stat-v2__hint {
+    font-size: 10px;
+  }
+
+  /* panes (paneis) com padding menor */
+  .att-pane-v2,
+  .fin-pane-v2,
+  .pages-pane-v2,
+  .media-pane,
+  .research-pane {
+    padding: 16px 14px;
+  }
+  .att-pane-v2__head h2,
+  .fin-pane-v2__head h2,
+  .pages-pane-v2__head h2,
+  .media-pane__head h2,
+  .research-pane__head h2 {
+    font-size: 17px;
+  }
+  .att-pane-v2__hint,
+  .fin-pane-v2__hint,
+  .pages-pane-v2__hint,
+  .media-pane__hint,
+  .research-pane__hint {
+    display: none; /* texto extra removido pra caber */
+  }
+
+  /* sections cerimoniais (att-section-v2, pages-section-v2): título menor */
+  .att-section-v2__head h2,
+  .pages-section-v2__head h2 {
+    font-size: 20px;
+  }
+
+  /* heatmaps com scroll horizontal smooth + indicador de "→ tem mais" */
+  .att-fol-heatmap-wrap,
+  .fin-heatmap-wrap {
+    padding: 14px 12px;
+    position: relative;
+  }
+  .att-fol-heatmap,
+  .fin-heatmap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    /* mask gradient na direita pra indicar continuação */
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+  }
+  .att-fol-heatmap__row,
+  .fin-heatmap__row {
+    grid-template-columns: 140px 1fr;
+    gap: 8px;
+  }
+  .att-fol-heatmap__header,
+  .fin-heatmap__header {
+    grid-template-columns: 140px 1fr;
+    gap: 8px;
+  }
+  .att-fol-heatmap__cell {
+    width: 22px;
+    height: 22px;
+  }
+  .fin-heatmap__cell {
+    width: 44px;
+    height: 28px;
+    font-size: 10px;
+  }
+  .fin-heatmap__month {
+    width: 44px;
+  }
+  .att-fol-heatmap__name,
+  .fin-heatmap__name {
+    font-size: 12px;
+  }
+  .att-fol-heatmap__name strong,
+  .fin-heatmap__name strong {
+    font-size: 12.5px;
+  }
+
+  /* help banner ainda mais compacto */
+  .help-banner { margin-bottom: 14px; }
+  .help-banner__toggle { padding: 9px 12px; gap: 8px; }
+  .help-banner__label { font-size: 13px; }
+  .help-banner__body { padding: 4px 12px 14px; margin: 0 6px; }
+  .help-banner__content { font-size: 13px; line-height: 1.55; }
+  .help-banner__content h3 { font-size: 16px; margin: 14px 0 4px; }
+  .help-banner__content h4 { font-size: 14px; }
+  .help-banner__content li { font-size: 12.5px; }
+
+  /* skylines mais baixos em mobile (são informativos, não centrais) */
+  .att-fol-skyline,
+  .pages-skyline {
+    height: 56px;
+  }
+  .fin-skyline-dual {
+    height: 70px;
+  }
+
+  /* pipelines: nodes 1 por linha em mobile pra não comprimir */
+  .att-fol-pipeline,
+  .fin-pipeline,
+  .pages-pipeline {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .att-fol-pipeline__node,
+  .fin-pipeline__node,
+  .pages-pipeline__node {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    padding: 10px 14px;
+    min-width: 0;
+    gap: 8px;
+  }
+  .att-fol-pipeline__num,
+  .fin-pipeline__num,
+  .pages-pipeline__num {
+    font-size: 20px;
+    order: 3;
+    margin-left: auto;
+  }
+  .att-fol-pipeline__label,
+  .fin-pipeline__label,
+  .pages-pipeline__label {
+    order: 1;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+  .att-fol-pipeline__hint,
+  .fin-pipeline__hint,
+  .pages-pipeline__hint {
+    order: 2;
+    margin-left: 8px;
+    font-size: 10.5px;
+  }
+
+  /* murais com cards menores (2 cols) */
+  .att-fol-mural,
+  .fin-mural,
+  .pages-mural,
+  .media-moodboard,
+  .research-moodboard {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+  }
+
+  /* page-editor: hero compact + block-list gap menor */
+  .pages-editor-hero { padding: 18px 16px; }
+  .pages-editor-stats { gap: 6px; grid-template-columns: repeat(2, 1fr) !important; }
+  .pages-block-list { gap: 8px; }
+  .pages-block-letter { padding: 14px 14px; }
+  .pages-block-letter__icon { width: 36px; height: 36px; }
+
+  /* drawer wide vira 100% no mobile já em editor.css; reforçar overflow */
+  .block-drawer-overlay { padding: 0; }
+
+  /* timeline drawer das páginas */
+  .pages-timeline-drawer__panel { width: 100%; }
+
+  /* tabela de membros do grupo (att-members-table): card view em mobile */
+  .att-members-table thead { display: none; }
+  .att-members-table tr,
+  .att-members-table td {
+    display: block;
+    width: 100%;
+  }
+  .att-members-table tr {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--bg-card);
+  }
+  .att-members-table td {
+    border: none;
+    padding: 4px 0;
+  }
+  .att-members-table td:last-child {
+    display: flex;
+    gap: 6px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+    margin-top: 6px;
+  }
+}
+
+/* =========================================================
    ===== Help banner — pílula discreta com "como funciona este módulo"
    Aparece entre subnav e hero. Fechado por padrão; não atrapalha o fluxo.
    ========================================================= */
