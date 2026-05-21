@@ -988,6 +988,144 @@ body[data-state="app"] .admin-app { display: flex; }
 }
 
 /* =========================================================
+   ===== Touch targets + tap feedback (mobile / touch only) =====
+   Apple HIG: ≥ 44x44pt. WCAG 2.5.5: ≥ 44x44 CSS px.
+   ========================================================= */
+
+@media (max-width: 720px), (hover: none) {
+  /* botões com ícone passam de 32 → 40px (icon visual continua 14px) */
+  .icon-btn {
+    min-width: 40px;
+    min-height: 40px;
+    width: 40px;
+    height: 40px;
+  }
+  .icon-btn--xs {
+    min-width: 36px;
+    min-height: 36px;
+    width: 36px;
+    height: 36px;
+  }
+
+  /* botões textuais ≥ 40px altura */
+  .btn,
+  button.btn,
+  a.btn,
+  .btn--small {
+    min-height: 40px;
+  }
+  .btn--small {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  /* tap feedback global (visível em qualquer toque) */
+  button:active,
+  .btn:active,
+  .icon-btn:active,
+  a.btn:active,
+  .pages-letter__cta:active,
+  .pages-row-v2__cta:active,
+  .att-chip:active,
+  .media-chip:active,
+  .research-chip:active,
+  .pages-editor-toolbar__chip:active,
+  .att-toolbar__chip:active,
+  .att-view-toggle button:active,
+  .media-view-toggle button:active,
+  .research-view-toggle button:active,
+  .help-banner__toggle:active {
+    transform: scale(0.96);
+    transition: transform 0.06s ease;
+  }
+
+  /* switches: aumenta área de tap mesmo que track continue visualmente igual */
+  .att-switch,
+  .pages-letter__switch,
+  .pages-row-v2__switch,
+  .pages-quick-toggle__switch,
+  .page-card__switch {
+    padding: 10px 6px;
+    margin: -10px -6px;
+  }
+
+  /* chips de filtro: altura ≥ 36 */
+  .att-chip,
+  .media-chip,
+  .research-chip,
+  .pages-editor-toolbar__chip,
+  .att-toolbar__chip {
+    min-height: 36px;
+    padding: 8px 14px;
+  }
+
+  /* view toggles: botões maiores */
+  .att-view-toggle button,
+  .media-view-toggle button,
+  .research-view-toggle button {
+    min-height: 36px;
+    padding: 8px 12px;
+  }
+
+  /* links de subnav (att-nav, fin-nav, etc): touch-friendly */
+  .sub-nav a {
+    min-height: 40px;
+    padding: 10px 14px;
+  }
+
+  /* selects e inputs com tap-area maior */
+  select,
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="number"],
+  input[type="time"],
+  input[type="password"],
+  textarea {
+    min-height: 40px;
+  }
+
+  /* tooltips: convertem hover→focus (já tem em alguns, garante em todos) */
+  [data-tooltip]:focus::after,
+  [data-tooltip]:focus-visible::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-deep);
+    color: var(--cream);
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    z-index: 30;
+    pointer-events: none;
+    font-family: 'Lora', Georgia, serif;
+  }
+}
+
+/* desativar hovers que só funcionam em desktop (evita "stuck hover" no mobile) */
+@media (hover: none) {
+  .pages-letter:hover,
+  .pages-row-v2:hover,
+  .att-group-letter:hover,
+  .att-person-letter:hover,
+  .att-fol-card:hover,
+  .fin-exp-letter:hover,
+  .fin-plan-letter:hover,
+  .att-sem-letter:hover,
+  .research-note-card:hover,
+  .research-post-card:hover,
+  .media-post-card:hover {
+    transform: none;
+    /* mantém só a borda que muda — sem lift */
+  }
+}
+
+/* =========================================================
    ===== Help banner — pílula discreta com "como funciona este módulo"
    Aparece entre subnav e hero. Fechado por padrão; não atrapalha o fluxo.
    ========================================================= */
