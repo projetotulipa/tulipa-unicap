@@ -1,0 +1,488 @@
+/* TULIPA · /bio — Linktree mobile-first com a estética do projeto */
+
+:root {
+  --rose-deep:   #3D1820;
+  --rose:        #5C2230;
+  --rose-soft:   #9F5A6B;
+  --rose-bg:     #C49AA8;
+  --sage-deep:   #2F3D22;
+  --sage:        #4A5C36;
+  --cream:       #EDDFC2;
+  --paper:       #E0CFA8;
+  --gold:        #C19E5A;
+  --gold-soft:   #D9BD83;
+  --bg-deep:     #1A100D;
+  --bg:          #211612;
+  --bg-card:     #2A1C17;
+  --bg-card-hi:  #34241E;
+  --border:      #3F2A22;
+  --text:        #DCC9A8;
+  --text-dim:    #A48E6F;
+  --text-dimer:  #7B6549;
+  --text-mute:   #5A4A38;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --shadow-rose: 0 24px 60px rgba(92, 34, 48, 0.30);
+  --shadow-gold: 0 20px 50px rgba(193, 158, 90, 0.18);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: 'Lora', Georgia, serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+body {
+  min-height: 100dvh;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(159, 90, 107, 0.18), transparent 65%),
+    radial-gradient(ellipse 70% 40% at 50% 100%, rgba(74, 92, 54, 0.12), transparent 65%),
+    radial-gradient(ellipse 40% 30% at 90% 30%, rgba(193, 158, 90, 0.10), transparent 60%),
+    var(--bg-deep);
+  background-attachment: fixed;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- pétalas decorativas ambientais ---------- */
+.bio-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.bio-petal {
+  position: absolute;
+  display: block;
+  width: 320px;
+  height: 320px;
+  border-radius: 60% 40% 60% 40%;
+  filter: blur(40px);
+  opacity: 0.35;
+  animation: bio-float 18s ease-in-out infinite;
+}
+.bio-petal--a { top: -120px; left: -100px; background: radial-gradient(circle, var(--rose) 0%, transparent 70%); animation-delay: 0s; }
+.bio-petal--b { top: 40%; right: -140px; background: radial-gradient(circle, var(--gold) 0%, transparent 70%); animation-delay: -6s; opacity: 0.18; }
+.bio-petal--c { bottom: -120px; left: 20%; background: radial-gradient(circle, var(--sage) 0%, transparent 70%); animation-delay: -12s; opacity: 0.22; }
+@keyframes bio-float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33%      { transform: translate(20px, -30px) rotate(8deg); }
+  66%      { transform: translate(-15px, 20px) rotate(-6deg); }
+}
+
+/* ---------- container principal ---------- */
+.bio {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 40px 20px 32px;
+  padding-top: max(40px, env(safe-area-inset-top));
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---------- header (identidade) ---------- */
+.bio__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  animation: bio-fade-in 0.5s var(--ease);
+}
+.bio__avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(159, 90, 107, 0.45), rgba(92, 34, 48, 0.85));
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow:
+    0 0 0 1px rgba(193, 158, 90, 0.35),
+    0 0 30px rgba(193, 158, 90, 0.18),
+    0 14px 40px rgba(40, 15, 18, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+.bio__avatar::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--gold), var(--rose-soft), var(--gold));
+  z-index: -1;
+  animation: bio-spin 12s linear infinite;
+}
+@keyframes bio-spin { to { transform: rotate(360deg); } }
+.bio__avatar img,
+.bio__avatar svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bio__avatar--fallback {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 60px;
+  color: var(--cream);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.bio__avatar--skel {
+  background: linear-gradient(135deg, rgba(159, 90, 107, 0.25), rgba(74, 92, 54, 0.15));
+  border-color: rgba(193, 158, 90, 0.2);
+  animation: bio-pulse 1.8s ease-in-out infinite;
+}
+
+.bio__name {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 38px;
+  color: var(--cream);
+  line-height: 1.05;
+  margin: 4px 0 0;
+  letter-spacing: 0.005em;
+}
+.bio__name--skel {
+  width: 200px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--bg-card), var(--bg-card-hi), var(--bg-card));
+  background-size: 200% 100%;
+  animation: bio-shimmer 1.8s ease-in-out infinite;
+}
+
+.bio__tagline {
+  font-family: 'Lora', Georgia, serif;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+  margin: 4px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.bio__tagline::before,
+.bio__tagline::after {
+  content: '';
+  width: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-soft));
+}
+.bio__tagline::after {
+  background: linear-gradient(90deg, var(--gold-soft), transparent);
+}
+.bio__tagline--skel {
+  width: 160px;
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--bg-card), var(--bg-card-hi), var(--bg-card));
+  background-size: 200% 100%;
+  animation: bio-shimmer 1.8s ease-in-out infinite;
+}
+.bio__tagline--skel::before, .bio__tagline--skel::after { display: none; }
+
+.bio__bio {
+  margin: 14px auto 0;
+  max-width: 420px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.bio__bio strong { color: var(--cream); font-weight: 600; }
+.bio__bio em {
+  color: var(--gold-soft);
+  font-style: italic;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+}
+
+/* ---------- cards ---------- */
+.bio__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.bio-card {
+  --card-bg-from: var(--bg-card);
+  --card-bg-to: var(--bg-card-hi);
+  --card-accent: var(--rose-soft);
+  position: relative;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--card-bg-from), var(--card-bg-to));
+  border: 1px solid var(--border);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.25s;
+  opacity: 0;
+  transform: translateY(14px);
+  animation: bio-card-in 0.5s var(--ease) forwards;
+}
+.bio-card::before {
+  /* fita gold no topo (aparece no hover) */
+  content: '';
+  position: absolute;
+  top: 0; left: 18px; right: 18px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--rose-soft) 70%, transparent);
+  opacity: 0;
+  transition: opacity 0.22s;
+}
+.bio-card:hover, .bio-card:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-rose), var(--shadow-gold);
+  border-color: rgba(193, 158, 90, 0.45);
+  outline: none;
+}
+.bio-card:hover::before, .bio-card:focus-visible::before { opacity: 0.85; }
+.bio-card:active { transform: translateY(-1px); }
+
+/* card simples (sem imagem) — só texto+CTA */
+.bio-card--simple {
+  padding: 22px 24px;
+  text-align: center;
+}
+.bio-card--simple .bio-card__title {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--cream);
+  margin: 0;
+  line-height: 1.15;
+}
+.bio-card--simple .bio-card__desc {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.bio-card--simple .bio-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 8px 18px;
+  background: linear-gradient(135deg, var(--rose), var(--rose-deep));
+  color: var(--cream);
+  border-radius: 999px;
+  font-family: 'Lora', Georgia, serif;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(193, 158, 90, 0.35);
+}
+.bio-card--simple .bio-card__cta svg { transition: transform 0.22s; }
+.bio-card--simple:hover .bio-card__cta svg { transform: translateX(3px); }
+
+/* card "carta" (com imagem/svg) — split horizontal */
+.bio-card--rich {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  min-height: 140px;
+}
+.bio-card__media {
+  position: relative;
+  height: 100%;
+  min-height: 140px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(193, 158, 90, 0.18), transparent 70%),
+    linear-gradient(135deg, var(--rose-deep), var(--rose));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--border);
+}
+.bio-card__media img,
+.bio-card__media svg {
+  width: 80%;
+  height: auto;
+  max-height: 90%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+}
+.bio-card__media-fade {
+  /* gradient sutil da imagem pro card */
+  position: absolute;
+  top: 0; right: -1px; bottom: 0;
+  width: 24px;
+  background: linear-gradient(90deg, transparent, var(--card-bg-from));
+  pointer-events: none;
+  z-index: 2;
+}
+.bio-card__body {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.bio-card__body .bio-card__title {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--cream);
+  margin: 0;
+  line-height: 1.15;
+}
+.bio-card__body .bio-card__desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.bio-card__body .bio-card__cta {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 6px 14px;
+  background: rgba(193, 158, 90, 0.14);
+  border: 1px solid rgba(193, 158, 90, 0.4);
+  color: var(--gold);
+  border-radius: 999px;
+  font-family: 'Lora', Georgia, serif;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.bio-card__body .bio-card__cta svg { transition: transform 0.22s; }
+.bio-card--rich:hover .bio-card__cta svg { transform: translateX(3px); }
+
+/* alterna lado da mídia em cards pares (a partir do 2º rich) */
+.bio-card--rich.bio-card--alt {
+  grid-template-columns: 1fr 130px;
+}
+.bio-card--rich.bio-card--alt .bio-card__media {
+  order: 2;
+  border-right: none;
+  border-left: 1px solid var(--border);
+}
+.bio-card--rich.bio-card--alt .bio-card__media-fade {
+  right: auto;
+  left: -1px;
+  background: linear-gradient(270deg, transparent, var(--card-bg-from));
+}
+.bio-card--rich.bio-card--alt .bio-card__body { order: 1; }
+
+/* paletas semânticas por accent dos cards padrão */
+.bio-card[data-accent="rose"]   { --card-accent: var(--rose-soft); }
+.bio-card[data-accent="rose"] .bio-card__media { background: radial-gradient(circle at 50% 50%, rgba(193, 158, 90, 0.15), transparent 70%), linear-gradient(135deg, var(--rose-deep), var(--rose)); }
+
+.bio-card[data-accent="sage"]   { --card-accent: var(--sage); }
+.bio-card[data-accent="sage"] .bio-card__media { background: radial-gradient(circle at 50% 50%, rgba(217, 189, 131, 0.18), transparent 70%), linear-gradient(135deg, var(--sage-deep), var(--sage)); }
+
+.bio-card[data-accent="gold"]   { --card-accent: var(--gold); }
+.bio-card[data-accent="gold"] .bio-card__media { background: radial-gradient(circle at 50% 50%, rgba(237, 223, 194, 0.18), transparent 70%), linear-gradient(135deg, #6F5524, var(--gold)); }
+
+/* stagger animation pros cards */
+.bio-card:nth-child(1) { animation-delay: 0.10s; }
+.bio-card:nth-child(2) { animation-delay: 0.18s; }
+.bio-card:nth-child(3) { animation-delay: 0.26s; }
+.bio-card:nth-child(4) { animation-delay: 0.34s; }
+.bio-card:nth-child(5) { animation-delay: 0.42s; }
+.bio-card:nth-child(6) { animation-delay: 0.50s; }
+.bio-card:nth-child(7) { animation-delay: 0.58s; }
+.bio-card:nth-child(8) { animation-delay: 0.66s; }
+.bio-card:nth-child(n+9) { animation-delay: 0.74s; }
+
+/* ---------- footer ---------- */
+.bio__foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  border-top: 1px dashed var(--border);
+  margin-top: 24px;
+}
+.bio__back {
+  font-family: 'Lora', Georgia, serif;
+  font-size: 13px;
+  color: var(--gold-soft);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color 0.18s;
+}
+.bio__back:hover { color: var(--cream); }
+.bio__credit {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--text-dimer);
+}
+
+/* ---------- mobile (paddings menores) ---------- */
+@media (max-width: 480px) {
+  .bio { padding: 32px 16px 24px; padding-top: max(32px, env(safe-area-inset-top)); }
+  .bio__avatar { width: 120px; height: 120px; }
+  .bio__avatar--fallback { font-size: 50px; }
+  .bio__name { font-size: 32px; }
+  .bio__bio { font-size: 13.5px; }
+  .bio-card--rich,
+  .bio-card--rich.bio-card--alt { grid-template-columns: 110px 1fr; min-height: 124px; }
+  .bio-card__media,
+  .bio-card__media { min-height: 124px; }
+  .bio-card__body { padding: 16px 18px; }
+  .bio-card__body .bio-card__title { font-size: 20px; }
+}
+
+/* ---------- animations ---------- */
+@keyframes bio-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes bio-card-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes bio-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+@keyframes bio-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ---------- tap highlight ---------- */
+* { -webkit-tap-highlight-color: rgba(159, 90, 107, 0.18); }
