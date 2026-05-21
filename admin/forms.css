@@ -168,3 +168,27 @@
   .fb__cols { grid-template-columns: 1fr; }
   .fb__palette, .fb__canvas, .fb__inspector { max-height: none; }
 }
+
+/* ---------- resumo / gráficos ---------- */
+.r-modes { display: flex; gap: 6px; margin: 14px 0 0; }
+.r-mode { background: var(--fb-surface-2); border: 1px solid var(--fb-line); color: var(--fb-dim); border-radius: 999px; padding: 6px 16px; font-size: 0.78rem; cursor: pointer; }
+.r-mode.is-on { color: var(--fb-text); border-color: var(--fb-gold); }
+.r-summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 8px; }
+.sum-total { grid-column: 1/-1; color: var(--fb-dim); font-size: 0.85rem; margin: 6px 0 0; }
+.sum-card { background: var(--fb-surface); border: 1px solid var(--fb-line); border-radius: 12px; padding: 14px 16px; }
+.sum-card__title { margin: 0 0 10px; font-size: 0.9rem; color: var(--fb-text); }
+.sum-avg { margin: 0 0 8px; font-size: 0.82rem; color: var(--fb-dim); }
+.sum-avg strong { color: var(--fb-gold); font-size: 1.1rem; }
+.sum-mini { margin: 0; color: var(--fb-dim); font-size: 0.82rem; }
+.sum-bar { display: grid; grid-template-columns: 92px 1fr 66px; gap: 8px; align-items: center; margin-bottom: 6px; }
+.sum-bar__lbl { font-size: 0.76rem; color: var(--fb-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sum-bar__track { background: var(--fb-surface-2); border-radius: 999px; height: 12px; overflow: hidden; }
+.sum-bar__fill { display: block; height: 100%; background: linear-gradient(90deg, var(--fb-sage), var(--fb-gold)); }
+.sum-bar__n { font-size: 0.72rem; color: var(--fb-dim); text-align: right; }
+.rd-sign { max-width: 100%; background: #fff; border-radius: 8px; border: 1px solid var(--fb-line); margin-top: 4px; }
+
+/* ---------- drag-drop no construtor ---------- */
+.fb-field { cursor: grab; }
+.fb-field:active { cursor: grabbing; }
+.fb-field.fb-drag { opacity: 0.45; }
+.fb-field.fb-over { box-shadow: 0 -3px 0 0 var(--fb-gold); }
