@@ -1,9 +1,13 @@
-// Páginas — Sprint 1 ("Folha Viva": hero signet + galeria mood board com thumbs iframe lazy).
+// Páginas — Sprint 1 + Sprint 4 ("Folha Viva": galeria mood board + dashboard rico).
+// S1: hero signet + galeria com thumbs iframe lazy.
+// S4: pulso (pipeline + skyline 28 dias) + quick-toggle + mural cream-deep.
 
 import { PAGES } from '../pages-meta.js';
 import { HOME_SCHEMA } from '../schemas/home.js';
 import { icon } from '../icons.js';
 import { stampSeal, stampPage } from '../pages/signet.js';
+
+const MONTH_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 
 const viewState = {
   search: '',
@@ -42,16 +46,298 @@ export function renderPages(ctx) {
         ${renderStatSkel()}${renderStatSkel()}${renderStatSkel()}${renderStatSkel()}
       </section>
 
+      <section class="pages-pane-v2 pages-pane-v2--full">
+        <header class="pages-pane-v2__head">
+          <span class="pages-pane-v2__icon">${icon('spark', { size: 18 })}</span>
+          <h2>Pulso das folhas</h2>
+          <p class="pages-pane-v2__hint">Do plano à publicação — fluxo das ${PAGES.length} páginas catalogadas.</p>
+        </header>
+        <div id="pagesPipeline"></div>
+        <div class="pages-pane-v2-row" style="margin-top: 14px; margin-bottom: 0;">
+          <div>
+            <p class="muted" style="font-size: 12px; margin: 0 0 4px; letter-spacing: 0.08em; text-transform: uppercase;">Edições recentes</p>
+            <div id="pagesEditCount" style="margin-bottom: 4px;"></div>
+          </div>
+          <div>
+            <p class="muted" style="font-size: 12px; margin: 0 0 4px; letter-spacing: 0.08em; text-transform: uppercase;">Skyline · últimos 28 dias</p>
+            <div id="pagesSkyline"></div>
+            <div class="pages-skyline__legend">
+              <span class="pages-skyline__legend-item"><span class="pages-skyline__legend-swatch"></span>edições no dia</span>
+              <span class="pages-skyline__legend-item"><span class="pages-skyline__legend-swatch pages-skyline__legend-swatch--peak"></span>pico do período</span>
+              <span class="pages-skyline__legend-item"><span class="pages-skyline__legend-swatch pages-skyline__legend-swatch--today"></span>hoje</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="pages-pane-v2 pages-pane-v2--full">
+        <header class="pages-pane-v2__head">
+          <span class="pages-pane-v2__icon pages-pane-v2__icon--rose">${icon('eye', { size: 18 })}</span>
+          <h2>Visibilidade rápida</h2>
+          <p class="pages-pane-v2__hint">Toggle por página sem entrar no editor. Mudança publica imediatamente.</p>
+        </header>
+        <div id="pagesQuickToggle"></div>
+      </section>
+
       <div id="pagesToolbar"></div>
 
       <div id="pagesGallery"></div>
+
+      <section class="pages-pane-v2 pages-pane-v2--full" id="pagesMuralPane" hidden style="margin-top: 14px;">
+        <header class="pages-pane-v2__head">
+          <span class="pages-pane-v2__icon pages-pane-v2__icon--cream">${icon('check-circle', { size: 18 })}</span>
+          <h2>Folhas no ar</h2>
+          <p class="pages-pane-v2__hint">As páginas vivas do site — em destaque cerimonial.</p>
+        </header>
+        <div id="pagesMural" class="pages-mural"></div>
+      </section>
     </div>
   `;
 
   renderStats();
+  renderPipeline();
+  renderQuickToggle();
+  renderMural();
   renderToolbar();
   renderGallery();
   setupThumbObserver();
+  loadEditionsTimeline();
+}
+
+// ---------- pipeline 4 nós ----------
+function renderPipeline() {
+  const box = document.getElementById('pagesPipeline');
+  if (!box) return;
+  const { sectors, data } = cached;
+  const hidden = data.global?.hidden || {};
+  let live = 0, hiddenCount = 0;
+  for (const p of sectors) {
+    const key = `page.${p.scope.replace('lp:', '')}`;
+    if (hidden[key]) hiddenCount++; else live++;
+  }
+  const totalLive = live + 1; // + home
+  const blocos = HOME_SCHEMA.blocks?.length || 0;
+  const lpBlocos = (PAGES.length - 1) * 4; // estimativa
+  const totalBlocos = blocos + lpBlocos;
+  const arrow = icon('arrow-right', { size: 14 });
+
+  const nodes = [
+    { num: PAGES.length, label: 'catalogadas', hint: 'total no admin', tone: 'cream' },
+    { num: totalLive, label: 'no ar', hint: totalLive === 1 ? 'visível ao público' : 'visíveis ao público', tone: 'sage', href: null },
+    { num: hiddenCount, label: 'ocultas', hint: hiddenCount === 0 ? 'nenhuma' : 'sumiram da navbar', tone: hiddenCount > 0 ? 'rose' : '', href: null },
+    { num: totalBlocos, label: 'blocos', hint: 'editáveis nas LPs', tone: 'gold' },
+  ];
+
+  box.innerHTML = `
+    <div class="pages-pipeline">
+      ${nodes.map((n, i) => {
+        const inner = `
+          <span class="pages-pipeline__num ${n.tone ? 'pages-pipeline__num--' + n.tone : ''}">${escapeHtml(String(n.num))}</span>
+          <span class="pages-pipeline__label">${escapeHtml(n.label)}</span>
+          <span class="pages-pipeline__hint">${escapeHtml(n.hint)}</span>
+        `;
+        const node = n.href
+          ? `<a class="pages-pipeline__node" href="${n.href}">${inner}</a>`
+          : `<div class="pages-pipeline__node">${inner}</div>`;
+        return (i > 0 ? `<span class="pages-pipeline__arrow">${arrow}</span>` : '') + node;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ---------- quick-toggle ----------
+function renderQuickToggle() {
+  const box = document.getElementById('pagesQuickToggle');
+  if (!box) return;
+  const { sectors, data } = cached;
+  const hidden = data.global?.hidden || {};
+  // ordenar por nome
+  const sorted = [...sectors].sort((a, b) => (a.label || '').localeCompare(b.label || '', 'pt-BR'));
+
+  box.innerHTML = `
+    <div class="pages-quick-toggle">
+      ${sorted.map((p) => {
+        const key = `page.${p.scope.replace('lp:', '')}`;
+        const isHidden = !!hidden[key];
+        const monogram = monogramOf(p.label);
+        return `
+          <div class="pages-quick-toggle__item ${isHidden ? 'is-hidden' : ''}"
+               data-hidden-key="${escapeAttr(key)}"
+               data-name="${escapeAttr(p.label)}">
+            <span class="pages-quick-toggle__signet" aria-hidden="true">${escapeHtml(monogram)}</span>
+            <div class="pages-quick-toggle__main">
+              <span class="pages-quick-toggle__name">${escapeHtml(p.label)}</span>
+              <span class="pages-quick-toggle__status">${isHidden ? 'oculta · sumiu da nav' : 'no ar · visível'}</span>
+            </div>
+            <label class="pages-quick-toggle__switch" title="${isHidden ? 'Mostrar' : 'Ocultar'} ${escapeAttr(p.label)}">
+              <input type="checkbox" data-action="quick-toggle" ${!isHidden ? 'checked' : ''} aria-label="${isHidden ? 'Mostrar' : 'Ocultar'} ${escapeAttr(p.label)}" />
+              <span class="pages-quick-toggle__switch-track">
+                <span class="pages-quick-toggle__switch-thumb"></span>
+              </span>
+            </label>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  box.querySelectorAll('[data-action="quick-toggle"]').forEach((sw) => {
+    sw.addEventListener('change', async () => {
+      const item = sw.closest('.pages-quick-toggle__item');
+      const key = item.dataset.hiddenKey;
+      const name = item.dataset.name;
+      const shouldHide = !sw.checked;
+      const { api } = cached.ctx;
+      api.patchEdit('global', 'hidden', key, shouldHide ? true : null);
+
+      // visual otimista
+      item.classList.toggle('is-hidden', shouldHide);
+      const status = item.querySelector('.pages-quick-toggle__status');
+      if (status) status.textContent = shouldHide ? 'oculta · sumiu da nav' : 'no ar · visível';
+
+      try {
+        await api.publish('global', `quick-toggle ${key} -> ${shouldHide ? 'oculta' : 'no ar'}`);
+        cached.data = api.getData();
+        // re-sincroniza stats/pipeline/galeria sem refetch pesado
+        renderStats();
+        renderPipeline();
+        renderMural();
+        // atualiza card correspondente na galeria
+        const card = document.querySelector(`.pages-letter[data-hidden-key="${cssEscape(key)}"]`);
+        if (card) {
+          card.classList.toggle('is-hidden', shouldHide);
+          const labelEl = card.querySelector('.pages-letter__switch-status');
+          if (labelEl) labelEl.textContent = shouldHide ? 'oculta' : 'no ar';
+          const cardSw = card.querySelector('[data-action="toggle-visibility"]');
+          if (cardSw) cardSw.checked = !shouldHide;
+          const thumbStatus = card.querySelector('.pages-letter__thumb-status');
+          if (thumbStatus) {
+            thumbStatus.innerHTML = shouldHide
+              ? `<span class="pages-pill-v2 pages-pill-v2--rose">${icon('eye-off', { size: 11 })}<span style="margin-left:4px;">oculta</span></span>`
+              : `<span class="pages-pill-v2 pages-pill-v2--sage">${icon('eye', { size: 11 })}<span style="margin-left:4px;">no ar</span></span>`;
+          }
+        }
+      } catch (e) {
+        // reverter
+        sw.checked = !shouldHide;
+        item.classList.toggle('is-hidden', !shouldHide);
+        api.patchEdit('global', 'hidden', key, !shouldHide ? true : null);
+        if (status) status.textContent = !shouldHide ? 'oculta · sumiu da nav' : 'no ar · visível';
+        console.error('[pages quick-toggle] erro:', e);
+      }
+    });
+  });
+}
+
+// ---------- mural cream-deep das publicadas ----------
+function renderMural() {
+  const pane = document.getElementById('pagesMuralPane');
+  const box = document.getElementById('pagesMural');
+  if (!pane || !box) return;
+  const { sectors, data, home } = cached;
+  const hidden = data.global?.hidden || {};
+  // mura mostra: home + sectors no ar (limita 8)
+  const live = sectors.filter((p) => {
+    const key = `page.${p.scope.replace('lp:', '')}`;
+    return !hidden[key];
+  });
+  const all = [home, ...live].slice(0, 8);
+
+  if (all.length === 0) {
+    pane.hidden = true;
+    return;
+  }
+  pane.hidden = false;
+
+  box.innerHTML = all.map((p) => {
+    const slug = pageSlug(p);
+    const pathLabel = p.path.replace('../', '/');
+    const eyebrow = p.isHome ? 'destaque · home' : 'no ar';
+    return `
+      <a class="pages-mural__card" href="#/paginas/${escapeAttr(slug)}">
+        <div>
+          <p class="pages-mural__eyebrow">${escapeHtml(eyebrow)}</p>
+          <p class="pages-mural__name">${escapeHtml(p.label)}</p>
+        </div>
+        <div class="pages-mural__foot">
+          <span class="pages-mural__path">${escapeHtml(pathLabel)}</span>
+          <span class="pages-mural__seal">${icon('eye', { size: 10 })}<span style="margin-left:4px;">${p.isHome ? 'home' : 'viva'}</span></span>
+        </div>
+        <div class="pages-mural__signet">${stampPage({ size: 150 })}</div>
+      </a>
+    `;
+  }).join('');
+}
+
+// ---------- skyline edições 28 dias via snapshots ----------
+async function loadEditionsTimeline() {
+  const skyBox = document.getElementById('pagesSkyline');
+  const countBox = document.getElementById('pagesEditCount');
+  if (!skyBox || !countBox) return;
+
+  const api = cached.ctx.api;
+  if (!api.listRecentSnapshots) {
+    skyBox.innerHTML = `<p class="muted" style="font-size: 12px; font-style: italic;">histórico indisponível.</p>`;
+    countBox.innerHTML = `<span class="pages-skyline__big" style="color: var(--text-mute); font-size: 22px;">—</span>`;
+    return;
+  }
+
+  const { data: snaps, error } = await api.listRecentSnapshots({ limit: 500 });
+  if (error || !snaps) {
+    skyBox.innerHTML = `<p class="muted" style="font-size: 12px; font-style: italic;">erro carregando histórico.</p>`;
+    countBox.innerHTML = `<span class="pages-skyline__big" style="color: var(--text-mute); font-size: 22px;">—</span>`;
+    return;
+  }
+
+  const today = new Date();
+  const todayStr = isoDate(today);
+  // 28 dias
+  const days = [];
+  for (let i = 27; i >= 0; i--) {
+    const d = daysAgo(today, i);
+    days.push({ date: isoDate(d), label: d, count: 0 });
+  }
+  const idx = new Map(days.map((d, i) => [d.date, i]));
+
+  // version é Date.now() ms — converte pra YYYY-MM-DD
+  for (const s of snaps) {
+    const ts = s.created_at || (s.version ? new Date(s.version) : null);
+    if (!ts) continue;
+    const d = typeof ts === 'string' ? ts.slice(0, 10) : isoDate(new Date(ts));
+    if (idx.has(d)) {
+      days[idx.get(d)].count++;
+    }
+  }
+  const maxN = Math.max(1, ...days.map((d) => d.count));
+  const peakDays = days.filter((d) => d.count === maxN && maxN > 0).map((d) => d.date);
+
+  const totalRecent = days.reduce((a, d) => a + d.count, 0);
+  const last7 = days.slice(-7).reduce((a, d) => a + d.count, 0);
+
+  countBox.innerHTML = `
+    <span class="pages-skyline__big">${last7}</span>
+    <span class="pages-skyline__label muted" style="font-size: 12px; font-style: italic; margin-left: 8px;">
+      ${last7 === 1 ? 'edição esta semana' : 'edições esta semana'} · ${totalRecent} em 28 dias
+    </span>
+  `;
+
+  skyBox.outerHTML = `<div class="pages-skyline" id="pagesSkyline">
+    ${days.map((d) => {
+      const isToday = d.date === todayStr;
+      const isPeak = !isToday && peakDays.includes(d.date);
+      const cls = isToday ? ' pages-skyline__bar--today'
+                : isPeak ? ' pages-skyline__bar--peak'
+                : '';
+      const h = d.count > 0 ? Math.max(8, Math.round(d.count / maxN * 100)) : 0;
+      const dayLab = d.label.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      const tip = d.count === 0
+        ? `${dayLab} · sem edições`
+        : `${dayLab} · ${d.count} ${d.count === 1 ? 'edição' : 'edições'}${isPeak ? ' (pico)' : ''}${isToday ? ' (hoje)' : ''}`;
+      return `<div class="pages-skyline__bar${cls}" data-tooltip="${escapeAttr(tip)}">
+        ${h > 0 ? `<div class="pages-skyline__fill" style="height: ${h}%;"></div>` : ''}
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 function renderStatSkel() {
@@ -394,3 +680,14 @@ function escapeHtml(s) {
   }[c]));
 }
 function escapeAttr(s) { return escapeHtml(s); }
+
+function isoDate(d) { return d.toISOString().slice(0, 10); }
+function daysAgo(base, n) {
+  const x = new Date(base);
+  x.setDate(x.getDate() - n);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+function cssEscape(s) {
+  return (window.CSS && window.CSS.escape) ? window.CSS.escape(s) : String(s).replace(/"/g, '\\"');
+}

@@ -5,7 +5,7 @@ import { SECTORS, ROLES, sectorByValue, describeProfile } from './sectors.js';
 import { icon } from './icons.js';
 import {
   getData, getScope, patchEdit, setOrder, setBlockOrder, getBlockOrder,
-  bootstrap, publish, onChange,
+  bootstrap, publish, onChange, listRecentSnapshots,
 } from '../js/site-data.js';
 
 import { renderPages }      from './views/pages.js';
@@ -169,7 +169,7 @@ function route() {
     api: {
       supabase, getData, getScope, patchEdit, setOrder,
       setBlockOrder, getBlockOrder,
-      publish, onChange,
+      publish, onChange, listRecentSnapshots,
       SCOPES,
       navigate: (h) => { location.hash = h; },
       markDirty: (scope) => { state.dirty.add(scope); },

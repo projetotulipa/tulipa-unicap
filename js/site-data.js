@@ -154,6 +154,23 @@ export async function bootstrap() {
   }
 }
 
+// ---------- Histórico de snapshots (usado pelo dashboard de Páginas) ----------
+// Retorna { data: [{scope, version, note, published_by, created_at}], error }
+// Limitado aos últimos N snapshots por scope (pra alimentar skyline e timeline).
+export async function listRecentSnapshots({ limit = 200 } = {}) {
+  try {
+    const { data, error } = await supabase
+      .from('site_content')
+      .select('scope, version, note, published_by, created_at')
+      .order('version', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (e) {
+    return { data: [], error: e };
+  }
+}
+
 // ---------- Publish (usado pelo admin) ----------
 export async function publish(scope, note = '') {
   const { data: user } = await supabase.auth.getUser();
