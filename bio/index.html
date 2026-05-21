@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>TULIPA — links</title>
   <meta name="description" content="TULIPA · Tessitura Universitária de Linguagens em Psicologia Analítica. Conheça o projeto e o atendimento social pela Allos." />
-  <meta name="theme-color" content="#1F1410" />
+  <meta name="theme-color" content="#1B0810" />
   <meta name="color-scheme" content="dark" />
   <meta name="format-detection" content="telephone=no" />
   <meta property="og:title" content="TULIPA — links" />
@@ -18,11 +18,16 @@
   <link rel="stylesheet" href="bio.css" />
 </head>
 <body>
-  <!-- Decoração ambiental: blobs suaves de cor -->
+  <!-- Mesh gradient vivo (fundo) -->
+  <div class="bio-mesh" aria-hidden="true"></div>
+
+  <!-- Decoração ambiental: blobs suaves de cor (5 pétalas) -->
   <div class="bio-ambient" aria-hidden="true">
     <span class="bio-petal bio-petal--a"></span>
     <span class="bio-petal bio-petal--b"></span>
     <span class="bio-petal bio-petal--c"></span>
+    <span class="bio-petal bio-petal--d"></span>
+    <span class="bio-petal bio-petal--e"></span>
   </div>
 
   <!-- Flores secas decorativas (espelho da home) -->
@@ -115,6 +120,30 @@
       <div class="bio__name bio__name--skel"></div>
       <div class="bio__tagline bio__tagline--skel"></div>
     </header>
+
+    <!-- Wave divider — separador ondulado entre head e cards -->
+    <svg class="bio-wave" viewBox="0 0 540 56" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="bioWaveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#9F5A6B" stop-opacity="0"/>
+          <stop offset="25%"  stop-color="#9F5A6B" stop-opacity="0.55"/>
+          <stop offset="50%"  stop-color="#C19E5A" stop-opacity="0.7"/>
+          <stop offset="75%"  stop-color="#8B9C75" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#5B4870" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="bioWaveGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#C19E5A" stop-opacity="0"/>
+          <stop offset="50%"  stop-color="#EDDFC2" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#C19E5A" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="M-20 28 Q 80 8, 180 28 T 380 28 T 580 28" fill="none" stroke="url(#bioWaveGrad)" stroke-width="1.4"/>
+      <path d="M-20 36 Q 100 56, 220 36 T 440 36 T 620 36" fill="none" stroke="url(#bioWaveGrad2)" stroke-width="1" class="bio-wave__slow"/>
+      <circle cx="270" cy="28" r="2.5" fill="#C19E5A" opacity="0.85"/>
+      <circle cx="135" cy="28" r="1.6" fill="#9F5A6B" opacity="0.7"/>
+      <circle cx="405" cy="28" r="1.6" fill="#8B9C75" opacity="0.7"/>
+    </svg>
+
     <div class="bio__cards" id="bioCards"></div>
   </main>
 

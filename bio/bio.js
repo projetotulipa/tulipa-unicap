@@ -144,6 +144,14 @@ function renderBioMd(s) {
   return v;
 }
 
+// cycling de accents — cores alternam pra parecer um arco-íris junguiano
+const ACCENT_CYCLE = ['rose', 'sage', 'gold', 'terracotta', 'violet', 'indigo'];
+function accentFor(link, idx) {
+  if (link.id === 'default-site')  return 'rose';
+  if (link.id === 'default-allos') return 'sage';
+  return ACCENT_CYCLE[idx % ACCENT_CYCLE.length];
+}
+
 function renderCards(links) {
   const box = document.getElementById('bioCards');
   if (!box) return;
@@ -152,22 +160,22 @@ function renderCards(links) {
     return;
   }
 
-  // alternância: rich cards ímpares ficam normais, pares com --alt
   let richIndex = 0;
-  box.innerHTML = links.map((link) => {
+  box.innerHTML = links.map((link, idx) => {
+    const accent = accentFor(link, idx);
     const hasImage = !!(link.image || link.icon);
     if (hasImage) {
       const isAlt = richIndex % 2 === 1;
       richIndex++;
-      return richCardHtml(link, isAlt);
+      return richCardHtml(link, isAlt, accent);
     }
-    return simpleCardHtml(link);
+    return simpleCardHtml(link, accent);
   }).join('');
 }
 
-function simpleCardHtml(link) {
+function simpleCardHtml(link, accent) {
   return `
-    <a class="bio-card bio-card--simple" href="${escapeAttr(link.href)}" target="_blank" rel="noopener" data-accent="rose">
+    <a class="bio-card bio-card--simple" href="${escapeAttr(link.href)}" target="_blank" rel="noopener" data-accent="${accent}">
       <h3 class="bio-card__title">${escapeHtml(link.label)}</h3>
       ${link.description ? `<p class="bio-card__desc">${escapeHtml(link.description)}</p>` : ''}
       <span class="bio-card__cta">
@@ -178,12 +186,7 @@ function simpleCardHtml(link) {
   `;
 }
 
-function richCardHtml(link, isAlt) {
-  // accent semantic: site = rose, allos = sage, demais ficam gold rotativo
-  const accent = link.id === 'default-allos' ? 'sage'
-              : link.id === 'default-site'  ? 'rose'
-              : (isAlt ? 'gold' : 'rose');
-
+function richCardHtml(link, isAlt, accent) {
   const mediaHtml = link.image
     ? `<img src="${escapeAttr(link.image)}" alt="" />`
     : (SVG_BY_ICON[link.icon] || SVG_GENERIC);
@@ -192,7 +195,6 @@ function richCardHtml(link, isAlt) {
     <a class="bio-card bio-card--rich ${isAlt ? 'bio-card--alt' : ''}" href="${escapeAttr(link.href)}" target="_blank" rel="noopener" data-accent="${accent}">
       <div class="bio-card__media">
         ${mediaHtml}
-        <span class="bio-card__media-fade" aria-hidden="true"></span>
       </div>
       <div class="bio-card__body">
         <h3 class="bio-card__title">${escapeHtml(link.label)}</h3>
