@@ -173,13 +173,17 @@ body {
   0%, 100% { transform: translate(56px, 470px) rotate(0deg); }
   50%      { transform: translate(56px, 482px) rotate(6deg); }
 }
+/* mobile: laterais maiores, mais visíveis e entrando mais na tela */
 @media (max-width: 640px) {
-  .bio-flora { width: 110px; opacity: 0.42; }
-  .bio-flora--left  { left: -48px; }
-  .bio-flora--right { right: -48px; }
+  .bio-flora { width: 170px; opacity: 0.62; filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35)); }
+  .bio-flora--left  { left: -32px; }
+  .bio-flora--right { right: -32px; }
+  .bio-flora__petal { display: none; } /* esconde a pétala solta solo (compete com cards) */
 }
 @media (max-width: 380px) {
-  .bio-flora { opacity: 0.28; }
+  .bio-flora { width: 140px; opacity: 0.50; }
+  .bio-flora--left  { left: -28px; }
+  .bio-flora--right { right: -28px; }
 }
 
 /* ============================================================
@@ -750,22 +754,48 @@ body {
   .bio__bio { font-size: 13.5px; }
   .bio-wave { height: 44px; margin: 4px auto -6px; }
   .bio__cards { gap: 18px; }
-  .bio-card--rich              { grid-template-columns: 116px 1fr; min-height: 132px; }
+  /* card alt vs normal — colunas explícitas */
+  .bio-card--rich              { grid-template-columns: 116px 1fr; min-height: 132px; align-items: center; }
   .bio-card--rich.bio-card--alt{ grid-template-columns: 1fr 116px; }
-  .bio-card__media { min-height: 132px; }
+  /* mídia ABSOLUTA em px: nunca cresce com o texto */
+  .bio-card__media {
+    width: 116px;
+    height: 116px;
+    min-height: 0;
+    max-height: 116px;
+    align-self: center;
+  }
   .bio-card__media img,
-  .bio-card__media svg { width: 80%; max-height: 86%; }
-  .bio-card__body { padding: 18px 18px; }
-  .bio-card__body .bio-card__title { font-size: 21px; }
-  .bio-card--simple { padding: 24px 20px; }
+  .bio-card__media svg {
+    width: 76px;
+    height: 76px;
+    max-width: 76px;
+    max-height: 76px;
+  }
+  .bio-card__body { padding: 16px 18px; }
+  .bio-card__body .bio-card__title { font-size: 20px; }
+  .bio-card__body .bio-card__desc  { font-size: 12.5px; }
+  .bio-card--simple { padding: 22px 20px; }
   .bio-card--simple .bio-card__title { font-size: 22px; }
 }
 @media (max-width: 380px) {
   .bio__avatar { width: 120px; height: 120px; }
   .bio__name { font-size: 30px; }
-  .bio-card--rich              { grid-template-columns: 104px 1fr; min-height: 124px; }
-  .bio-card--rich.bio-card--alt{ grid-template-columns: 1fr 104px; }
-  .bio-card__media { min-height: 124px; }
+  .bio-card--rich              { grid-template-columns: 96px 1fr; min-height: 116px; }
+  .bio-card--rich.bio-card--alt{ grid-template-columns: 1fr 96px; }
+  .bio-card__media {
+    width: 96px;
+    height: 96px;
+    max-height: 96px;
+  }
+  .bio-card__media img,
+  .bio-card__media svg {
+    width: 62px;
+    height: 62px;
+    max-width: 62px;
+    max-height: 62px;
+  }
+  .bio-card__body { padding: 14px 14px; }
 }
 
 /* desktop wide — flora aparece mais */
