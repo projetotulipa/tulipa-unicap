@@ -862,15 +862,129 @@ body[data-state="app"] .admin-app { display: flex; }
   font-style: italic;
 }
 
+/* =========================================================
+   ===== MOBILE (≤ 720px): bottom-tab navigation =====
+   Sidebar lateral vira bottom-bar fixa (ergonômica pro dedão).
+   Header compacto no topo com brand. Main rola entre os dois.
+   ========================================================= */
+
 @media (max-width: 720px) {
-  .admin-app { flex-direction: column; }
-  .admin-sidebar { width: 100%; flex-direction: row; align-items: center; padding: 8px; }
-  .admin-sidebar__brand { border-bottom: none; padding: 4px 12px; }
-  .admin-sidebar__nav { flex-direction: row; overflow-x: auto; padding: 4px; }
-  .admin-sidebar__nav a { white-space: nowrap; padding: 6px 10px; }
-  .admin-sidebar__user { display: none; }
-  .admin-main { padding: 20px; }
-  .publish-bar { margin: 20px -20px -20px; padding: 12px 20px; }
+  .admin-app {
+    flex-direction: column;
+    height: 100dvh; /* viewport dinâmica do mobile */
+    height: 100vh;
+  }
+
+  /* sidebar vira mobile-shell: brand no topo + nav fixo no bottom */
+  .admin-sidebar {
+    width: 100%;
+    flex-direction: column;
+    background: transparent;
+    border-right: none;
+    pointer-events: none; /* deixa filhos cuidarem disso individualmente */
+  }
+  .admin-sidebar::after { display: none; }
+
+  /* brand vira header sticky no topo (compacto) */
+  .admin-sidebar__brand {
+    pointer-events: auto;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding: 10px 16px;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .admin-sidebar__brand::after { display: none; }
+  .admin-sidebar__mark { width: 32px; height: 32px; }
+  .admin-sidebar__brand strong { font-size: 16px; }
+  .admin-sidebar__brand small { font-size: 9px; }
+
+  /* nav: fixed bottom, igual app nativo */
+  .admin-sidebar__nav {
+    pointer-events: auto;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: stretch;
+    padding: 6px 4px;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom));
+    background: var(--bg-elev);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .admin-sidebar__nav::-webkit-scrollbar { display: none; }
+
+  /* cada item: stack icon+label vertical, touch-target ≥ 56px largura */
+  .admin-sidebar__nav a:not([hidden]) {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 6px 4px;
+    min-width: 60px;
+    flex: 1 1 auto;
+    border-radius: 10px;
+    white-space: nowrap;
+    font-size: 10px;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+    text-align: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .admin-sidebar__nav a span {
+    width: 22px; height: 22px;
+  }
+  .admin-sidebar__nav a.is-active {
+    padding-left: 6px; /* override do desktop */
+    background: linear-gradient(180deg, rgba(193, 158, 90, 0.12), transparent);
+    color: var(--cream);
+  }
+  .admin-sidebar__nav a.is-active::before {
+    top: 0;
+    left: 50%;
+    bottom: auto;
+    width: 24px;
+    height: 3px;
+    transform: translateX(-50%);
+    border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, var(--gold), var(--rose-soft));
+  }
+  .admin-sidebar__nav a:active {
+    background: rgba(159, 90, 107, 0.18);
+    transform: scale(0.96);
+  }
+
+  /* user info esconde no mobile — acessível via long-press do brand se precisar */
+  .admin-sidebar__user {
+    display: none;
+  }
+
+  /* main respira entre brand-top e bottom-nav */
+  .admin-main {
+    padding: 18px 14px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+  .publish-bar {
+    margin: 20px -14px;
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+}
+
+/* tablet pequeno (entre 720 e 900): compactar sidebar */
+@media (min-width: 721px) and (max-width: 900px) {
+  .admin-sidebar { width: 220px; }
+  .admin-main { padding: 28px 28px 60px; }
 }
 
 /* =========================================================
