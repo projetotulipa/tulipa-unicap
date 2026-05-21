@@ -140,11 +140,30 @@ Pastas: fichamentos por grupo · revisões teóricas · artigos & projetos futur
     body:
 `## O que o Dep. de Mídia sustenta
 
-Artes & Mídias é o setor criativo da TULIPA. Recebe os posts da Pesquisa, transforma em arte visual e publica no Instagram. Cuida da identidade visual e da presença pública do projeto.
+**Artes & Mídias** é o setor criativo da TULIPA — onde a psicologia analítica encontra o estético-visual. Cuida do rosto, da voz e da presença pública do projeto. Cada peça é pequeno gesto curatorial: não vendemos a TULIPA, apresentamos.
 
 ## Atribuições contínuas
 
-- **Tarefas** — kanban por status (a fazer, em produção, concluído), com prazo, equipe e pessoa responsáveis.
+- **Instagram @tulipa.unicap** — posts, stories, reels, divulgação de eventos e atividades.
+- **Identidade visual** — manutenção da coerência estética (paleta, tipografia, motivos botânicos, tons junguianos).
+- **Cartazes & materiais de evento** — processos seletivos, oficinas, palestras, mesas redondas.
+- **Curadoria de imagens & citações** — selecionar o que sai como voz pública da TULIPA.
+- **Site & presença web** — manutenção desta página e demais canais digitais.
+
+## Fluxo com a Pesquisa
+
+Nenhum post sai sem revisão teórica:
+
+1. Mídia sugere o post e envia o texto à Pesquisa.
+2. Pesquisa revisa (24-48h).
+3. Pesquisa devolve validado.
+4. Mídia produz a arte e publica.
+
+A Pesquisa também sugere conteúdos próprios (1-2 ideias/mês) baseados em fichamentos.
+
+## Estrutura interna (no admin)
+
+- **Tarefas** — kanban por status (a fazer / em produção / concluído) com prazo, equipe e pessoa responsáveis.
 - **Posts recebidos** — conteúdos enviados pela Pesquisa que precisam de arte.
 - **Equipes de mídia** — sub-equipes com cargas distribuídas.
 - **Calendário** — programação visual dos próximos lançamentos.

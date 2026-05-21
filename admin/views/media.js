@@ -3,6 +3,8 @@
 import { icon } from '../icons.js';
 import * as data from '../media/data.js';
 import { renderMediaNav } from './media-nav.js';
+import { renderHelpBanner, wireHelpBanner } from './help-banner.js';
+import { helpDefault } from '../help/data.js';
 
 // pétala SVG decorativa (mesma forma do favicon mas isolada)
 const PETAL_SVG = `
@@ -20,6 +22,8 @@ export async function renderMediaDashboard(ctx) {
   root.innerHTML = `
     <div class="view">
       ${renderMediaNav('dashboard')}
+
+      ${renderHelpBanner({ slot: 'midia', title: helpDefault('midia').title })}
 
       <header class="media-hero">
         <div class="media-hero__petal">${PETAL_SVG}</div>
@@ -81,6 +85,8 @@ export async function renderMediaDashboard(ctx) {
       </section>
     </div>
   `;
+
+  wireHelpBanner(ctx, 'midia').catch((err) => console.warn('[help-banner]', err));
 
   loadAll().catch((e) => console.error(e));
 }
