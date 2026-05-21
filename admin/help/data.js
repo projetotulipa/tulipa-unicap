@@ -170,7 +170,7 @@ A Pesquisa também sugere conteúdos próprios (1-2 ideias/mês) baseados em fic
 
 ## Direção
 
-Coordena o fluxo de produção, distribui tarefas conforme carga das equipes, garante padrão visual e prazo de entrega.`,
+**Clara Bueno** coordena o fluxo de produção, distribui tarefas conforme a carga das equipes, garante o padrão visual e os prazos de entrega. Mantém viva a identidade gráfica e a presença pública do projeto.`,
   },
 };
 
