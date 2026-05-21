@@ -27,6 +27,7 @@ const STATIC = new Set(['heading', 'paragraph', 'image', 'divider']);
 let FORM = null;
 let PAGES = [];
 let pageIdx = 0;
+let captcha = null;
 
 // ---------------- boot ----------------
 (async function boot() {
@@ -99,6 +100,8 @@ function renderForm() {
   const s = FORM.settings;
   const multi = !!s.multiStep && PAGES.length > 1;
   const cols = s.layoutColumns === 2 ? 'ff-grid--2' : '';
+  captcha = s.captcha ? { a: 1 + Math.floor(Math.random() * 8), b: 1 + Math.floor(Math.random() * 8) } : null;
+  const onSubmitStep = !multi || pageIdx === PAGES.length - 1;
 
   root.innerHTML = `<form class="ff-card ff-form" id="ffForm" novalidate>
     ${s.coverImage ? `<img class="ff-cover" src="${esc(s.coverImage)}" alt="">` : ''}
@@ -117,6 +120,7 @@ function renderForm() {
         </section>`).join('')}
     </div>
     ${s.consentText ? `<label class="ff-consent"><input type="checkbox" id="ffConsent"><span>${esc(s.consentText)}</span></label>` : ''}
+    ${captcha && onSubmitStep ? `<label class="ff-field ff-field--full ff-captcha"><span class="ff-label">Confirme que é humano — quanto é ${captcha.a} + ${captcha.b}? <span class="ff-req">*</span></span><input class="ff-input" id="ffCaptcha" inputmode="numeric" autocomplete="off"></label>` : ''}
     <!-- honeypot anti-bot -->
     <div class="ff-hp" aria-hidden="true"><label>Não preencha<input type="text" id="ffHp" tabindex="-1" autocomplete="off"></label></div>
     <p class="ff-formerror" id="ffFormError" hidden></p>
@@ -539,6 +543,11 @@ async function onSubmit(e) {
   e.preventDefault();
   // honeypot → finge sucesso
   if (document.getElementById('ffHp')?.value) { successScreen(); return; }
+  // captcha simples (conta)
+  if (captcha) {
+    const ans = parseInt(document.getElementById('ffCaptcha')?.value, 10);
+    if (ans !== captcha.a + captcha.b) return showFormError('Verificação incorreta — confira a conta.');
+  }
   // LGPD
   const consent = document.getElementById('ffConsent');
   if (consent && !consent.checked) { return showFormError('Você precisa aceitar para enviar.'); }
