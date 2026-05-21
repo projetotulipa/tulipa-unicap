@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Formulário · TULIPA</title>
+  <meta name="description" content="Formulário da TULIPA — Tessitura Universitária de Linguagens em Psicologia Analítica (UNICAP)." />
+  <meta name="theme-color" content="#EDDFC2" />
+  <meta name="color-scheme" content="light" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 20 C 35 30, 30 50, 35 65 C 40 78, 50 80, 50 80 C 50 80, 60 78, 65 65 C 70 50, 65 30, 50 20 Z' fill='%234A5C36'/%3E%3Cpath d='M50 78 L50 95' stroke='%232F3D22' stroke-width='2' fill='none'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500;1,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="forms.css" />
+</head>
+<body>
+  <!-- flora seca estática (verde/creme) -->
+  <svg class="ff-flora ff-flora--left" viewBox="0 0 190 700" preserveAspectRatio="xMinYMin meet" aria-hidden="true">
+    <defs>
+      <linearGradient id="leafA" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#8FA084" stop-opacity="0.9"/><stop offset="1" stop-color="#5A6E45" stop-opacity="0.55"/>
+      </linearGradient>
+      <linearGradient id="stemA" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#7E8B62"/><stop offset="1" stop-color="#46552F"/>
+      </linearGradient>
+      <linearGradient id="budA" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#E0CFA8"/><stop offset="1" stop-color="#B7A06E"/>
+      </linearGradient>
+    </defs>
+    <!-- eucalipto curvado -->
+    <g>
+      <path d="M52 12 Q 66 140, 40 290 Q 64 430, 78 560 Q 70 640, 56 690" stroke="url(#stemA)" stroke-width="1.4" fill="none"/>
+      <ellipse cx="50" cy="70"  rx="12" ry="8"  fill="url(#leafA)" transform="rotate(-16 50 70)"/>
+      <ellipse cx="60" cy="116" rx="13" ry="8.5" fill="url(#leafA)" transform="rotate(22 60 116)"/>
+      <ellipse cx="44" cy="162" rx="12" ry="8"  fill="url(#leafA)" transform="rotate(-12 44 162)"/>
+      <ellipse cx="56" cy="210" rx="13" ry="8.5" fill="url(#leafA)" transform="rotate(18 56 210)"/>
+      <ellipse cx="40" cy="258" rx="12" ry="8"  fill="url(#leafA)" transform="rotate(-10 40 258)"/>
+      <ellipse cx="52" cy="306" rx="12" ry="7.5" fill="url(#leafA)" transform="rotate(15 52 306)"/>
+      <ellipse cx="58" cy="356" rx="11" ry="7"  fill="url(#leafA)" transform="rotate(-8 58 356)"/>
+      <ellipse cx="68" cy="404" rx="11" ry="7"  fill="url(#leafA)" transform="rotate(20 68 404)"/>
+      <ellipse cx="74" cy="452" rx="10" ry="6.5" fill="url(#leafA)" transform="rotate(-12 74 452)"/>
+    </g>
+    <!-- tulipa seca creme -->
+    <g transform="translate(108 250)">
+      <path d="M0 0 Q 2 150, -6 300 Q -10 410, 1 470" stroke="url(#stemA)" stroke-width="1.7" fill="none"/>
+      <g transform="translate(1 0)">
+        <path d="M0 0 C -18 -10, -25 -34, -16 -52 C -7 -40, -2 -20, 0 -10 Z" fill="url(#budA)" opacity="0.92"/>
+        <path d="M0 -2 C 16 -8, 24 -32, 17 -50 C 6 -38, -2 -20, 0 -10 Z" fill="#C9B486" opacity="0.9"/>
+        <path d="M0 -10 C -7 -18, -9 -36, -2 -50 C 7 -36, 5 -18, 0 -10 Z" fill="#D8C490" opacity="0.95"/>
+      </g>
+      <path d="M-6 150 Q -26 146, -46 132 Q -26 178, -4 170 Z" fill="url(#leafA)" opacity="0.6"/>
+    </g>
+  </svg>
+
+  <svg class="ff-flora ff-flora--right" viewBox="0 0 190 700" preserveAspectRatio="xMinYMin meet" aria-hidden="true">
+    <defs>
+      <linearGradient id="leafB" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#8FA084" stop-opacity="0.9"/><stop offset="1" stop-color="#5A6E45" stop-opacity="0.55"/>
+      </linearGradient>
+      <linearGradient id="stemB" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#7E8B62"/><stop offset="1" stop-color="#46552F"/>
+      </linearGradient>
+      <linearGradient id="budB" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#E0CFA8"/><stop offset="1" stop-color="#B7A06E"/>
+      </linearGradient>
+    </defs>
+    <g>
+      <path d="M52 12 Q 66 140, 40 290 Q 64 430, 78 560 Q 70 640, 56 690" stroke="url(#stemB)" stroke-width="1.4" fill="none"/>
+      <ellipse cx="50" cy="86"  rx="12" ry="8"  fill="url(#leafB)" transform="rotate(-16 50 86)"/>
+      <ellipse cx="60" cy="132" rx="13" ry="8.5" fill="url(#leafB)" transform="rotate(22 60 132)"/>
+      <ellipse cx="44" cy="178" rx="12" ry="8"  fill="url(#leafB)" transform="rotate(-12 44 178)"/>
+      <ellipse cx="56" cy="226" rx="13" ry="8.5" fill="url(#leafB)" transform="rotate(18 56 226)"/>
+      <ellipse cx="40" cy="274" rx="12" ry="8"  fill="url(#leafB)" transform="rotate(-10 40 274)"/>
+      <ellipse cx="52" cy="322" rx="12" ry="7.5" fill="url(#leafB)" transform="rotate(15 52 322)"/>
+      <ellipse cx="58" cy="372" rx="11" ry="7"  fill="url(#leafB)" transform="rotate(-8 58 372)"/>
+      <ellipse cx="68" cy="420" rx="11" ry="7"  fill="url(#leafB)" transform="rotate(20 68 420)"/>
+    </g>
+    <g transform="translate(112 300)">
+      <path d="M0 0 Q 2 130, -6 260 Q -10 360, 1 420" stroke="url(#stemB)" stroke-width="1.6" fill="none"/>
+      <path d="M-6 120 Q -26 116, -46 102 Q -26 148, -4 140 Z" fill="url(#leafB)" opacity="0.6"/>
+    </g>
+  </svg>
+
+  <main id="formRoot">
+    <div class="ff-card ff-msg"><p>Carregando…</p></div>
+  </main>
+
+  <script type="module" src="./forms.js"></script>
+</body>
+</html>
