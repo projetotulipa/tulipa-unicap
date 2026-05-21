@@ -382,7 +382,7 @@ body {
   --card-accent: var(--rose-soft);
   --card-glow:   rgba(159, 90, 107, 0.45);
   --card-tint:   rgba(159, 90, 107, 0.20);
-  --blob-shape:  38px 22px 40px 26px / 26px 40px 22px 38px;
+  --blob-shape:  55% 45% 60% 40% / 22px 18px 24px 20px;
 
   position: relative;
   display: block;
@@ -418,7 +418,7 @@ body {
 .bio-card:hover {
   transform: translateY(-4px) rotate(-0.3deg);
   box-shadow: var(--shadow-card-hi), 0 0 0 1px var(--card-tint) inset;
-  border-radius: 30px 42px 28px 40px / 40px 28px 42px 30px;
+  border-radius: 50% 50% 45% 55% / 22px 22px 20px 24px;
 }
 .bio-card:hover::after { transform: scale(1.18) translate(-12px, 12px); }
 .bio-card:focus-visible {
@@ -429,18 +429,18 @@ body {
 .bio-card:active { transform: translateY(-1px); }
 
 /* shape alterna pra parecer onda — 5 variações em ciclo */
-.bio-card:nth-child(5n+2) { --blob-shape: 24px 40px 26px 38px / 38px 26px 40px 24px; }
-.bio-card:nth-child(5n+3) { --blob-shape: 40px 26px 36px 30px / 30px 36px 26px 40px; }
-.bio-card:nth-child(5n+4) { --blob-shape: 30px 38px 24px 40px / 40px 24px 38px 30px; }
-.bio-card:nth-child(5n+5) { --blob-shape: 36px 28px 40px 24px / 24px 40px 28px 36px; }
+.bio-card:nth-child(5n+2) { --blob-shape: 40% 60% 45% 55% / 20px 24px 18px 22px; }
+.bio-card:nth-child(5n+3) { --blob-shape: 60% 50% 55% 45% / 24px 20px 22px 18px; }
+.bio-card:nth-child(5n+4) { --blob-shape: 45% 55% 50% 60% / 18px 22px 20px 24px; }
+.bio-card:nth-child(5n+5) { --blob-shape: 50% 60% 45% 55% / 22px 18px 24px 20px; }
 
-/* respiração lenta do shape — ondulação contínua e VISÍVEL, mas em px
-   LIMITADOS (22–42px) pra morfar sem que a curva alcance título/CTA.
-   (Antes usava % de 50%+, que virava sweep gigante e comia o texto.) */
+/* respiração do shape — ondulação contínua e VISÍVEL. Truque anti-corte:
+   raio HORIZONTAL grande (%) faz a onda larga; raio VERTICAL pequeno (≤24px)
+   mantém a curva rasa, então nunca alcança título/CTA mesmo em cards baixos. */
 @keyframes bio-wobble {
   0%, 100% { border-radius: var(--blob-shape); }
-  33%      { border-radius: 22px 42px 26px 40px / 40px 26px 42px 22px; }
-  66%      { border-radius: 42px 24px 40px 26px / 26px 40px 24px 42px; }
+  33%      { border-radius: 45% 60% 40% 55% / 20px 24px 18px 22px; }
+  66%      { border-radius: 60% 45% 55% 40% / 24px 18px 22px 20px; }
 }
 
 /* ---------- card simples (sem imagem) ---------- */
@@ -797,7 +797,7 @@ body {
     max-width: 62px;
     max-height: 62px;
   }
-  .bio-card__body { padding: 14px 14px; }
+  .bio-card__body { padding: 14px 18px; }
 }
 
 /* ============================================================
@@ -806,15 +806,18 @@ body {
    e reduz os blurs/camadas. As animações de ENTRADA continuam.
    ============================================================ */
 @media (max-width: 640px) {
-  .bio-mesh::before    { animation: none; }       /* mesh para de derivar */
+  .bio-mesh::before    { animation: none; filter: blur(18px); } /* mesh estático + blur menor */
   .bio-mesh::after     { display: none; }         /* grão + mix-blend: caro no mobile */
-  .bio-petal           { animation: none; filter: blur(36px); } /* sem flutuar; blur menor */
+  .bio-petal           { animation: none; filter: blur(28px); } /* sem flutuar; blur menor */
   .bio-petal--d,
   .bio-petal--e        { display: none; }          /* 5 → 3 blobs desfocados */
   .bio-flora__sprig    { animation: none; }        /* floras paradas */
   .bio__avatar         { animation: none; }        /* sem box-shadow pulsando */
   .bio__avatar::before { animation: none; }        /* halo cônico não gira */
   .bio-wave path       { animation: none; }        /* onda estática */
+  /* cards SEGUEM ondulando (dinamismo), mas sem o blur do glow —
+     recortar um blur a cada frame é o que pesava no wobble */
+  .bio-card::after     { filter: none; }
 }
 
 /* desktop wide — flora aparece mais */
