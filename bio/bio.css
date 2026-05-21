@@ -692,25 +692,24 @@ body {
 /* ============================================================
    CARDS CLAROS + SILHUETA DE NUVEM
    Sobrescreve os accents escuros: base pergaminho clara, texto vinho,
-   forma de nuvem (mask estática) + leve flutuar. Tom claro varia por hue.
+   topo e base com ONDA suave. Cor clara SÓLIDA (chapada), varia por hue.
    ============================================================ */
-.bio-card[data-accent="rose"]       { --light-a:#F3E2E6; --light-b:#E3C6CC; }
-.bio-card[data-accent="sage"]       { --light-a:#ECEDD8; --light-b:#CFD6B4; }
-.bio-card[data-accent="gold"]       { --light-a:#F7EDCE; --light-b:#E8D3A4; }
-.bio-card[data-accent="cream"]      { --light-a:#F7EFDA; --light-b:#E9DAB6; }
-.bio-card[data-accent="terracotta"] { --light-a:#F7E3D7; --light-b:#EAC4AE; }
-.bio-card[data-accent="violet"]     { --light-a:#ECE7F1; --light-b:#D1C6DD; }
-.bio-card[data-accent="indigo"]     { --light-a:#E5EBF2; --light-b:#C6D2E2; }
+.bio-card[data-accent="rose"]       { --flat:#EAD0D5; --media-c:var(--rose); }
+.bio-card[data-accent="sage"]       { --flat:#DCE0C2; --media-c:var(--sage); }
+.bio-card[data-accent="gold"]       { --flat:#EFDDB2; --media-c:var(--gold-deep); }
+.bio-card[data-accent="cream"]      { --flat:#EDE0BE; --media-c:#B89B6A; }
+.bio-card[data-accent="terracotta"] { --flat:#EFD3C2; --media-c:var(--terracotta-deep); }
+.bio-card[data-accent="violet"]     { --flat:#DED4E6; --media-c:var(--violet); }
+.bio-card[data-accent="indigo"]     { --flat:#D2DCEA; --media-c:var(--indigo); }
 
 .bio-card[data-accent] {
-  background:
-    radial-gradient(ellipse 95% 80% at 18% 0%, rgba(255, 255, 255, 0.6), transparent 60%),
-    linear-gradient(150deg, var(--light-a, #F4E8CC), var(--light-b, #E6D2A8));
-  box-shadow: 0 16px 38px -12px rgba(58, 28, 16, 0.42), 0 4px 12px rgba(58, 28, 16, 0.20);
+  background: var(--flat, #E9DAB6);            /* CHAPADO: cor sólida */
+  box-shadow: 0 14px 30px -12px rgba(40, 18, 10, 0.5);
 }
-.bio-card[data-accent]::after { opacity: 0.38; }
-.bio-card[data-accent] .bio-card__title { color: var(--rose-deepest); text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45); }
+.bio-card[data-accent]::after { display: none; }   /* sem glow */
+.bio-card[data-accent] .bio-card__title { color: var(--rose-deepest); }
 .bio-card[data-accent] .bio-card__desc  { color: #5A3E2E; }
+.bio-card[data-accent] .bio-card__media { background: var(--media-c, var(--rose)); }
 .bio-card[data-accent] .bio-card__cta {
   background: linear-gradient(135deg, var(--rose), var(--rose-deep));
   color: var(--cream);
@@ -718,46 +717,20 @@ body {
   box-shadow: 0 4px 12px rgba(92, 34, 48, 0.26);
 }
 
-/* forma de NUVEM via mask: 2 faixas centrais (cruz) preenchem o miolo;
-   círculos (lóbulos) fazem o puff no topo, base e pontas. O texto vive
-   no miolo seguro (padding ≥ 20px cobre a profundidade dos recortes). */
+/* FUNDO DA PÁGINA CHAPADO — sem mesh/pétalas/flora desfocadas */
+.bio-mesh, .bio-ambient, .bio-flora { display: none; }
+
+/* BORDAS ONDULADAS — onda suave no topo e na base via mask SVG (px fixos,
+   não cresce em cards altos). Faixa central sólida + 2 tiras com a curva.
+   Texto fica no miolo (padding ≥22px cobre a profundidade da onda ~±9px). */
 .bio-card {
-  --cloud-mask:
-    linear-gradient(#000, #000) 50% 50% / 100% calc(100% - 32px) no-repeat,
-    linear-gradient(#000, #000) 50% 50% / calc(100% - 40px) 100% no-repeat,
-    radial-gradient(circle 24px at 14% 24px, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 20px at 32% 19px, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 26px at 51% 25px, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 20px at 70% 18px, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 24px at 87% 23px, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 24px at 13% calc(100% - 23px), #000 98%, transparent) no-repeat,
-    radial-gradient(circle 20px at 34% calc(100% - 18px), #000 98%, transparent) no-repeat,
-    radial-gradient(circle 26px at 53% calc(100% - 25px), #000 98%, transparent) no-repeat,
-    radial-gradient(circle 20px at 72% calc(100% - 18px), #000 98%, transparent) no-repeat,
-    radial-gradient(circle 24px at 88% calc(100% - 23px), #000 98%, transparent) no-repeat,
-    radial-gradient(circle 28px at 28px 50%, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 28px at calc(100% - 28px) 50%, #000 98%, transparent) no-repeat;
-  -webkit-mask: var(--cloud-mask);
-          mask: var(--cloud-mask);
+  --wave:
+    linear-gradient(#000, #000) center / 100% calc(100% - 44px) no-repeat,
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%2026'%20preserveAspectRatio='none'%3E%3Cpath%20d='M0%2013%20C%2020%203%2034%203%2050%2013%20C%2066%2023%2080%2023%20100%2013%20L100%2026%20L0%2026%20Z'%20fill='%23000'/%3E%3C/svg%3E") top / 100% 24px no-repeat,
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%2026'%20preserveAspectRatio='none'%3E%3Cpath%20d='M0%200%20L100%200%20L100%2013%20C%2080%2023%2066%2023%2050%2013%20C%2034%203%2020%203%200%2013%20Z'%20fill='%23000'/%3E%3C/svg%3E") bottom / 100% 24px no-repeat;
+  -webkit-mask: var(--wave);
+          mask: var(--wave);
   border-radius: 0;
-}
-/* lóbulos deslocados nos cards pares → cada nuvem fica irregular/única */
-.bio-card:nth-child(even) {
-  --cloud-mask:
-    linear-gradient(#000, #000) 50% 50% / 100% calc(100% - 30px) no-repeat,
-    linear-gradient(#000, #000) 50% 50% / calc(100% - 40px) 100% no-repeat,
-    radial-gradient(circle 26px at 11% 25px, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 19px at 29% 18px, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 22px at 47% 22px, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 27px at 67% 26px, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 20px at 90% 19px, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 22px at 12% calc(100% - 21px), #000 98%, transparent) no-repeat,
-    radial-gradient(circle 27px at 31% calc(100% - 26px), #000 98%, transparent) no-repeat,
-    radial-gradient(circle 19px at 50% calc(100% - 18px), #000 98%, transparent) no-repeat,
-    radial-gradient(circle 24px at 71% calc(100% - 23px), #000 98%, transparent) no-repeat,
-    radial-gradient(circle 22px at 90% calc(100% - 21px), #000 98%, transparent) no-repeat,
-    radial-gradient(circle 28px at 28px 50%, #000 98%, transparent) no-repeat,
-    radial-gradient(circle 28px at calc(100% - 28px) 50%, #000 98%, transparent) no-repeat;
 }
 
 /* stagger animation pros cards */
@@ -866,7 +839,7 @@ body {
     max-width: 62px;
     max-height: 62px;
   }
-  .bio-card__body { padding: 20px 22px; }
+  .bio-card__body { padding: 22px 22px; }
 }
 
 /* ============================================================
