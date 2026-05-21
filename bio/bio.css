@@ -717,8 +717,10 @@ body {
   box-shadow: 0 4px 12px rgba(92, 34, 48, 0.26);
 }
 
-/* FUNDO DA PÁGINA CHAPADO — sem mesh/pétalas/flora desfocadas */
-.bio-mesh, .bio-ambient, .bio-flora { display: none; }
+/* FUNDO DA PÁGINA CHAPADO — sem mesh nem pétalas borradas.
+   As flores secas (flora SVG) FICAM, porém ESTÁTICAS (sem sway/drift). */
+.bio-mesh, .bio-ambient { display: none; }
+.bio-flora__sprig, .bio-flora__petal { animation: none; }
 
 /* BORDAS ONDULADAS — onda suave no topo e na base via mask SVG (px fixos,
    não cresce em cards altos). Faixa central sólida + 2 tiras com a curva.
