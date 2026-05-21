@@ -123,9 +123,10 @@ function renderIdentity(identity) {
   const head = document.querySelector('.bio__head');
   if (!head) return;
 
+  // Fallback: logo TULIPA da home (em vez da inicial "T")
   const avatarHtml = identity.avatar
     ? `<img src="${escapeAttr(identity.avatar)}" alt="${escapeAttr(identity.name)}" />`
-    : `<span class="bio__avatar--fallback">${escapeHtml(initials(identity.name))}</span>`;
+    : `<img class="bio__avatar--logo" src="../assets/logo.png" alt="${escapeAttr(identity.name)}" onerror="this.outerHTML='<span class=&quot;bio__avatar--fallback&quot;>${escapeAttr(initials(identity.name))}</span>'" />`;
 
   head.innerHTML = `
     <div class="bio__avatar">${avatarHtml}</div>
