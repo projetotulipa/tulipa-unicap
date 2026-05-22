@@ -7,6 +7,9 @@ import { supabase } from '../../js/supabase.js';
 export const BIO_SCOPE = 'bio:default';
 export const BIO_BUCKET = 'bio-assets';
 
+// Paleta válida — espelha ACCENT_CYCLE em bio/bio.js. null = auto (cycling).
+const VALID_ACCENTS = new Set(['rose', 'cream', 'sage', 'gold', 'terracotta', 'violet', 'indigo']);
+
 // ===== DEFAULTS (2 cards pré-cadastrados, deletáveis) =====
 export const BIO_DEFAULTS = Object.freeze({
   identity: {
@@ -71,6 +74,7 @@ function normalize(raw) {
       description: String(l.description || ''),
       image: l.image || null,
       icon: l.icon || null,
+      accent: VALID_ACCENTS.has(l.accent) ? l.accent : null,
       hidden: !!l.hidden,
     })) : [],
   };

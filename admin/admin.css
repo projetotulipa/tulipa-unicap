@@ -2047,6 +2047,48 @@ textarea.bio-editor-input { resize: vertical; min-height: 80px; }
 }
 .bio-icon-pick:disabled { cursor: not-allowed; }
 
+.bio-accent-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px;
+  background: rgba(193, 158, 90, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.bio-accent-pick {
+  position: relative;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(40, 18, 10, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.bio-accent-pick:hover {
+  transform: translateY(-1px) scale(1.08);
+  box-shadow: 0 4px 10px rgba(40, 18, 10, 0.24), inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+.bio-accent-pick.is-sel {
+  border-color: var(--gold-soft, #C19E5A);
+  box-shadow: 0 0 0 2px rgba(193, 158, 90, 0.25), 0 4px 10px rgba(40, 18, 10, 0.28);
+}
+.bio-accent-pick__auto {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 14px;
+  color: #5A3E2E;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
 /* mobile: layout stacked */
 @media (max-width: 700px) {
   .bio-link-card {

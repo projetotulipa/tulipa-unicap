@@ -30,6 +30,19 @@ const ICON_LIBRARY = [
   { id: 'generic',    label: 'genérico',   thumb: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8" opacity="0.5"/><path d="M12 7 L13.5 11 L18 11 L14.5 13.5 L16 18 L12 15 L8 18 L9.5 13.5 L6 11 L10.5 11 Z"/></svg>' },
 ];
 
+// Paleta de accents — espelha os data-accent em bio/bio.css (linhas 774-780).
+// Cor `swatch` reproduz o --flat (chapado) usado no card público.
+const ACCENT_LIBRARY = [
+  { id: null,          label: 'auto (cycling)', swatch: 'linear-gradient(135deg,#EAD0D5 0%,#DCE0C2 25%,#EFDDB2 50%,#EFD3C2 75%,#DED4E6 100%)' },
+  { id: 'rose',        label: 'rosa',           swatch: '#EAD0D5' },
+  { id: 'sage',        label: 'sálvia',         swatch: '#DCE0C2' },
+  { id: 'gold',        label: 'dourado',        swatch: '#EFDDB2' },
+  { id: 'cream',       label: 'creme',          swatch: '#EDE0BE' },
+  { id: 'terracotta',  label: 'terracota',      swatch: '#EFD3C2' },
+  { id: 'violet',      label: 'violeta',        swatch: '#DED4E6' },
+  { id: 'indigo',      label: 'índigo',         swatch: '#D2DCEA' },
+];
+
 let cached = null;   // { ctx, state, original }
 let isDirty = false;
 let unsavedWarner = null;
@@ -418,6 +431,7 @@ function addLink() {
     description: '',
     image: null,
     icon: null,
+    accent: null,
     hidden: false,
   });
   markDirty();
@@ -506,6 +520,22 @@ function linkCardHtml(link, idx) {
                         title="${escapeAttr(opt.label)}" aria-label="${escapeAttr(opt.label)}"
                         ${link.image ? 'disabled' : ''}>
                   ${opt.thumb}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="bio-link-card__row">
+          <div class="bio-editor-field" style="flex: 1; min-width: 0;">
+            <label class="bio-editor-label">Cor do card</label>
+            <div class="bio-accent-picker" role="radiogroup" aria-label="Cor do card">
+              ${ACCENT_LIBRARY.map((opt) => `
+                <button type="button"
+                        class="bio-accent-pick ${ (link.accent || null) === opt.id ? 'is-sel' : ''}"
+                        data-action="pick-accent" data-accent-id="${opt.id == null ? '' : escapeAttr(opt.id)}"
+                        title="${escapeAttr(opt.label)}" aria-label="${escapeAttr(opt.label)}"
+                        style="background: ${opt.swatch};">
+                  ${opt.id == null ? '<span class="bio-accent-pick__auto">A</span>' : ''}
                 </button>
               `).join('')}
             </div>
@@ -669,6 +699,18 @@ function bindLinkActions() {
         markDirty();
         // update visual selection sem re-render completo
         card.querySelectorAll('[data-action="pick-icon"]').forEach((b) => b.classList.remove('is-sel'));
+        btn.classList.add('is-sel');
+      });
+    });
+
+    // accent picker
+    card.querySelectorAll('[data-action="pick-accent"]').forEach((btn) => {
+      btn.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const id = btn.dataset.accentId || null;
+        cached.state.links[idx].accent = id || null;
+        markDirty();
+        card.querySelectorAll('[data-action="pick-accent"]').forEach((b) => b.classList.remove('is-sel'));
         btn.classList.add('is-sel');
       });
     });
@@ -998,7 +1040,7 @@ function diffBioData(oldData, newData) {
     if (!o) {
       changes.push({ kind: 'link-add', label: n.label || '(sem rótulo)', id });
     } else {
-      const fields = ['label', 'href', 'description', 'image', 'icon', 'hidden'];
+      const fields = ['label', 'href', 'description', 'image', 'icon', 'accent', 'hidden'];
       for (const f of fields) {
         if (JSON.stringify(o[f]) !== JSON.stringify(n[f])) {
           changes.push({ kind: 'link-edit', field: f, label: n.label || o.label || '(sem rótulo)', before: o[f], after: n[f] });

@@ -331,7 +331,9 @@ function renderBioMd(s) {
 // cycling de accents — cores alternam pra parecer um arco-íris junguiano
 // cream entra cedo pra quebrar a monotonia escura com luz papel
 const ACCENT_CYCLE = ['rose', 'cream', 'sage', 'gold', 'terracotta', 'violet', 'indigo'];
+const ACCENT_VALID = new Set(ACCENT_CYCLE);
 function accentFor(link, idx) {
+  if (link.accent && ACCENT_VALID.has(link.accent)) return link.accent;
   if (link.id === 'default-site')  return 'rose';
   if (link.id === 'default-allos') return 'sage';
   if (link.id === 'default-form')  return 'gold';
