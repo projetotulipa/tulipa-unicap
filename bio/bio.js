@@ -4,6 +4,8 @@
 import { supabase } from '../js/supabase.js';
 
 const BIO_SCOPE = 'bio:default';
+const CACHE_KEY = 'tulipa:bio-public-cache';
+const FETCH_TIMEOUT_MS = 5000;
 
 // ===== SVGs inline pros cards padrão e fallbacks =====
 const SVG_BRAND = `
@@ -110,23 +112,48 @@ const DEFAULTS = {
   ],
 };
 
-// ===== Carrega conteúdo =====
-async function loadContent() {
+// ===== Cache local (resiliência offline) =====
+function readCache() {
   try {
-    const { data, error } = await supabase
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.data) return parsed;
+  } catch {}
+  return null;
+}
+function writeCache(data) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() })); } catch {}
+}
+
+// ===== Carrega conteúdo (stale-while-revalidate) =====
+async function loadContent() {
+  const cached = readCache();
+  try {
+    const query = supabase
       .from('site_content')
       .select('data')
       .eq('scope', BIO_SCOPE)
       .order('version', { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!error && data?.data) {
-      return normalize(data.data);
+    const timeout = new Promise((_, rej) =>
+      setTimeout(() => rej(new Error('timeout')), FETCH_TIMEOUT_MS)
+    );
+    const { data, error } = await Promise.race([query, timeout]);
+    if (error) throw error;
+    if (data?.data) {
+      writeCache(data.data);
+      return { content: normalize(data.data), source: 'live' };
     }
+    return { content: normalize(DEFAULTS), source: 'defaults' };
   } catch (e) {
     console.warn('[bio] erro carregando snapshot:', e?.message);
+    if (cached?.data) {
+      return { content: normalize(cached.data), source: 'cache', stale: true };
+    }
+    return { content: normalize(DEFAULTS), source: 'offline', error: e };
   }
-  return normalize(DEFAULTS);
 }
 
 function normalize(raw) {
@@ -155,10 +182,10 @@ function renderIdentity(identity) {
   const head = document.querySelector('.bio__head');
   if (!head) return;
 
-  // Fallback: logo TULIPA da home (em vez da inicial "T")
-  const avatarHtml = identity.avatar
-    ? `<img src="${escapeAttr(identity.avatar)}" alt="${escapeAttr(identity.name)}" />`
-    : `<img class="bio__avatar--logo" src="./logo-centered.png" alt="${escapeAttr(identity.name)}" onerror="this.onerror=null; this.src='../assets/logo.png';" />`;
+  const avatarSrc = safeImgSrc(identity.avatar);
+  const avatarHtml = avatarSrc
+    ? `<img src="${escapeAttr(avatarSrc)}" alt="${escapeAttr(identity.name)}" data-avatar="user" />`
+    : `<img class="bio__avatar--logo" src="./logo-centered.png" alt="${escapeAttr(identity.name)}" data-avatar="logo" />`;
 
   head.innerHTML = `
     <div class="bio__avatar">${avatarHtml}</div>
@@ -166,6 +193,22 @@ function renderIdentity(identity) {
     ${identity.tagline ? `<p class="bio__tagline">${escapeHtml(identity.tagline)}</p>` : ''}
     ${identity.bio ? `<p class="bio__bio">${renderBioMd(identity.bio)}</p>` : ''}
   `;
+
+  // Fallback de erro de imagem sem inline JS (CSP-safe).
+  const avatarImg = head.querySelector('.bio__avatar img');
+  if (avatarImg) {
+    avatarImg.addEventListener('error', function onErr() {
+      this.removeEventListener('error', onErr);
+      // Logo local → fallback no logo da home; user-avatar → fallback no logo local
+      if (this.dataset.avatar === 'user') {
+        this.dataset.avatar = 'logo';
+        this.classList.add('bio__avatar--logo');
+        this.src = './logo-centered.png';
+      } else {
+        this.src = '../assets/logo.png';
+      }
+    });
+  }
 }
 
 // markdown bem leve só pra **bold** e *italic* na bio
@@ -190,7 +233,7 @@ function renderCards(links) {
   const box = document.getElementById('bioCards');
   if (!box) return;
   if (!links.length) {
-    box.innerHTML = `<p style="text-align:center; color: var(--text-dim); font-style: italic; padding: 30px 0;">Sem links ainda.</p>`;
+    box.innerHTML = `<p class="bio-cards__empty">Sem links ainda.</p>`;
     return;
   }
 
@@ -208,8 +251,9 @@ function renderCards(links) {
 }
 
 function simpleCardHtml(link, accent) {
+  const href = safeHref(link.href);
   return `
-    <a class="bio-card bio-card--simple" href="${escapeAttr(link.href)}" target="_blank" rel="noopener" data-accent="${accent}">
+    <a class="bio-card bio-card--simple" href="${escapeAttr(href)}" target="_blank" rel="noopener" data-accent="${accent}" data-link-id="${escapeAttr(link.id || '')}">
       <h3 class="bio-card__title">${escapeHtml(link.label)}</h3>
       ${link.description ? `<p class="bio-card__desc">${escapeHtml(link.description)}</p>` : ''}
       <span class="bio-card__cta">
@@ -221,12 +265,14 @@ function simpleCardHtml(link, accent) {
 }
 
 function richCardHtml(link, isAlt, accent) {
-  const mediaHtml = link.image
-    ? `<img src="${escapeAttr(link.image)}" alt="" />`
+  const href = safeHref(link.href);
+  const imgSrc = safeImgSrc(link.image);
+  const mediaHtml = imgSrc
+    ? `<img src="${escapeAttr(imgSrc)}" alt="" loading="lazy" decoding="async" />`
     : (SVG_BY_ICON[link.icon] || SVG_GENERIC);
 
   return `
-    <a class="bio-card bio-card--rich ${isAlt ? 'bio-card--alt' : ''}" href="${escapeAttr(link.href)}" target="_blank" rel="noopener" data-accent="${accent}">
+    <a class="bio-card bio-card--rich ${isAlt ? 'bio-card--alt' : ''}" href="${escapeAttr(href)}" target="_blank" rel="noopener" data-accent="${accent}" data-link-id="${escapeAttr(link.id || '')}">
       <div class="bio-card__media">
         ${mediaHtml}
       </div>
@@ -251,17 +297,140 @@ function escapeHtml(s) {
 }
 function escapeAttr(s) { return escapeHtml(s); }
 
+// Whitelist de protocolos pra impedir javascript:/data:/etc em href.
+// Aceita https:, http:, mailto:, tel:, sms:, anchor (#), absoluto (/) e bare domain.
+function safeHref(href) {
+  if (!href) return '#';
+  const t = String(href).trim();
+  if (!t || t === '#') return '#';
+  if (t.startsWith('#') || t.startsWith('/')) return t;
+  if (/^(https?:|mailto:|tel:|sms:)/i.test(t)) return t;
+  if (/^[\w-][\w-.]*\.[a-z]{2,}/i.test(t)) return 'https://' + t;
+  return '#';
+}
+
+// Idem pra src de imagem — bloqueia javascript: e data: estranhos.
+function safeImgSrc(src) {
+  if (!src) return '';
+  const t = String(src).trim();
+  if (!t) return '';
+  if (t.startsWith('/') || t.startsWith('./') || t.startsWith('../')) return t;
+  if (/^(https?:|data:image\/)/i.test(t)) return t;
+  return '';
+}
+
+// ===== Share / Copy / QR =====
+function showToast(msg, kind = 'ok') {
+  const el = document.getElementById('bioToast');
+  if (!el) return;
+  el.textContent = msg;
+  el.dataset.kind = kind;
+  el.classList.add('is-show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => el.classList.remove('is-show'), 2200);
+}
+
+async function handleShareAction(action) {
+  const shareUrl = window.location.href.replace(/[?#].*$/, '');
+  const shareTitle = document.title || 'TULIPA — links';
+  const shareText = 'Links da TULIPA · Psicologia Analítica UNICAP';
+
+  if (action === 'share') {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+      } catch (e) {
+        if (e?.name !== 'AbortError') showToast('Não foi possível compartilhar.', 'err');
+      }
+    } else {
+      // fallback: copia
+      await copyToClipboard(shareUrl);
+    }
+    return;
+  }
+
+  if (action === 'copy') {
+    await copyToClipboard(shareUrl);
+    return;
+  }
+
+  if (action === 'qr') {
+    const dlg = document.getElementById('bioQrDialog');
+    if (dlg?.showModal) dlg.showModal();
+    else if (dlg) dlg.setAttribute('open', '');
+    return;
+  }
+
+  if (action === 'qr-close') {
+    const dlg = document.getElementById('bioQrDialog');
+    if (dlg?.close) dlg.close();
+    else if (dlg) dlg.removeAttribute('open');
+  }
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Link copiado ✓');
+  } catch {
+    // fallback antigo
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('Link copiado ✓'); }
+    catch { showToast('Não foi possível copiar.', 'err'); }
+    finally { ta.remove(); }
+  }
+}
+
+function bindShareActions() {
+  document.querySelectorAll('[data-share-action]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleShareAction(btn.dataset.shareAction);
+    });
+  });
+  // fecha dialog ao clicar fora
+  const dlg = document.getElementById('bioQrDialog');
+  dlg?.addEventListener('click', (e) => {
+    if (e.target === dlg) dlg.close?.();
+  });
+}
+
+function showStatusBanner(kind, msg) {
+  // kind: 'stale' (amarelo, conteúdo em cache) | 'offline' (vermelho, defaults)
+  const main = document.querySelector('main.bio');
+  if (!main) return;
+  const banner = document.createElement('div');
+  banner.className = `bio-status bio-status--${kind}`;
+  banner.setAttribute('role', 'status');
+  banner.innerHTML = `<span>${escapeHtml(msg)}</span><button class="bio-status__retry" type="button">tentar de novo</button>`;
+  main.insertBefore(banner, main.firstChild);
+  banner.querySelector('.bio-status__retry')?.addEventListener('click', () => location.reload());
+}
+
 // ===== Boot =====
 (async function () {
   try {
-    const content = await loadContent();
+    const { content, source, stale, error } = await loadContent();
     renderIdentity(content.identity);
     renderCards(content.links);
 
-    // atualiza title da página com nome
     if (content.identity.name) {
       document.title = `${content.identity.name} — links`;
     }
+
+    if (stale) {
+      showStatusBanner('stale', 'Mostrando versão salva — sem conexão agora.');
+    } else if (source === 'offline') {
+      showStatusBanner('offline', 'Não foi possível carregar os links. Verifique sua conexão.');
+      console.error('[bio] offline + sem cache:', error?.message);
+    }
+
+    bindShareActions();
   } catch (e) {
     console.error('[bio] erro fatal:', e);
     const root = document.getElementById('bioRoot');

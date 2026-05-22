@@ -8,9 +8,21 @@
   <meta name="theme-color" content="#1B0810" />
   <meta name="color-scheme" content="dark" />
   <meta name="format-detection" content="telephone=no" />
+  <meta name="robots" content="noindex, follow" />
+  <link rel="canonical" href="https://projetotulipa.github.io/tulipa-unicap/bio/" />
   <meta property="og:title" content="TULIPA — links" />
   <meta property="og:description" content="O Linktree da TULIPA — Psicologia Analítica Junguiana UNICAP." />
   <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://projetotulipa.github.io/tulipa-unicap/bio/" />
+  <meta property="og:image" content="https://projetotulipa.github.io/tulipa-unicap/bio/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Logo TULIPA — Tessitura Universitária de Linguagens em Psicologia Analítica" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TULIPA — links" />
+  <meta name="twitter:description" content="O Linktree da TULIPA — Psicologia Analítica Junguiana UNICAP." />
+  <meta name="twitter:image" content="https://projetotulipa.github.io/tulipa-unicap/bio/og-image.png" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 20 C 35 30, 30 50, 35 65 C 40 78, 50 80, 50 80 C 50 80, 60 78, 65 65 C 70 50, 65 30, 50 20 Z' fill='%235C2230'/%3E%3Cpath d='M50 78 L50 95' stroke='%234A5C36' stroke-width='2' fill='none'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -147,10 +159,47 @@
     <div class="bio__cards" id="bioCards"></div>
   </main>
 
+  <div class="bio__share" role="group" aria-label="Compartilhar esta página">
+    <button class="bio__share-btn" type="button" data-share-action="share" aria-label="Compartilhar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+      <span>compartilhar</span>
+    </button>
+    <button class="bio__share-btn" type="button" data-share-action="copy" aria-label="Copiar link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      <span>copiar</span>
+    </button>
+    <button class="bio__share-btn" type="button" data-share-action="qr" aria-label="Mostrar QR code">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        <line x1="14" y1="14" x2="14" y2="17"/><line x1="17" y1="14" x2="20" y2="14"/><line x1="14" y1="20" x2="17" y2="20"/><line x1="20" y1="17" x2="20" y2="20"/>
+      </svg>
+      <span>QR</span>
+    </button>
+  </div>
+
+  <dialog class="bio__qr-dialog" id="bioQrDialog" aria-labelledby="bioQrTitle">
+    <div class="bio__qr-dialog-inner">
+      <h2 id="bioQrTitle" class="bio__qr-title">Escaneie ou compartilhe</h2>
+      <img src="./qr.png" alt="QR code apontando pra /bio da TULIPA" class="bio__qr-img" />
+      <p class="bio__qr-url">projetotulipa.github.io/tulipa-unicap/bio</p>
+      <div class="bio__qr-actions">
+        <a href="./qr.png" download="tulipa-qr.png" class="bio__qr-link">baixar QR</a>
+        <button type="button" class="bio__qr-close" data-share-action="qr-close">fechar</button>
+      </div>
+    </div>
+  </dialog>
+
   <footer class="bio__foot">
     <a href="../" class="bio__back">↩ ir ao site</a>
     <span class="bio__credit">tulipa · unicap</span>
   </footer>
+
+  <div class="bio__toast" id="bioToast" role="status" aria-live="polite"></div>
 
   <script type="module" src="./bio.js"></script>
 </body>
