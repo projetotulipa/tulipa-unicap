@@ -27,6 +27,7 @@ export async function renderFormsResponses(ctx, formId) {
   let filter = null;
   let mode = 'list';
   let responses = [];
+  let searchQuery = '';
 
   root.innerHTML = `
     <div class="admin-head">
@@ -44,6 +45,10 @@ export async function renderFormsResponses(ctx, formId) {
     <div class="r-filters" id="rFilters">
       ${['', 'new', 'reviewed', 'archived', 'spam'].map((s) => `
         <button class="r-filter ${s === '' ? 'is-on' : ''}" data-f="${s}">${s === '' ? 'Todas' : ST[s]}</button>`).join('')}
+      <div class="r-search">
+        <input id="rSearch" type="search" class="adm-input" placeholder="buscar nome, e-mail ou conteúdo…" autocomplete="off" />
+        <span class="r-search__count" id="rSearchCount" hidden></span>
+      </div>
     </div>
     <div id="rBody"><div class="empty-state">Carregando…</div></div>
     <div class="r-drawer" id="rDrawer" hidden></div>
@@ -69,6 +74,17 @@ export async function renderFormsResponses(ctx, formId) {
     };
   });
 
+  // busca textual (debounced)
+  const searchInput = root.querySelector('#rSearch');
+  let searchTimer = null;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      searchQuery = searchInput.value.trim();
+      renderList();
+    }, 180);
+  });
+
   await refreshStats();
   await load();
 
@@ -89,9 +105,49 @@ export async function renderFormsResponses(ctx, formId) {
     const { data, error: e } = await Forms.listResponses(formId, { status: filter });
     if (e) { box.innerHTML = `<div class="empty-state">Erro: ${esc(e.message)}</div>`; return; }
     responses = data || [];
+    renderList();
+  }
+
+  function normalize(s) {
+    return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  function matchesSearch(r, q) {
+    if (!q) return true;
+    const nq = normalize(q);
+    if (normalize(r.respondent_name).includes(nq)) return true;
+    if (normalize(r.respondent_email).includes(nq)) return true;
+    if (normalize(r.admin_notes).includes(nq)) return true;
+    for (const f of dataFields) {
+      const v = (r.data || {})[f.key];
+      if (v == null) continue;
+      const s = Array.isArray(v) ? v.join(' ') : (typeof v === 'object' ? JSON.stringify(v) : String(v));
+      if (normalize(s).includes(nq)) return true;
+    }
+    return false;
+  }
+
+  function renderList() {
+    const box = root.querySelector('#rBody');
+    const count = root.querySelector('#rSearchCount');
     box.className = 'r-list';
-    if (!responses.length) { box.innerHTML = `<div class="empty-state">Nenhuma resposta ${filter ? 'nesse filtro' : 'ainda'}.</div>`; return; }
-    box.innerHTML = responses.map(rowHtml).join('');
+    let view = responses;
+    if (searchQuery) {
+      view = responses.filter((r) => matchesSearch(r, searchQuery));
+      if (count) { count.hidden = false; count.textContent = `${view.length} de ${responses.length}`; }
+    } else if (count) {
+      count.hidden = true;
+      count.textContent = '';
+    }
+    if (!responses.length) {
+      box.innerHTML = `<div class="empty-state">Nenhuma resposta ${filter ? 'nesse filtro' : 'ainda'}.</div>`;
+      return;
+    }
+    if (!view.length) {
+      box.innerHTML = `<div class="empty-state">Nada combinou com "${esc(searchQuery)}".</div>`;
+      return;
+    }
+    box.innerHTML = view.map(rowHtml).join('');
     box.querySelectorAll('.r-row').forEach((r) => { r.onclick = () => openDrawer(r.dataset.id); });
   }
 

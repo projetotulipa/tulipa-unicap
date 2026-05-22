@@ -35,17 +35,22 @@ export async function getForm(id) {
   return supabase.from('forms').select('*').eq('id', id).maybeSingle();
 }
 
-export async function createForm({ title = 'Novo formulário' } = {}) {
+export async function createForm({
+  title = 'Novo formulário',
+  description = '',
+  schema = null,
+  settings = null,
+} = {}) {
   const slug = await uniqueSlug(title);
   const { data: u } = await supabase.auth.getUser();
   return supabase.from('forms').insert({
     title,
     slug,
-    description: '',
+    description,
     status: 'draft',
     is_listed: false,
-    schema: emptyFormSchema(),
-    settings: defaultFormSettings(),
+    schema: schema || emptyFormSchema(),
+    settings: settings || defaultFormSettings(),
     created_by: u?.user?.id || null,
     updated_by: u?.user?.id || null,
   }).select().single();

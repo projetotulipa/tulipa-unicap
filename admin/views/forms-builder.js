@@ -45,10 +45,12 @@ export async function renderFormsBuilder(ctx, formId) {
         <button class="admin-link-btn" id="fbBack">${icon('arrow-left', { size: 14 })} Voltar</button>
         <div class="fb__title"><strong id="fbTitle">${esc(form.title)}</strong>
           <span class="form-status ${form.status === 'published' ? 'is-published' : 'is-draft'}" id="fbStatus">${form.status === 'published' ? 'Publicado' : 'Rascunho'}</span>
+          <span class="fb__autosave" id="fbAutosave" aria-live="polite"></span>
         </div>
         <div class="fb__bar-actions">
-          <button class="btn btn--ghost btn--small" id="fbLink">${icon('external', { size: 12 })} Link</button>
-          <button class="btn btn--primary btn--small" id="fbSave">Salvar</button>
+          <button class="btn btn--ghost btn--small" id="fbLink" title="Copiar link público">${icon('external', { size: 12 })} Link</button>
+          <button class="btn btn--ghost btn--small" id="fbSave">Salvar</button>
+          <button class="btn btn--primary btn--small" id="fbPublish">${form.status === 'published' ? 'Despublicar' : 'Publicar'}</button>
         </div>
       </header>
       <div class="fb__cols">
@@ -76,13 +78,52 @@ export async function renderFormsBuilder(ctx, formId) {
 
   // ----- header actions -----
   root.querySelector('#fbBack').onclick = () => maybeLeave(() => api.navigate('#/forms'));
-  root.querySelector('#fbSave').onclick = save;
+  root.querySelector('#fbSave').onclick = () => save({ manual: true });
   root.querySelector('#fbLink').onclick = async () => {
     if (S.dirty) await save();
     const url = formPublicUrl(S.form.slug);
     try { await navigator.clipboard.writeText(url); toastSuccess('Link copiado!'); }
     catch { prompt('Link público:', url); }
   };
+  root.querySelector('#fbPublish').onclick = publishToggle;
+
+  // ----- autosave (8s quando dirty) -----
+  let savingNow = false;
+  const autosaveTimer = setInterval(async () => {
+    if (S.dirty && !savingNow && document.visibilityState === 'visible') {
+      savingNow = true;
+      await save({ silent: true });
+      savingNow = false;
+    }
+  }, 8000);
+  window.addEventListener('beforeunload', () => clearInterval(autosaveTimer));
+
+  // ----- atalhos teclado (Ctrl+S, Ctrl+Shift+D, "/") -----
+  function onKey(e) {
+    if (!document.body.contains(root)) {
+      document.removeEventListener('keydown', onKey);
+      clearInterval(autosaveTimer);
+      return;
+    }
+    // ignora se está em input/textarea (exceto Ctrl+S e Ctrl+Shift+D que sempre rodam)
+    const inInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName);
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      if (S.dirty) save({ manual: true });
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'd') {
+      e.preventDefault();
+      if (S.selected && S.selected !== 'form') duplicateField(S.selected);
+      return;
+    }
+    if (e.key === '/' && !inInput && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      openQuickAdd();
+    }
+  }
+  document.addEventListener('keydown', onKey);
 
   renderCanvas();
   renderInspector();
@@ -107,7 +148,9 @@ export async function renderFormsBuilder(ctx, formId) {
     return null;
   }
 
-  async function save() {
+  async function save({ silent = false, manual = false } = {}) {
+    const auto = root.querySelector('#fbAutosave');
+    if (auto) auto.textContent = 'salvando…';
     const patch = {
       title: S.form.title, slug: S.form.slug, description: S.form.description,
       status: S.form.status, is_listed: S.form.is_listed,
@@ -116,10 +159,135 @@ export async function renderFormsBuilder(ctx, formId) {
       max_responses: S.form.max_responses || null,
     };
     const { error } = await Forms.updateForm(S.form.id, patch);
-    if (error) return toastError('Erro ao salvar: ' + error.message);
+    if (error) {
+      if (auto) auto.textContent = '⚠ erro ao salvar';
+      return toastError('Erro ao salvar: ' + error.message);
+    }
     S.dirty = false;
     root.querySelector('#fbSave').classList.remove('is-dirty');
-    toastSuccess('Salvo!');
+    const hhmm = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    if (auto) auto.textContent = `salvo ${hhmm}`;
+    if (manual && !silent) toastSuccess('Salvo!');
+  }
+
+  async function publishToggle() {
+    const btn = root.querySelector('#fbPublish');
+    btn.disabled = true;
+    const next = S.form.status === 'published' ? 'draft' : 'published';
+    S.form.status = next;
+    btn.textContent = next === 'published' ? 'publicando…' : 'despublicando…';
+    if (S.dirty) await save({ silent: true });
+    else {
+      const { error } = await Forms.setFormStatus(S.form.id, next);
+      if (error) {
+        S.form.status = next === 'published' ? 'draft' : 'published';
+        toastError('Erro: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = S.form.status === 'published' ? 'Despublicar' : 'Publicar';
+        return;
+      }
+    }
+    btn.disabled = false;
+    btn.textContent = next === 'published' ? 'Despublicar' : 'Publicar';
+    updateStatusPill();
+    if (next === 'published') {
+      openShareModal();
+    } else {
+      toastSuccess('Despublicado.');
+    }
+    // forms também podem aparecer listados — atualiza s_status no inspector se aberto
+    if (S.selected === 'form') renderInspector();
+  }
+
+  async function openShareModal() {
+    const url = formPublicUrl(S.form.slug);
+    document.querySelectorAll('.fb-share-modal').forEach((el) => el.remove());
+    const overlay = document.createElement('div');
+    overlay.className = 'fb-share-modal';
+    overlay.innerHTML = `
+      <div class="fb-share-modal__box" role="dialog" aria-labelledby="fbShareTitle">
+        <header class="fb-share-modal__head">
+          <div>
+            <p class="fb-share-modal__crumb">publicado · pronto pra compartilhar</p>
+            <h2 id="fbShareTitle">${esc(S.form.title)}</h2>
+          </div>
+          <button class="admin-link-btn" data-act="close" aria-label="Fechar">${icon('x', { size: 14 })}</button>
+        </header>
+        <div class="fb-share-modal__body">
+          <div class="fb-share-url">
+            <input class="adm-input" id="fbShareUrl" readonly value="${attr(url)}" />
+            <button class="btn btn--primary btn--small" data-act="copy">${icon('external', { size: 12 })} Copiar</button>
+          </div>
+          <div class="fb-share-actions">
+            <a class="btn btn--ghost btn--small" data-act="open" target="_blank" rel="noopener" href="${attr(url)}">Abrir formulário</a>
+            <a class="btn btn--ghost btn--small" data-act="wa" target="_blank" rel="noopener"
+               href="https://wa.me/?text=${encodeURIComponent('Respondam aqui: ' + url)}">Compartilhar no WhatsApp</a>
+            <button class="btn btn--ghost btn--small" data-act="share-native" ${navigator.share ? '' : 'hidden'}>Compartilhar (nativo)</button>
+          </div>
+          <div class="fb-share-qr" id="fbShareQr">
+            <div class="fb-share-qr__placeholder">gerando QR…</div>
+          </div>
+          <p class="fb-share-modal__hint">Imprima o QR num cartaz ou compartilhe a imagem. Funciona offline.</p>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('is-open'));
+
+    const close = () => {
+      overlay.classList.remove('is-open');
+      setTimeout(() => overlay.remove(), 200);
+      document.removeEventListener('keydown', onKey);
+    };
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    document.addEventListener('keydown', onKey);
+
+    overlay.addEventListener('click', async (ev) => {
+      if (ev.target === overlay) return close();
+      const act = ev.target.closest('[data-act]')?.dataset?.act;
+      if (act === 'close') return close();
+      if (act === 'copy') {
+        try { await navigator.clipboard.writeText(url); toastSuccess('Link copiado!'); }
+        catch { prompt('Copie o link:', url); }
+      }
+      if (act === 'share-native' && navigator.share) {
+        try {
+          await navigator.share({ title: S.form.title, text: 'Respondam aqui: ', url });
+        } catch (e) { if (e?.name !== 'AbortError') toastError('Não foi possível compartilhar.'); }
+      }
+    });
+
+    // Gera QR client-side (lazy import)
+    try {
+      const { default: QRCode } = await import('https://esm.sh/qrcode-svg@1.1.0');
+      const qr = new QRCode({
+        content: url,
+        padding: 2,
+        width: 240,
+        height: 240,
+        color: '#1B0810',
+        background: '#F4E5C2',
+        ecl: 'M',
+        join: true,
+      });
+      const svg = qr.svg();
+      const box = overlay.querySelector('#fbShareQr');
+      if (box) {
+        box.innerHTML = `${svg}
+          <button class="btn btn--ghost btn--small" data-act-qr="download">${icon('external', { size: 12 })} Baixar QR (SVG)</button>`;
+        box.querySelector('[data-act-qr="download"]').onclick = () => {
+          const blob = new Blob([svg], { type: 'image/svg+xml' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = `${S.form.slug}-qr.svg`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        };
+      }
+    } catch (e) {
+      const box = overlay.querySelector('#fbShareQr');
+      if (box) box.innerHTML = `<p class="muted">Não foi possível gerar o QR agora.</p>`;
+    }
   }
   function maybeLeave(go) {
     if (!S.dirty || confirm('Você tem alterações não salvas. Sair mesmo assim?')) go();
@@ -160,6 +328,7 @@ export async function renderFormsBuilder(ctx, formId) {
       card.querySelector('.fb-field__body').onclick = () => { S.selected = id; renderCanvas(); renderInspector(); };
       card.querySelector('[data-act="up"]').onclick = (e) => { e.stopPropagation(); move(id, -1); };
       card.querySelector('[data-act="down"]').onclick = (e) => { e.stopPropagation(); move(id, 1); };
+      card.querySelector('[data-act="dup"]').onclick = (e) => { e.stopPropagation(); duplicateField(id); };
       card.querySelector('[data-act="del"]').onclick = (e) => {
         e.stopPropagation();
         const loc = findField(id); if (!loc) return;
@@ -212,11 +381,102 @@ export async function renderFormsBuilder(ctx, formId) {
           </div>
         </div>
         <div class="fb-field__ops">
-          <button class="admin-link-btn" data-act="up" ${i === 0 ? 'disabled' : ''}>${icon('arrow-up', { size: 12 })}</button>
-          <button class="admin-link-btn" data-act="down" ${i === total - 1 ? 'disabled' : ''}>${icon('arrow-down', { size: 12 })}</button>
-          <button class="admin-link-btn danger" data-act="del">${icon('trash', { size: 12 })}</button>
+          <button class="admin-link-btn" data-act="up" ${i === 0 ? 'disabled' : ''} title="Subir">${icon('arrow-up', { size: 12 })}</button>
+          <button class="admin-link-btn" data-act="down" ${i === total - 1 ? 'disabled' : ''} title="Descer">${icon('arrow-down', { size: 12 })}</button>
+          <button class="admin-link-btn" data-act="dup" title="Duplicar (Ctrl+Shift+D)">${icon('copy', { size: 12 })}</button>
+          <button class="admin-link-btn danger" data-act="del" title="Remover">${icon('trash', { size: 12 })}</button>
         </div>
       </div>`;
+  }
+
+  // ===== Quick-add popup (/ trigger) =====
+  function openQuickAdd() {
+    document.querySelectorAll('.fb-quickadd').forEach((el) => el.remove());
+    const overlay = document.createElement('div');
+    overlay.className = 'fb-quickadd';
+    overlay.innerHTML = `
+      <div class="fb-quickadd__box" role="dialog">
+        <input class="fb-quickadd__search" id="qaSearch" type="text" placeholder="adicionar campo: digite pra buscar (escape pra fechar)" autocomplete="off" />
+        <div class="fb-quickadd__list" id="qaList"></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('is-open'));
+    const search = overlay.querySelector('#qaSearch');
+    const list = overlay.querySelector('#qaList');
+
+    let cursor = 0;
+    let filtered = FIELD_TYPES.slice();
+
+    const close = () => {
+      overlay.classList.remove('is-open');
+      setTimeout(() => overlay.remove(), 150);
+      document.removeEventListener('keydown', onQaKey, true);
+    };
+
+    function normalize(s) {
+      return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    }
+
+    function render() {
+      list.innerHTML = filtered.map((t, i) => `
+        <button class="fb-quickadd__item ${i === cursor ? 'is-cur' : ''}" data-type="${t.type}" type="button">
+          <span class="fb-quickadd__ico">${icon(t.icon, { size: 14 })}</span>
+          <span class="fb-quickadd__lbl">${esc(t.label)}</span>
+          <span class="fb-quickadd__cat">${esc(t.category)}</span>
+        </button>
+      `).join('') || `<p class="fb-quickadd__empty">nenhum tipo combina.</p>`;
+      const cur = list.querySelector('.fb-quickadd__item.is-cur');
+      if (cur) cur.scrollIntoView({ block: 'nearest' });
+    }
+
+    function pick(type) {
+      addField(type);
+      close();
+    }
+
+    search.addEventListener('input', () => {
+      const q = normalize(search.value.trim());
+      filtered = q ? FIELD_TYPES.filter((t) =>
+        normalize(t.label).includes(q) || normalize(t.type).includes(q) || normalize(t.category).includes(q)
+      ) : FIELD_TYPES.slice();
+      cursor = 0;
+      render();
+    });
+
+    function onQaKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key === 'ArrowDown') { e.preventDefault(); cursor = Math.min(cursor + 1, filtered.length - 1); render(); return; }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); cursor = Math.max(cursor - 1, 0); render(); return; }
+      if (e.key === 'Enter') { e.preventDefault(); if (filtered[cursor]) pick(filtered[cursor].type); return; }
+    }
+    document.addEventListener('keydown', onQaKey, true);
+
+    overlay.addEventListener('click', (ev) => {
+      if (ev.target === overlay) return close();
+      const btn = ev.target.closest('[data-type]');
+      if (btn) pick(btn.dataset.type);
+    });
+
+    render();
+    setTimeout(() => search.focus(), 50);
+  }
+
+  function duplicateField(id) {
+    const loc = findField(id);
+    if (!loc) return;
+    const f = loc.field;
+    const clone = JSON.parse(JSON.stringify(f));
+    // novo id/key únicos
+    clone.id = `${f.type}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 4)}`;
+    clone.key = clone.id;
+    // sufixo "(cópia)" só se houver label
+    if (clone.label) clone.label = `${clone.label} (cópia)`;
+    loc.page.fields.splice(loc.idx + 1, 0, clone);
+    S.selected = clone.id;
+    markDirty();
+    renderCanvas();
+    renderInspector();
   }
 
   // ---------- INSPECTOR ----------
@@ -299,8 +559,10 @@ export async function renderFormsBuilder(ctx, formId) {
   }
   function updateStatusPill() {
     const el = root.querySelector('#fbStatus');
-    el.textContent = S.form.status === 'published' ? 'Publicado' : 'Rascunho';
+    el.textContent = ({ published: 'Publicado', draft: 'Rascunho', closed: 'Fechado', archived: 'Arquivado' })[S.form.status] || 'Rascunho';
     el.className = 'form-status ' + (S.form.status === 'published' ? 'is-published' : 'is-draft');
+    const btn = root.querySelector('#fbPublish');
+    if (btn) btn.textContent = S.form.status === 'published' ? 'Despublicar' : 'Publicar';
   }
 
   // ---- FIELD CONFIG ----

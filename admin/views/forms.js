@@ -1,5 +1,6 @@
 // TULIPA · admin · Formulários — dashboard (lista / criar / publicar / ocultar).
 import * as Forms from '../forms/data.js';
+import { FORM_TEMPLATES, buildFromTemplate } from '../forms/templates.js';
 import { icon } from '../icons.js';
 import { toastSuccess, toastError } from '../toast.js';
 
@@ -33,13 +34,57 @@ export async function renderFormsDashboard(ctx) {
     <div id="formsList" class="forms-grid"><div class="empty-state">Carregando…</div></div>
   `;
 
-  root.querySelector('#newFormBtn').addEventListener('click', async () => {
-    const title = prompt('Nome do formulário:', 'Novo formulário');
-    if (title === null) return;
-    const { data, error } = await Forms.createForm({ title: (title || '').trim() || 'Novo formulário' });
-    if (error) return toastError('Erro ao criar: ' + error.message);
-    api.navigate(`#/forms/editar/${data.id}`);
-  });
+  root.querySelector('#newFormBtn').addEventListener('click', () => openTemplatePicker());
+
+  function openTemplatePicker() {
+    document.querySelectorAll('.tpl-picker').forEach((el) => el.remove());
+    const overlay = document.createElement('div');
+    overlay.className = 'tpl-picker';
+    overlay.innerHTML = `
+      <div class="tpl-picker__box" role="dialog" aria-labelledby="tplTitle">
+        <header class="tpl-picker__head">
+          <div>
+            <h2 id="tplTitle">Começar de um modelo</h2>
+            <p class="tpl-picker__sub">Escolha um ponto de partida — você pode editar tudo depois.</p>
+          </div>
+          <button class="admin-link-btn" data-act="close" aria-label="Fechar">${icon('x', { size: 14 })}</button>
+        </header>
+        <div class="tpl-picker__grid">
+          ${FORM_TEMPLATES.map((t) => `
+            <button class="tpl-card" data-tpl="${t.id}" type="button">
+              <span class="tpl-card__ico">${icon(t.icon || 'edit', { size: 18 })}</span>
+              <strong class="tpl-card__label">${esc(t.label)}</strong>
+              <span class="tpl-card__desc">${esc(t.description || '')}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('is-open'));
+
+    const close = () => {
+      overlay.classList.remove('is-open');
+      setTimeout(() => overlay.remove(), 200);
+      document.removeEventListener('keydown', onKey);
+    };
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    document.addEventListener('keydown', onKey);
+
+    overlay.addEventListener('click', async (ev) => {
+      if (ev.target === overlay) return close();
+      if (ev.target.closest('[data-act="close"]')) return close();
+      const card = ev.target.closest('[data-tpl]');
+      if (!card) return;
+      const tplId = card.dataset.tpl;
+      card.classList.add('is-loading');
+      const payload = buildFromTemplate(tplId);
+      const { data, error } = await Forms.createForm(payload);
+      if (error) { toastError('Erro ao criar: ' + error.message); card.classList.remove('is-loading'); return; }
+      close();
+      api.navigate(`#/forms/editar/${data.id}`);
+    });
+  }
 
   await load();
 
