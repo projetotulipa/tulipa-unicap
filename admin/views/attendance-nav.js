@@ -1,4 +1,4 @@
-// Sub-nav (pills) compartilhada entre as views de Presença.
+// Sub-nav (pills) compartilhada entre as views da Secretaria.
 
 import { icon } from '../icons.js';
 
@@ -7,12 +7,13 @@ const ITEMS = [
   { key: 'grupos',    label: 'Grupos',      hash: '#/presenca/grupos',    iconName: 'group' },
   { key: 'pessoas',   label: 'Pessoas',     hash: '#/presenca/pessoas',   iconName: 'users' },
   { key: 'semestres', label: 'Semestres',   hash: '#/presenca/semestres', iconName: 'calendar', adminOnly: true },
+  { key: 'useful',    label: 'Úteis',       hash: '#/presenca/uteis',     iconName: 'external' },
 ];
 
 export function renderSubNav(active, opts = {}) {
   const isAdmin = !!opts.isAdmin;
   return `
-    <nav class="sub-nav" aria-label="Navegação interna de Presença">
+    <nav class="sub-nav" aria-label="Navegação interna da Secretaria">
       ${ITEMS.filter((it) => !it.adminOnly || isAdmin).map((it) => `
         <a href="${it.hash}" class="${active === it.key ? 'is-active' : ''}">
           ${icon(it.iconName, { size: 14 })}

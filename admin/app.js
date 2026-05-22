@@ -43,6 +43,7 @@ import { renderMediaCalendar }       from './views/media-calendar.js';
 import { renderFormsDashboard }      from './views/forms.js';
 import { renderFormsBuilder }        from './views/forms-builder.js';
 import { renderFormsResponses }      from './views/forms-responses.js';
+import { renderUsefulLinks }         from './views/useful-links.js';
 
 // ---------- estado ----------
 const state = {
@@ -141,7 +142,7 @@ function enterApp() {
   for (const el of $$('[data-bio-only]')) {
     el.hidden = !canManageBio();
   }
-  // mostra "Presença" pra admin OR setor secretaria
+  // mostra "Secretaria" pra admin OR setor secretaria
   for (const el of $$('[data-secretaria-only]')) {
     el.hidden = !canManageAttendance();
   }
@@ -221,6 +222,7 @@ function route() {
         if (parts[1] === 'grupos')             return renderAttendanceGroups(ctx);
         if (parts[1] === 'pessoas')            return renderAttendancePeople(ctx);
         if (parts[1] === 'semestres')          return renderAttendanceSemesters(ctx);
+        if (parts[1] === 'uteis')              return renderUsefulLinks(ctx, 'secretaria');
         if (parts[1] === 'encontros' && parts[2]) return renderAttendanceMeeting(ctx, parts[2]);
         return renderAttendanceDashboard(ctx);
       case 'financeiro':
@@ -228,12 +230,14 @@ function route() {
         if (parts[1] === 'mensalidades') return renderFinancePayments(ctx);
         if (parts[1] === 'gastos')       return renderFinanceExpenses(ctx);
         if (parts[1] === 'planejamento') return renderFinancePlans(ctx);
+        if (parts[1] === 'uteis')        return renderUsefulLinks(ctx, 'financeiro');
         return renderFinanceDashboard(ctx);
       case 'pesquisa':
         if (!canManageResearch()) { location.hash = defaultHashForUser(); return; }
         if (parts[1] === 'fichamentos') return renderResearchNotes(ctx);
         if (parts[1] === 'posts')       return renderResearchPosts(ctx);
         if (parts[1] === 'equipes')     return renderResearchTeams(ctx);
+        if (parts[1] === 'uteis')       return renderUsefulLinks(ctx, 'pesquisa');
         return renderResearchDashboard(ctx);
       case 'midia':
         if (!canManageMedia()) { location.hash = defaultHashForUser(); return; }
@@ -241,6 +245,7 @@ function route() {
         if (parts[1] === 'equipes')     return renderMediaTeams(ctx);
         if (parts[1] === 'tarefas')     return renderMediaTasks(ctx);
         if (parts[1] === 'calendario')  return renderMediaCalendar(ctx);
+        if (parts[1] === 'uteis')       return renderUsefulLinks(ctx, 'midia');
         return renderMediaDashboard(ctx);
       case 'forms':
         if (!canManageForms()) { location.hash = defaultHashForUser(); return; }

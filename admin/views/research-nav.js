@@ -5,6 +5,7 @@ const ITEMS = [
   { key: 'fichamentos', label: 'Fichamentos',  hash: '#/pesquisa/fichamentos',  iconName: 'page' },
   { key: 'posts',       label: 'Posts',        hash: '#/pesquisa/posts',        iconName: 'spark' },
   { key: 'equipes',     label: 'Equipes',      hash: '#/pesquisa/equipes',      iconName: 'group' },
+  { key: 'useful',      label: 'Úteis',        hash: '#/pesquisa/uteis',        iconName: 'external' },
 ];
 
 export function renderResearchNav(active) {

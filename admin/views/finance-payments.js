@@ -244,7 +244,7 @@ function renderContent() {
       <div class="fin-empty-v2">
         <div class="fin-empty-v2__art">${icon('users', { size: 52 })}</div>
         <h3>Nenhuma pessoa pagante cadastrada</h3>
-        <p>Cadastre em <strong>Presença → Pessoas</strong>. Pessoas isentas não aparecem aqui.</p>
+        <p>Cadastre em <strong>Secretaria → Pessoas</strong>. Pessoas isentas não aparecem aqui.</p>
       </div>
     `;
     return;

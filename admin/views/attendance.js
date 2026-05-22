@@ -45,10 +45,10 @@ export async function renderAttendanceDashboard(ctx) {
           <span class="att-codex-seal">${codexSeal({ size: 32 })}</span>
         </div>
         <div class="att-hero-v2__inner">
-          <p class="att-hero-v2__eyebrow">${escapeHtml(greeting(today))} · ${escapeHtml(formatDate(today, 'long'))}</p>
-          <h1>Registro de presenças</h1>
+          <p class="att-hero-v2__eyebrow">secretaria · ${escapeHtml(greeting(today))} · ${escapeHtml(formatDate(today, 'long'))}</p>
+          <h1>Secretaria</h1>
           <p class="att-hero-v2__lede">
-            Acompanhe quem está em dia e quem pede atenção em <strong>${escapeHtml(periodLabel)}</strong>.
+            Registro de presenças, comunicação dos encontros e organização do dia-a-dia em <strong>${escapeHtml(periodLabel)}</strong>.
           </p>
         </div>
         ${canCreateGroup ? `

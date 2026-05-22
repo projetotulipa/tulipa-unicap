@@ -175,7 +175,7 @@ A Pesquisa também sugere conteúdos próprios (1-2 ideias/mês) baseados em fic
 };
 
 export const HELP_SLOTS = [
-  { slot: 'presenca',   adminHash: '#/presenca',   label: 'Presença'        },
+  { slot: 'presenca',   adminHash: '#/presenca',   label: 'Secretaria'      },
   { slot: 'financeiro', adminHash: '#/financeiro', label: 'Tesouraria'      },
   { slot: 'pesquisa',   adminHash: '#/pesquisa',   label: 'Pesquisa'        },
   { slot: 'midia',      adminHash: '#/midia',      label: 'Artes & Mídias'  },

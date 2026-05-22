@@ -32,7 +32,7 @@ export async function renderAttendanceMeeting(ctx, meetingId) {
   if (error || !meeting) {
     root.innerHTML = `
       <div class="view">
-        <p class="view__crumbs"><a href="#/presenca">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Presença</span></a></p>
+        <p class="view__crumbs"><a href="#/presenca">${icon('arrow-left', { size: 14 })}<span style="margin-left:6px;">Secretaria</span></a></p>
         <div class="att-empty-v2">
           <div class="att-empty-v2__art">${codexSeal({ size: 52 })}</div>
           <h3>Encontro não encontrado</h3>

@@ -6,6 +6,7 @@ const ITEMS = [
   { key: 'tasks',     label: 'Tarefas',        hash: '#/midia/tarefas',  iconName: 'check-circle' },
   { key: 'teams',     label: 'Equipes',        hash: '#/midia/equipes',  iconName: 'group' },
   { key: 'calendar',  label: 'Calendário',     hash: '#/midia/calendario', iconName: 'calendar' },
+  { key: 'useful',    label: 'Úteis',          hash: '#/midia/uteis',    iconName: 'external' },
 ];
 
 export function renderMediaNav(active) {

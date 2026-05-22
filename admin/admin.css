@@ -863,6 +863,258 @@ body[data-state="app"] .admin-app { display: flex; }
 }
 
 /* =========================================================
+   ===== USEFUL LINKS (Mídia/Pesquisa/Tesouraria/Secretaria) =====
+   Caderno de referências por módulo: link externo OU nota markdown.
+   ========================================================= */
+
+.useful-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 22px;
+  align-items: center;
+  background: linear-gradient(135deg, var(--bg-elev) 0%, var(--bg-card) 80%);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 26px 28px;
+  margin-bottom: 22px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.useful-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-rose), transparent);
+}
+.useful-hero__petal {
+  width: 64px;
+  height: 64px;
+  color: var(--rose-soft);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.useful-hero__inner { min-width: 0; }
+.useful-hero__eyebrow {
+  margin: 0 0 4px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dimer);
+}
+.useful-hero h1 {
+  margin: 0 0 6px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--cream);
+}
+.useful-hero__lede {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 60ch;
+}
+.useful-hero__cta {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.useful-loading {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-dim);
+  font-style: italic;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.useful-loading__petal {
+  width: 26px;
+  height: 26px;
+  border-radius: 70% 30% 70% 30%;
+  background: linear-gradient(135deg, var(--rose-soft), var(--rose));
+  animation: bloom 1.6s ease-in-out infinite;
+}
+.useful-loading p { margin: 0; }
+
+.useful-empty {
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-lg);
+}
+.useful-empty__art {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(159, 90, 107, 0.08);
+  color: var(--rose-soft);
+  margin-bottom: 12px;
+}
+.useful-empty h3 {
+  margin: 0 0 6px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--cream);
+}
+.useful-empty p {
+  margin: 0 auto;
+  max-width: 46ch;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.useful-empty__cta {
+  margin-top: 18px;
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.useful-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.useful-row {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 30px 1fr auto;
+  gap: 12px;
+  align-items: flex-start;
+  transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease), transform 0.18s var(--ease);
+}
+.useful-row:hover {
+  border-color: var(--border-rose);
+  box-shadow: var(--shadow-sm);
+}
+.useful-row__icon {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rose-soft);
+  background: rgba(159, 90, 107, 0.07);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.useful-row--note .useful-row__icon { color: var(--gold-soft); background: rgba(193, 158, 90, 0.08); }
+.useful-row__main { min-width: 0; }
+.useful-row__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 19px;
+  line-height: 1.2;
+  color: var(--cream);
+  text-decoration: none;
+  word-break: break-word;
+}
+a.useful-row__title:hover { color: var(--gold-soft); }
+.useful-row__ext { color: var(--text-dimer); }
+a.useful-row__title:hover .useful-row__ext { color: var(--gold-soft); }
+.useful-row__url {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-dimer);
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.useful-row__body {
+  margin-top: 8px;
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.useful-row__body p { margin: 0 0 6px; }
+.useful-row__body p:last-child { margin-bottom: 0; }
+.useful-row__body h3,
+.useful-row__body h4,
+.useful-row__body h5 {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  color: var(--cream);
+  margin: 10px 0 4px;
+}
+.useful-row__body ul {
+  margin: 4px 0 8px;
+  padding-left: 18px;
+}
+.useful-row__body li { margin-bottom: 3px; }
+.useful-row__body code {
+  background: var(--bg);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--gold-soft);
+}
+.useful-row__actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.icon-btn--xs {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+@media (max-width: 720px) {
+  .useful-hero {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    padding: 18px;
+    gap: 12px 16px;
+  }
+  .useful-hero__petal { width: 48px; height: 48px; }
+  .useful-hero h1 { font-size: 24px; }
+  .useful-hero__lede { font-size: 13px; }
+  .useful-hero__cta {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+  }
+  .useful-hero__cta .btn { flex: 1 1 auto; }
+  .useful-row {
+    grid-template-columns: 28px 1fr;
+    grid-template-rows: auto auto;
+  }
+  .useful-row__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+}
+
+/* =========================================================
    ===== MOBILE (≤ 720px): bottom-tab navigation =====
    Sidebar lateral vira bottom-bar fixa (ergonômica pro dedão).
    Header compacto no topo com brand. Main rola entre os dois.

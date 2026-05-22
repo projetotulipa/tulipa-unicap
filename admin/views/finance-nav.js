@@ -5,6 +5,7 @@ const ITEMS = [
   { key: 'mensalidades',label: 'Mensalidades',  hash: '#/financeiro/mensalidades', iconName: 'users' },
   { key: 'gastos',      label: 'Gastos',        hash: '#/financeiro/gastos',       iconName: 'trash' },
   { key: 'planejamento',label: 'Planejamento',  hash: '#/financeiro/planejamento', iconName: 'spark' },
+  { key: 'useful',      label: 'Úteis',         hash: '#/financeiro/uteis',        iconName: 'external' },
 ];
 
 export function renderFinanceNav(active) {
