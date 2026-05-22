@@ -2,10 +2,12 @@
 // Fallback pros 2 cards padrão quando não há snapshot publicado.
 
 import { supabase } from '../js/supabase.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../js/config.js';
 
 const BIO_SCOPE = 'bio:default';
 const CACHE_KEY = 'tulipa:bio-public-cache';
 const FETCH_TIMEOUT_MS = 5000;
+const CLICK_ENDPOINT = `${SUPABASE_URL}/rest/v1/bio_clicks`;
 
 // ===== SVGs inline pros cards padrão e fallbacks =====
 const SVG_BRAND = `
@@ -66,11 +68,118 @@ const SVG_FORM = `
 </svg>
 `;
 
+const SVG_BOOK = `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><radialGradient id="bkg" cx="40%" cy="32%" r="70%"><stop offset="0%" stop-color="#F4E5C2"/><stop offset="100%" stop-color="#A88248"/></radialGradient></defs>
+  <path d="M22 22 C 36 18 46 22 50 28 L50 84 C 46 78 36 74 22 78 Z" fill="url(#bkg)" stroke="#5C2230" stroke-width="0.8" stroke-opacity="0.5"/>
+  <path d="M78 22 C 64 18 54 22 50 28 L50 84 C 54 78 64 74 78 78 Z" fill="url(#bkg)" stroke="#5C2230" stroke-width="0.8" stroke-opacity="0.5"/>
+  <line x1="50" y1="28" x2="50" y2="84" stroke="#5C2230" stroke-width="0.8" opacity="0.5"/>
+  <path d="M30 36 L44 34 M30 44 L44 42 M30 52 L42 50" stroke="#5C2230" stroke-width="0.9" opacity="0.55" fill="none" stroke-linecap="round"/>
+  <path d="M56 34 L70 36 M58 42 L70 44 M58 50 L68 52" stroke="#5C2230" stroke-width="0.9" opacity="0.55" fill="none" stroke-linecap="round"/>
+</svg>
+`;
+
+const SVG_CALENDAR = `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><radialGradient id="calg" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#E8D5DC"/><stop offset="100%" stop-color="#9F5A6B"/></radialGradient></defs>
+  <rect x="18" y="24" width="64" height="56" rx="6" fill="url(#calg)" stroke="#5C2230" stroke-width="0.8" opacity="0.95"/>
+  <rect x="18" y="24" width="64" height="14" rx="6" fill="#5C2230" opacity="0.78"/>
+  <rect x="28" y="18" width="5" height="14" rx="1.5" fill="#5C2230"/>
+  <rect x="67" y="18" width="5" height="14" rx="1.5" fill="#5C2230"/>
+  <circle cx="34" cy="52" r="2.2" fill="#5C2230" opacity="0.6"/>
+  <circle cx="50" cy="52" r="2.2" fill="#5C2230" opacity="0.6"/>
+  <circle cx="66" cy="52" r="2.2" fill="#5C2230" opacity="0.6"/>
+  <circle cx="34" cy="64" r="2.2" fill="#5C2230" opacity="0.6"/>
+  <circle cx="50" cy="64" r="3.6" fill="#5C2230"/>
+  <circle cx="66" cy="64" r="2.2" fill="#5C2230" opacity="0.6"/>
+</svg>
+`;
+
+const SVG_COFFEE = `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><radialGradient id="cfg" cx="40%" cy="40%" r="68%"><stop offset="0%" stop-color="#EDDFC2"/><stop offset="100%" stop-color="#8B6F3C"/></radialGradient></defs>
+  <path d="M24 38 L66 38 L62 78 C 61 84 56 86 50 86 L40 86 C 34 86 29 84 28 78 Z" fill="url(#cfg)" stroke="#5C2230" stroke-width="0.8"/>
+  <path d="M66 46 C 78 46 80 56 76 62 C 72 68 66 66 64 62" fill="none" stroke="#5C2230" stroke-width="2" opacity="0.75" stroke-linecap="round"/>
+  <path d="M36 24 C 36 30 32 32 32 36 M46 22 C 46 30 42 32 42 36 M56 24 C 56 30 52 32 52 36" stroke="#5C2230" stroke-width="1.4" fill="none" opacity="0.6" stroke-linecap="round"/>
+</svg>
+`;
+
+const SVG_EMAIL = `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><radialGradient id="emg" cx="45%" cy="35%" r="65%"><stop offset="0%" stop-color="#D9E5C8"/><stop offset="100%" stop-color="#6B7E55"/></radialGradient></defs>
+  <rect x="18" y="28" width="64" height="44" rx="4" fill="url(#emg)" stroke="#2A3818" stroke-width="0.8" opacity="0.95"/>
+  <path d="M18 32 L50 56 L82 32" fill="none" stroke="#2A3818" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+  <path d="M18 68 L40 50 M82 68 L60 50" fill="none" stroke="#2A3818" stroke-width="1.2" opacity="0.5" stroke-linecap="round"/>
+</svg>
+`;
+
+const SVG_INSTAGRAM = `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><radialGradient id="igg" cx="40%" cy="35%" r="75%"><stop offset="0%" stop-color="#F4D7DC"/><stop offset="50%" stop-color="#C49AA8"/><stop offset="100%" stop-color="#7B5EA7"/></radialGradient></defs>
+  <rect x="20" y="20" width="60" height="60" rx="14" fill="url(#igg)" stroke="#3A1840" stroke-width="0.8"/>
+  <circle cx="50" cy="50" r="14" fill="none" stroke="#FFF8EC" stroke-width="3" opacity="0.92"/>
+  <circle cx="50" cy="50" r="7" fill="#FFF8EC" opacity="0.85"/>
+  <circle cx="68" cy="32" r="3" fill="#FFF8EC"/>
+</svg>
+`;
+
+const SVG_WHATSAPP = `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><radialGradient id="wag" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#C8DFB8"/><stop offset="100%" stop-color="#3B5F3A"/></radialGradient></defs>
+  <circle cx="50" cy="50" r="32" fill="url(#wag)" stroke="#1F3A1E" stroke-width="0.8"/>
+  <path d="M38 36 C 36 38 35 42 36 46 C 38 54 46 62 54 64 C 58 65 62 64 64 62 L62 56 L56 58 C 54 56 50 52 48 50 L50 44 L46 38 Z" fill="#FFF8EC" opacity="0.95"/>
+</svg>
+`;
+
+const SVG_PIN = `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><radialGradient id="png" cx="42%" cy="32%" r="65%"><stop offset="0%" stop-color="#E8B89C"/><stop offset="100%" stop-color="#B5694A"/></radialGradient></defs>
+  <path d="M50 16 C 35 16 26 28 26 42 C 26 60 50 86 50 86 C 50 86 74 60 74 42 C 74 28 65 16 50 16 Z" fill="url(#png)" stroke="#3A1812" stroke-width="0.9"/>
+  <circle cx="50" cy="42" r="9" fill="#FFF8EC" opacity="0.9"/>
+  <circle cx="50" cy="42" r="4.5" fill="#3A1812"/>
+</svg>
+`;
+
+const SVG_PLAY = `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><radialGradient id="plg" cx="40%" cy="35%" r="70%"><stop offset="0%" stop-color="#F4D7DC"/><stop offset="100%" stop-color="#5C2230"/></radialGradient></defs>
+  <circle cx="50" cy="50" r="32" fill="url(#plg)" stroke="#2A0810" stroke-width="0.8"/>
+  <path d="M44 36 L66 50 L44 64 Z" fill="#FFF8EC" opacity="0.95"/>
+</svg>
+`;
+
+const SVG_MUSIC = `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><radialGradient id="mug" cx="45%" cy="35%" r="65%"><stop offset="0%" stop-color="#D5C8E8"/><stop offset="100%" stop-color="#4A3672"/></radialGradient></defs>
+  <circle cx="50" cy="50" r="32" fill="url(#mug)" stroke="#1F0F40" stroke-width="0.8"/>
+  <path d="M62 32 L42 36 L42 64" fill="none" stroke="#FFF8EC" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="38" cy="64" rx="6" ry="4.5" fill="#FFF8EC"/>
+  <ellipse cx="58" cy="58" rx="6" ry="4.5" fill="#FFF8EC"/>
+</svg>
+`;
+
+const SVG_STAR = `
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><radialGradient id="stg" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#F8E9C0"/><stop offset="100%" stop-color="#A88248"/></radialGradient></defs>
+  <path d="M50 18 L58 40 L82 42 L63 58 L70 82 L50 68 L30 82 L37 58 L18 42 L42 40 Z" fill="url(#stg)" stroke="#3A2410" stroke-width="0.8" stroke-linejoin="round"/>
+</svg>
+`;
+
 const SVG_BY_ICON = {
   brand: SVG_BRAND,
   heart: SVG_HEART,
   generic: SVG_GENERIC,
   form: SVG_FORM,
+  book: SVG_BOOK,
+  calendar: SVG_CALENDAR,
+  coffee: SVG_COFFEE,
+  email: SVG_EMAIL,
+  instagram: SVG_INSTAGRAM,
+  whatsapp: SVG_WHATSAPP,
+  pin: SVG_PIN,
+  play: SVG_PLAY,
+  music: SVG_MUSIC,
+  star: SVG_STAR,
 };
 
 // ===== DEFAULTS (sincronizados com admin/bio/data.js) =====
@@ -319,6 +428,55 @@ function safeImgSrc(src) {
   return '';
 }
 
+// ===== Click tracking =====
+// Respeita Do Not Track e opt-out por localStorage. Não captura PII.
+function trackingEnabled() {
+  try {
+    if (localStorage.getItem('tulipa:bio-no-track') === '1') return false;
+  } catch {}
+  if (navigator.doNotTrack === '1' || window.doNotTrack === '1') return false;
+  return true;
+}
+
+function trackCardClick(card) {
+  if (!trackingEnabled()) return;
+  const linkId = card?.dataset?.linkId;
+  if (!linkId) return;
+  const payload = {
+    link_id: linkId.slice(0, 80),
+    link_label: (card.querySelector('.bio-card__title')?.textContent || '').trim().slice(0, 80),
+    link_href: (card.getAttribute('href') || '').slice(0, 400),
+  };
+  try {
+    fetch(CLICK_ENDPOINT, {
+      method: 'POST',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  } catch {}
+}
+
+function bindClickTracking() {
+  const box = document.getElementById('bioCards');
+  if (!box) return;
+  box.addEventListener('click', (e) => {
+    const card = e.target.closest('.bio-card');
+    if (card) trackCardClick(card);
+  });
+  // Middle-click / cmd+click (auxclick) — abre em aba mas ainda contabiliza
+  box.addEventListener('auxclick', (e) => {
+    if (e.button !== 1) return;
+    const card = e.target.closest('.bio-card');
+    if (card) trackCardClick(card);
+  });
+}
+
 // ===== Share / Copy / QR =====
 function showToast(msg, kind = 'ok') {
   const el = document.getElementById('bioToast');
@@ -431,6 +589,7 @@ function showStatusBanner(kind, msg) {
     }
 
     bindShareActions();
+    bindClickTracking();
   } catch (e) {
     console.error('[bio] erro fatal:', e);
     const root = document.getElementById('bioRoot');
