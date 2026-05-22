@@ -338,11 +338,14 @@
 #fbSave.is-dirty { box-shadow: 0 0 0 2px var(--fb-gold) inset; }
 
 .fb__cols { display: grid; grid-template-columns: 200px 1fr 340px; gap: 12px; align-items: start; }
+.fb__cols--two { grid-template-columns: 1fr 360px; }
 .fb__palette, .fb__canvas, .fb__inspector {
   background: var(--fb-surface); border: 1px solid var(--fb-line);
-  border-radius: 12px; padding: 12px;
+  border-radius: 12px; padding: 14px;
   max-height: calc(100vh - 150px); overflow: auto;
 }
+.fb__cols--two .fb__canvas { padding: 18px 20px; }
+.fb__cols--two .fb__inspector { padding: 16px; }
 
 /* paleta */
 .fb-pal-cat { margin-bottom: 12px; }
@@ -483,3 +486,204 @@
 .fb-field:active { cursor: grabbing; }
 .fb-field.fb-drag { opacity: 0.45; }
 .fb-field.fb-over { box-shadow: 0 -3px 0 0 var(--fb-gold); }
+
+/* ============================================================
+   SIMPLIFICAÇÃO v2 — tabs no inspector, botão "+ campo", kebab
+   ============================================================ */
+
+/* ---------- inspector: tabs ---------- */
+.fb-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--fb-line);
+  padding-bottom: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.fb-tab {
+  background: transparent;
+  border: none;
+  color: var(--fb-dim);
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  transition: color .15s, border-color .15s;
+}
+.fb-tab:hover { color: var(--fb-text); }
+.fb-tab.is-on {
+  color: var(--fb-gold);
+  border-bottom-color: var(--fb-gold);
+  font-weight: 500;
+}
+.fb-tab-body { display: flex; flex-direction: column; }
+
+/* ---------- inspector: helpers ---------- */
+.fb-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--fb-dim);
+  font-style: italic;
+  line-height: 1.4;
+}
+.fb-hint code {
+  background: var(--fb-surface-2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.92em;
+  color: var(--fb-text);
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-style: normal;
+}
+.fb-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.fb-row-2col .fb-row { margin-bottom: 0; }
+.fb-rules { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+
+.fb-insp-empty {
+  color: var(--fb-dim);
+  font-size: 0.85rem;
+  font-style: italic;
+  padding: 16px 4px;
+  line-height: 1.55;
+}
+.fb-insp-empty p { margin: 0 0 6px; }
+.fb-insp-empty p:last-child { margin-bottom: 0; }
+.fb-insp-empty strong { color: var(--fb-text); font-style: normal; }
+
+/* ---------- canvas: botão "+ adicionar campo" ---------- */
+.fb-empty {
+  border: 1px dashed var(--fb-line-2);
+  border-radius: 12px;
+  padding: 28px 18px;
+  text-align: center;
+  background: rgba(193, 158, 90, 0.03);
+}
+.fb-empty__title {
+  color: var(--fb-text);
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+.fb-empty__sub {
+  color: var(--fb-dim);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.fb-empty__sub strong { color: var(--fb-gold); font-weight: 500; }
+.fb-empty kbd, .fb-add-hint kbd {
+  background: var(--fb-surface-2);
+  border: 1px solid var(--fb-line-2);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.78em;
+  color: var(--fb-text);
+}
+
+.fb-add-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--fb-line);
+}
+.fb-add-btn {
+  flex: 1;
+  background: var(--fb-surface-2);
+  border: 1px dashed var(--fb-line-2);
+  color: var(--fb-text);
+  border-radius: 10px;
+  padding: 12px;
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.fb-add-btn:hover {
+  border-color: var(--fb-gold);
+  border-style: solid;
+  color: var(--fb-gold);
+  background: rgba(193, 158, 90, 0.07);
+}
+.fb-add-hint {
+  font-size: 0.76rem;
+  color: var(--fb-dim);
+  white-space: nowrap;
+}
+
+/* ---------- dashboard: kebab menu ---------- */
+.form-card__top { position: relative; }
+.form-card__menu-wrap {
+  margin-left: auto;
+  position: relative;
+}
+.form-card__kebab {
+  transform: rotate(90deg);
+  padding: 4px 6px;
+}
+.form-card__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  background: linear-gradient(180deg, #33241b, #2a1d16);
+  border: 1px solid var(--fb-line-2);
+  border-radius: 10px;
+  padding: 6px;
+  z-index: 60;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.form-card__menu[hidden] { display: none; }
+.form-card__menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--fb-text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.form-card__menu button:hover {
+  background: rgba(193, 158, 90, 0.12);
+  color: var(--fb-gold);
+}
+.form-card__menu button.is-danger { color: var(--fb-danger); }
+.form-card__menu button.is-danger:hover {
+  background: rgba(185, 106, 106, 0.12);
+  color: var(--fb-danger);
+}
+.form-card__menu hr {
+  border: none;
+  border-top: 1px solid var(--fb-line);
+  margin: 4px 0;
+}
+
+/* ---------- responsivo (v2) ---------- */
+@media (max-width: 860px) {
+  .fb__cols--two { grid-template-columns: 1fr; }
+  .fb__cols--two .fb__inspector { max-height: none; }
+  .fb-row-2col { grid-template-columns: 1fr; }
+}

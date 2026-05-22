@@ -27,7 +27,7 @@ export async function renderFormsDashboard(ctx) {
     <div class="admin-head">
       <div>
         <h1>Formulários</h1>
-        <p class="admin-sub">Crie formulários, publique e receba as respostas aqui.</p>
+        <p class="admin-sub">Crie, publique e receba respostas. Cada cartão tem ações rápidas — o resto vive no menu ⋯.</p>
       </div>
       <button class="btn btn--primary" id="newFormBtn">${icon('plus', { size: 14 })}<span>Novo formulário</span></button>
     </div>
@@ -102,33 +102,56 @@ export async function renderFormsDashboard(ctx) {
 
   function cardHtml(f) {
     const st = STATUS[f.status] || STATUS.draft;
+    const date = new Date(f.updated_at).toLocaleDateString('pt-BR');
+    const isPub = f.status === 'published';
     return `
       <article class="form-card" data-id="${f.id}" data-slug="${esc(f.slug)}" data-status="${f.status}" data-listed="${f.is_listed}">
         <div class="form-card__top">
           <span class="form-status ${st.cls}">${st.label}</span>
-          ${f.is_listed ? '' : `<span class="form-chip" title="Não listada (só por link)">${icon('eye-off', { size: 12 })} oculta</span>`}
+          ${!f.is_listed && isPub ? `<span class="form-chip" title="Só por link — não aparece em listas públicas">${icon('eye-off', { size: 12 })} oculta</span>` : ''}
+          <div class="form-card__menu-wrap">
+            <button class="admin-link-btn form-card__kebab" data-act="menu" aria-label="Mais opções" title="Mais opções">${icon('drag', { size: 14 })}</button>
+            <div class="form-card__menu" hidden>
+              <button data-act="toggle-pub">${isPub ? 'Despublicar' : 'Publicar'}</button>
+              <button data-act="toggle-list">${f.is_listed ? 'Tornar oculta (só por link)' : 'Listar publicamente'}</button>
+              <button data-act="link">Copiar link público</button>
+              <button data-act="dup">Duplicar</button>
+              <hr>
+              <button data-act="del" class="is-danger">Excluir</button>
+            </div>
+          </div>
         </div>
         <h3 class="form-card__title">${esc(f.title)}</h3>
-        <p class="form-card__meta">${f.response_count || 0} resposta(s) · atualizado ${new Date(f.updated_at).toLocaleDateString('pt-BR')}</p>
+        <p class="form-card__meta">${f.response_count || 0} resposta(s) · atualizado ${date}</p>
         <div class="form-card__actions">
           <button class="btn btn--ghost btn--small" data-act="edit">${icon('edit', { size: 12 })}<span>Editar</span></button>
           <button class="btn btn--ghost btn--small" data-act="responses">${icon('pages', { size: 12 })}<span>Respostas (${f.response_count || 0})</span></button>
-          <button class="btn btn--ghost btn--small" data-act="toggle-pub">${f.status === 'published' ? 'Despublicar' : 'Publicar'}</button>
-          <button class="btn btn--ghost btn--small" data-act="toggle-list">${f.is_listed ? 'Ocultar' : 'Listar'}</button>
-          <button class="admin-link-btn" data-act="link" title="Copiar link público">${icon('external', { size: 12 })}</button>
-          <button class="admin-link-btn" data-act="dup" title="Duplicar">${icon('refresh', { size: 12 })}</button>
-          <button class="admin-link-btn danger" data-act="del" title="Excluir">${icon('trash', { size: 12 })}</button>
         </div>
       </article>`;
+  }
+
+  function closeAllMenus() {
+    document.querySelectorAll('.form-card__menu').forEach((m) => { m.hidden = true; });
   }
 
   function bind(box) {
     box.querySelectorAll('.form-card').forEach((card) => {
       const id = card.dataset.id;
       const slug = card.dataset.slug;
+      const menu = card.querySelector('.form-card__menu');
+
       card.querySelector('[data-act="edit"]').onclick = () => api.navigate(`#/forms/editar/${id}`);
       card.querySelector('[data-act="responses"]').onclick = () => api.navigate(`#/forms/respostas/${id}`);
+
+      card.querySelector('[data-act="menu"]').onclick = (ev) => {
+        ev.stopPropagation();
+        const wasHidden = menu.hidden;
+        closeAllMenus();
+        menu.hidden = !wasHidden;
+      };
+
       card.querySelector('[data-act="toggle-pub"]').onclick = async () => {
+        closeAllMenus();
         const next = card.dataset.status === 'published' ? 'draft' : 'published';
         const { error } = await Forms.setFormStatus(id, next);
         if (error) return toastError(error.message);
@@ -136,28 +159,39 @@ export async function renderFormsDashboard(ctx) {
         load();
       };
       card.querySelector('[data-act="toggle-list"]').onclick = async () => {
+        closeAllMenus();
         const next = card.dataset.listed !== 'true';
         const { error } = await Forms.setFormListed(id, next);
         if (error) return toastError(error.message);
-        toastSuccess(next ? 'Listada.' : 'Ocultada (só por link).');
+        toastSuccess(next ? 'Listada publicamente.' : 'Oculta — só por link.');
         load();
       };
       card.querySelector('[data-act="link"]').onclick = async () => {
+        closeAllMenus();
         const url = formPublicUrl(slug);
         try { await navigator.clipboard.writeText(url); toastSuccess('Link copiado!'); }
         catch { prompt('Copie o link:', url); }
       };
       card.querySelector('[data-act="dup"]').onclick = async () => {
+        closeAllMenus();
         const { error } = await Forms.duplicateForm(id);
         if (error) return toastError(error.message);
         toastSuccess('Duplicado.'); load();
       };
       card.querySelector('[data-act="del"]').onclick = async () => {
+        closeAllMenus();
         if (!confirm('Excluir este formulário e TODAS as respostas? Não dá pra desfazer.')) return;
         const { error } = await Forms.deleteForm(id);
         if (error) return toastError(error.message);
         toastSuccess('Excluído.'); load();
       };
     });
+
+    // Fecha menu ao clicar fora ou pressionar Escape
+    if (!box._menuBound) {
+      document.addEventListener('click', closeAllMenus);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAllMenus(); });
+      box._menuBound = true;
+    }
   }
 }

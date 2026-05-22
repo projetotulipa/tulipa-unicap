@@ -1,7 +1,7 @@
 // TULIPA · admin · Formulários — construtor (editor de campos + configs).
 import * as Forms from '../forms/data.js';
 import {
-  FIELD_TYPES, FIELD_CATEGORIES, FIELD_TYPE_MAP,
+  FIELD_TYPES, FIELD_TYPE_MAP,
   fieldCaps, makeField, isStaticField,
 } from '../forms/field-types.js';
 import { defaultFormSettings } from '../forms/field-types.js';
@@ -23,6 +23,20 @@ function toLocalInput(iso) {
 }
 function fromLocalInput(v) { return v ? new Date(v).toISOString() : null; }
 
+// quais tabs do inspector existem por contexto
+const FORM_TABS = [
+  { id: 'geral',    label: 'Geral' },
+  { id: 'visual',   label: 'Aparência' },
+  { id: 'acesso',   label: 'Acesso' },
+  { id: 'pos',      label: 'Pós-envio' },
+  { id: 'avancado', label: 'Avançado' },
+];
+const FIELD_TABS = [
+  { id: 'basico',   label: 'Básico' },
+  { id: 'avancado', label: 'Avançado' },
+  { id: 'logica',   label: 'Lógica' },
+];
+
 export async function renderFormsBuilder(ctx, formId) {
   const { root, api } = ctx;
   root.innerHTML = `<div class="empty-state">Carregando construtor…</div>`;
@@ -36,49 +50,38 @@ export async function renderFormsBuilder(ctx, formId) {
   }
   form.settings = { ...defaultFormSettings(), ...(form.settings || {}) };
 
-  const S = { form, pageIdx: 0, selected: 'form', dirty: false };
+  const S = {
+    form,
+    pageIdx: 0,
+    selected: 'form',
+    dirty: false,
+    formTab: 'geral',
+    fieldTab: 'basico',
+  };
   let dragId = null;
 
   root.innerHTML = `
-    <div class="fb">
+    <div class="fb fb--v2">
       <header class="fb__bar">
         <button class="admin-link-btn" id="fbBack">${icon('arrow-left', { size: 14 })} Voltar</button>
-        <div class="fb__title"><strong id="fbTitle">${esc(form.title)}</strong>
+        <div class="fb__title">
+          <strong id="fbTitle">${esc(form.title)}</strong>
           <span class="form-status ${form.status === 'published' ? 'is-published' : 'is-draft'}" id="fbStatus">${form.status === 'published' ? 'Publicado' : 'Rascunho'}</span>
           <span class="fb__autosave" id="fbAutosave" aria-live="polite"></span>
         </div>
         <div class="fb__bar-actions">
           <button class="btn btn--ghost btn--small" id="fbLink" title="Copiar link público">${icon('external', { size: 12 })} Link</button>
-          <button class="btn btn--ghost btn--small" id="fbSave">Salvar</button>
           <button class="btn btn--primary btn--small" id="fbPublish">${form.status === 'published' ? 'Despublicar' : 'Publicar'}</button>
         </div>
       </header>
-      <div class="fb__cols">
-        <aside class="fb__palette" id="fbPalette"></aside>
+      <div class="fb__cols fb__cols--two">
         <section class="fb__canvas" id="fbCanvas"></section>
         <aside class="fb__inspector" id="fbInspector"></aside>
       </div>
     </div>`;
 
-  // ----- palette -----
-  const pal = root.querySelector('#fbPalette');
-  pal.innerHTML = FIELD_CATEGORIES.map((cat) => `
-    <div class="fb-pal-cat">
-      <h4>${cat.label}</h4>
-      <div class="fb-pal-list">
-        ${FIELD_TYPES.filter((t) => t.category === cat.id).map((t) => `
-          <button class="fb-pal-item" data-type="${t.type}" title="${attr(t.label)}">
-            <span class="fb-pal-ico">${icon(t.icon, { size: 14 })}</span>${esc(t.label)}
-          </button>`).join('')}
-      </div>
-    </div>`).join('');
-  pal.querySelectorAll('.fb-pal-item').forEach((b) => {
-    b.onclick = () => addField(b.dataset.type);
-  });
-
   // ----- header actions -----
   root.querySelector('#fbBack').onclick = () => maybeLeave(() => api.navigate('#/forms'));
-  root.querySelector('#fbSave').onclick = () => save({ manual: true });
   root.querySelector('#fbLink').onclick = async () => {
     if (S.dirty) await save();
     const url = formPublicUrl(S.form.slug);
@@ -105,7 +108,6 @@ export async function renderFormsBuilder(ctx, formId) {
       clearInterval(autosaveTimer);
       return;
     }
-    // ignora se está em input/textarea (exceto Ctrl+S e Ctrl+Shift+D que sempre rodam)
     const inInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName);
 
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
@@ -130,12 +132,13 @@ export async function renderFormsBuilder(ctx, formId) {
 
   // ---------- helpers ----------
   function curPage() { return S.form.schema.pages[S.pageIdx]; }
-  function markDirty() { S.dirty = true; root.querySelector('#fbSave').classList.add('is-dirty'); }
+  function markDirty() { S.dirty = true; }
 
   function addField(type) {
     const f = makeField(type);
     curPage().fields.push(f);
     S.selected = f.id;
+    S.fieldTab = 'basico';
     markDirty();
     renderCanvas(); renderInspector();
   }
@@ -164,7 +167,6 @@ export async function renderFormsBuilder(ctx, formId) {
       return toastError('Erro ao salvar: ' + error.message);
     }
     S.dirty = false;
-    root.querySelector('#fbSave').classList.remove('is-dirty');
     const hhmm = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     if (auto) auto.textContent = `salvo ${hhmm}`;
     if (manual && !silent) toastSuccess('Salvo!');
@@ -195,7 +197,6 @@ export async function renderFormsBuilder(ctx, formId) {
     } else {
       toastSuccess('Despublicado.');
     }
-    // forms também podem aparecer listados — atualiza s_status no inspector se aberto
     if (S.selected === 'form') renderInspector();
   }
 
@@ -257,18 +258,11 @@ export async function renderFormsBuilder(ctx, formId) {
       }
     });
 
-    // Gera QR client-side (lazy import)
     try {
       const { default: QRCode } = await import('https://esm.sh/qrcode-svg@1.1.0');
       const qr = new QRCode({
-        content: url,
-        padding: 2,
-        width: 240,
-        height: 240,
-        color: '#1B0810',
-        background: '#F4E5C2',
-        ecl: 'M',
-        join: true,
+        content: url, padding: 2, width: 240, height: 240,
+        color: '#1B0810', background: '#F4E5C2', ecl: 'M', join: true,
       });
       const svg = qr.svg();
       const box = overlay.querySelector('#fbShareQr');
@@ -312,10 +306,18 @@ export async function renderFormsBuilder(ctx, formId) {
       </div>
       <div class="fb-fields" id="fbFields">
         ${fields.length ? fields.map((f, i) => fieldCardHtml(f, i, fields.length)).join('')
-          : `<div class="empty-state small">Clique num tipo de campo à esquerda para adicionar.</div>`}
+          : `<div class="fb-empty">
+              <div class="fb-empty__title">Nenhum campo ainda.</div>
+              <div class="fb-empty__sub">Clique em <strong>+ Adicionar campo</strong> abaixo, ou digite <kbd>/</kbd> em qualquer lugar.</div>
+            </div>`}
+      </div>
+      <div class="fb-add-row">
+        <button class="fb-add-btn" id="fbAddBtn">${icon('plus', { size: 14 })} Adicionar campo</button>
+        <span class="fb-add-hint">ou <kbd>/</kbd></span>
       </div>`;
 
-    c.querySelector('#fbFormBtn').onclick = () => { S.selected = 'form'; renderCanvas(); renderInspector(); };
+    c.querySelector('#fbFormBtn').onclick = () => { S.selected = 'form'; S.formTab = 'geral'; renderCanvas(); renderInspector(); };
+    c.querySelector('#fbAddBtn').onclick = () => openQuickAdd();
     if (c.querySelector('#fbAddPage')) c.querySelector('#fbAddPage').onclick = () => {
       pages.push({ id: 'p' + (pages.length + 1) + Date.now().toString(36), title: '', fields: [] });
       S.pageIdx = pages.length - 1; markDirty(); renderCanvas();
@@ -325,7 +327,7 @@ export async function renderFormsBuilder(ctx, formId) {
     });
     c.querySelectorAll('.fb-field').forEach((card) => {
       const id = card.dataset.id;
-      card.querySelector('.fb-field__body').onclick = () => { S.selected = id; renderCanvas(); renderInspector(); };
+      card.querySelector('.fb-field__body').onclick = () => { S.selected = id; S.fieldTab = 'basico'; renderCanvas(); renderInspector(); };
       card.querySelector('[data-act="up"]').onclick = (e) => { e.stopPropagation(); move(id, -1); };
       card.querySelector('[data-act="down"]').onclick = (e) => { e.stopPropagation(); move(id, 1); };
       card.querySelector('[data-act="dup"]').onclick = (e) => { e.stopPropagation(); duplicateField(id); };
@@ -389,7 +391,7 @@ export async function renderFormsBuilder(ctx, formId) {
       </div>`;
   }
 
-  // ===== Quick-add popup (/ trigger) =====
+  // ===== Quick-add popup (/ trigger ou botão "+ Adicionar campo") =====
   function openQuickAdd() {
     document.querySelectorAll('.fb-quickadd').forEach((el) => el.remove());
     const overlay = document.createElement('div');
@@ -430,10 +432,7 @@ export async function renderFormsBuilder(ctx, formId) {
       if (cur) cur.scrollIntoView({ block: 'nearest' });
     }
 
-    function pick(type) {
-      addField(type);
-      close();
-    }
+    function pick(type) { addField(type); close(); }
 
     search.addEventListener('input', () => {
       const q = normalize(search.value.trim());
@@ -467,13 +466,12 @@ export async function renderFormsBuilder(ctx, formId) {
     if (!loc) return;
     const f = loc.field;
     const clone = JSON.parse(JSON.stringify(f));
-    // novo id/key únicos
     clone.id = `${f.type}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 4)}`;
     clone.key = clone.id;
-    // sufixo "(cópia)" só se houver label
     if (clone.label) clone.label = `${clone.label} (cópia)`;
     loc.page.fields.splice(loc.idx + 1, 0, clone);
     S.selected = clone.id;
+    S.fieldTab = 'basico';
     markDirty();
     renderCanvas();
     renderInspector();
@@ -482,53 +480,88 @@ export async function renderFormsBuilder(ctx, formId) {
   // ---------- INSPECTOR ----------
   function renderInspector() {
     const ins = root.querySelector('#fbInspector');
-    if (S.selected === 'form') { ins.innerHTML = formSettingsHtml(); bindFormSettings(ins); return; }
+    if (S.selected === 'form') {
+      ins.innerHTML = formInspectorHtml();
+      bindFormTabs(ins);
+      bindFormSettings(ins);
+      return;
+    }
     const loc = findField(S.selected);
-    if (!loc) { ins.innerHTML = `<div class="fb-insp-empty">Selecione um campo ou as configurações do formulário.</div>`; return; }
-    ins.innerHTML = fieldConfigHtml(loc.field);
+    if (!loc) {
+      ins.innerHTML = `<div class="fb-insp-empty">
+        <p>Nada selecionado.</p>
+        <p>Clique num campo para editar, ou em <strong>Configurações do formulário</strong>.</p>
+      </div>`;
+      return;
+    }
+    ins.innerHTML = fieldInspectorHtml(loc.field);
+    bindFieldTabs(ins, loc.field);
     bindFieldConfig(ins, loc.field);
   }
 
-  // ---- FORM SETTINGS ----
-  function formSettingsHtml() {
-    const f = S.form; const s = f.settings;
+  // ---- FORM INSPECTOR (com tabs) ----
+  function formInspectorHtml() {
+    const f = S.form;
+    const s = f.settings;
+    const tab = S.formTab;
+    const tabsHtml = `<nav class="fb-tabs" role="tablist">${FORM_TABS.map((t) => `
+      <button class="fb-tab ${t.id === tab ? 'is-on' : ''}" data-tab="${t.id}" role="tab">${esc(t.label)}</button>`).join('')}</nav>`;
+
+    let body = '';
+    if (tab === 'geral') {
+      body = `
+        ${row('Título', `<input class="adm-input" id="s_title" value="${attr(f.title)}">`)}
+        ${row('Descrição', `<textarea class="adm-input" id="s_desc" rows="3" placeholder="aparece logo abaixo do título do formulário">${esc(f.description)}</textarea>`)}
+        ${row('Texto do botão enviar', `<input class="adm-input" id="s_submit" value="${attr(s.submitLabel || 'Enviar')}">`)}
+        ${row('Link curto (slug)', `<input class="adm-input" id="s_slug" value="${attr(f.slug)}">
+          <small class="fb-hint">só letras minúsculas, números e hífen — é o que aparece na URL</small>`)}`;
+    } else if (tab === 'visual') {
+      body = `
+        ${row('Colunas', `<select class="adm-input" id="s_cols">
+          <option value="1" ${s.layoutColumns===1?'selected':''}>1 coluna (recomendado)</option>
+          <option value="2" ${s.layoutColumns===2?'selected':''}>2 colunas</option>
+        </select>`)}
+        ${row('Cor de destaque', `<input type="color" class="adm-color" id="s_accent" value="${attr(s.theme?.accent || '#4A5C36')}">`)}
+        ${check('s_flora', 'Flores secas no fundo', s.showFlora)}
+        ${row('Imagem de capa (URL)', `<input class="adm-input" id="s_cover" placeholder="https://… (opcional)" value="${attr(s.coverImage || '')}">`)}`;
+    } else if (tab === 'acesso') {
+      body = `
+        ${row('Status', `<select class="adm-input" id="s_status">
+          ${['draft','published','closed','archived'].map((v) => `<option value="${v}" ${f.status === v ? 'selected' : ''}>${({draft:'Rascunho',published:'Publicado',closed:'Fechado',archived:'Arquivado'})[v]}</option>`).join('')}
+        </select>`)}
+        ${check('s_listed', 'Listar publicamente (desmarcado = só por link)', f.is_listed)}
+        <hr class="fb-hr">
+        ${row('Abre em', `<input type="datetime-local" class="adm-input" id="s_opens" value="${toLocalInput(f.opens_at)}">`)}
+        ${row('Fecha em', `<input type="datetime-local" class="adm-input" id="s_closes" value="${toLocalInput(f.closes_at)}">`)}
+        ${row('Limite de respostas', `<input type="number" min="1" class="adm-input" id="s_max" placeholder="sem limite" value="${f.max_responses ?? ''}">`)}`;
+    } else if (tab === 'pos') {
+      body = `
+        ${row('Mensagem de sucesso', `<textarea class="adm-input" id="s_success" rows="3">${esc(s.successMessage || '')}</textarea>`)}
+        ${row('Ou redirecionar para (URL)', `<input class="adm-input" id="s_redirect" placeholder="https://… (opcional — se preenchido, ignora a mensagem)" value="${attr(s.redirectUrl || '')}">`)}`;
+    } else if (tab === 'avancado') {
+      body = `
+        <h4 class="fb-insp-sub">Multi-etapas</h4>
+        ${check('s_multi', 'Dividir em etapas (multi-página)', s.multiStep)}
+        ${check('s_prog', 'Mostrar barra de progresso', s.showProgress)}
+        ${check('s_intro', 'Tela de introdução antes de começar', s.introScreen?.enabled)}
+        <hr class="fb-hr">
+        <h4 class="fb-insp-sub">Anti-spam & LGPD</h4>
+        ${check('s_honey', 'Honeypot (anti-bot oculto)', s.honeypot)}
+        ${check('s_captcha', 'Captcha (fase 2)', s.captcha)}
+        ${check('s_meta', 'Guardar IP/navegador na resposta', s.captureMeta)}
+        ${row('Texto de consentimento LGPD', `<textarea class="adm-input" id="s_consent" rows="3" placeholder="texto curto que aparece junto do envio">${esc(s.consentText || '')}</textarea>`)}`;
+    }
+
     return `
       <h3 class="fb-insp-title">Configurações do formulário</h3>
-      ${row('Título', `<input class="adm-input" id="s_title" value="${attr(f.title)}">`)}
-      ${row('Link (slug)', `<input class="adm-input" id="s_slug" value="${attr(f.slug)}">`)}
-      ${row('Descrição', `<textarea class="adm-input" id="s_desc" rows="2">${esc(f.description)}</textarea>`)}
-      <hr class="fb-hr">
-      ${row('Status', `<select class="adm-input" id="s_status">
-        ${['draft','published','closed','archived'].map((v) => `<option value="${v}" ${f.status === v ? 'selected' : ''}>${({draft:'Rascunho',published:'Publicado',closed:'Fechado',archived:'Arquivado'})[v]}</option>`).join('')}
-      </select>`)}
-      ${check('s_listed', 'Listar publicamente (desmarcado = só por link)', f.is_listed)}
-      <hr class="fb-hr">
-      ${row('Abre em', `<input type="datetime-local" class="adm-input" id="s_opens" value="${toLocalInput(f.opens_at)}">`)}
-      ${row('Fecha em', `<input type="datetime-local" class="adm-input" id="s_closes" value="${toLocalInput(f.closes_at)}">`)}
-      ${row('Limite de respostas', `<input type="number" min="1" class="adm-input" id="s_max" value="${f.max_responses ?? ''}">`)}
-      <hr class="fb-hr">
-      <h4 class="fb-insp-sub">Aparência</h4>
-      ${row('Colunas', `<select class="adm-input" id="s_cols"><option value="1" ${s.layoutColumns===1?'selected':''}>1 coluna</option><option value="2" ${s.layoutColumns===2?'selected':''}>2 colunas</option></select>`)}
-      ${row('Cor de destaque', `<input type="color" class="adm-color" id="s_accent" value="${attr(s.theme?.accent || '#4A5C36')}">`)}
-      ${check('s_flora', 'Flores secas no fundo', s.showFlora)}
-      ${row('Imagem de capa (URL)', `<input class="adm-input" id="s_cover" value="${attr(s.coverImage || '')}">`)}
-      <hr class="fb-hr">
-      <h4 class="fb-insp-sub">Fluxo</h4>
-      ${check('s_multi', 'Multi-etapas (usar etapas)', s.multiStep)}
-      ${check('s_prog', 'Mostrar barra de progresso', s.showProgress)}
-      ${check('s_intro', 'Tela de introdução', s.introScreen?.enabled)}
-      ${row('Texto do botão enviar', `<input class="adm-input" id="s_submit" value="${attr(s.submitLabel || 'Enviar')}">`)}
-      <hr class="fb-hr">
-      <h4 class="fb-insp-sub">Pós-envio</h4>
-      ${row('Mensagem de sucesso', `<textarea class="adm-input" id="s_success" rows="2">${esc(s.successMessage || '')}</textarea>`)}
-      ${row('Redirecionar para (URL)', `<input class="adm-input" id="s_redirect" value="${attr(s.redirectUrl || '')}">`)}
-      <hr class="fb-hr">
-      <h4 class="fb-insp-sub">Anti-spam & LGPD</h4>
-      ${check('s_honey', 'Honeypot (anti-bot oculto)', s.honeypot)}
-      ${check('s_captcha', 'Captcha (fase 2)', s.captcha)}
-      ${check('s_meta', 'Guardar IP/navegador', s.captureMeta)}
-      ${row('Texto de consentimento (LGPD)', `<textarea class="adm-input" id="s_consent" rows="2">${esc(s.consentText || '')}</textarea>`)}
-    `;
+      ${tabsHtml}
+      <div class="fb-tab-body">${body}</div>`;
+  }
+
+  function bindFormTabs(ins) {
+    ins.querySelectorAll('.fb-tab').forEach((t) => {
+      t.onclick = () => { S.formTab = t.dataset.tab; renderInspector(); };
+    });
   }
 
   function bindFormSettings(ins) {
@@ -557,6 +590,7 @@ export async function renderFormsBuilder(ctx, formId) {
     on('s_meta', 'change', (e) => { s.captureMeta = e.target.checked; markDirty(); });
     on('s_consent', 'input', (e) => { s.consentText = e.target.value; markDirty(); });
   }
+
   function updateStatusPill() {
     const el = root.querySelector('#fbStatus');
     el.textContent = ({ published: 'Publicado', draft: 'Rascunho', closed: 'Fechado', archived: 'Arquivado' })[S.form.status] || 'Rascunho';
@@ -565,52 +599,76 @@ export async function renderFormsBuilder(ctx, formId) {
     if (btn) btn.textContent = S.form.status === 'published' ? 'Despublicar' : 'Publicar';
   }
 
-  // ---- FIELD CONFIG ----
-  function fieldConfigHtml(f) {
+  // ---- FIELD INSPECTOR (com tabs) ----
+  function fieldInspectorHtml(f) {
     const caps = fieldCaps(f.type);
     const def = FIELD_TYPE_MAP[f.type];
-    const v = f.validation || {};
-    let html = `<h3 class="fb-insp-title">${icon(def?.icon || 'edit', { size: 14 })} ${esc(def?.label || f.type)}</h3>`;
+    const tab = S.fieldTab;
+    const showLogic = !caps.staticBlock;
+    const showAdvanced = !caps.staticBlock || caps.staticBlock; // sempre mostra (largura/conteúdo)
+    const tabs = FIELD_TABS.filter((t) => {
+      if (t.id === 'logica') return showLogic;
+      return true;
+    });
+    const tabsHtml = `<nav class="fb-tabs" role="tablist">${tabs.map((t) => `
+      <button class="fb-tab ${t.id === tab ? 'is-on' : ''}" data-tab="${t.id}" role="tab">${esc(t.label)}</button>`).join('')}</nav>`;
 
+    let body = '';
+    if (tab === 'basico') {
+      body = fieldBasicHtml(f, caps);
+    } else if (tab === 'avancado') {
+      body = fieldAdvancedHtml(f, caps);
+    } else if (tab === 'logica') {
+      body = logicHtml(f);
+    }
+
+    return `
+      <h3 class="fb-insp-title">${icon(def?.icon || 'edit', { size: 14 })} ${esc(def?.label || f.type)}</h3>
+      ${tabsHtml}
+      <div class="fb-tab-body">${body}</div>`;
+  }
+
+  function bindFieldTabs(ins, f) {
+    ins.querySelectorAll('.fb-tab').forEach((t) => {
+      t.onclick = () => { S.fieldTab = t.dataset.tab; renderInspector(); };
+    });
+  }
+
+  function fieldBasicHtml(f, caps) {
+    let html = '';
+    // bloco estático: heading/paragraph/image/divider
     if (caps.staticBlock) {
       if (f.type === 'image') {
-        html += row('URL da imagem', `<input class="adm-input" id="c_img" value="${attr(f.imageUrl)}">`);
+        html += row('URL da imagem', `<input class="adm-input" id="c_img" placeholder="https://…" value="${attr(f.imageUrl)}">`);
       } else if (f.type !== 'divider') {
-        html += row(f.type === 'heading' ? 'Texto do título' : 'Texto', `<textarea class="adm-input" id="c_content" rows="${f.type==='heading'?1:3}">${esc(f.content)}</textarea>`);
+        html += row(f.type === 'heading' ? 'Texto do título' : 'Texto', `<textarea class="adm-input" id="c_content" rows="${f.type==='heading'?1:4}">${esc(f.content)}</textarea>`);
       } else {
-        html += `<p class="fb-insp-empty">Divisória — sem configurações.</p>`;
+        html += `<p class="fb-insp-empty">Divisória — sem configurações básicas. Ajuste a largura na aba <strong>Avançado</strong>.</p>`;
       }
-      html += row('Largura', widthSelect(f));
       return html;
     }
 
-    html += row('Rótulo', `<input class="adm-input" id="c_label" value="${attr(f.label)}">`);
-    html += row('Texto de ajuda', `<textarea class="adm-input" id="c_desc" rows="2">${esc(f.description)}</textarea>`);
-    if (caps.placeholder) html += row('Placeholder', `<input class="adm-input" id="c_ph" value="${attr(f.placeholder)}">`);
+    html += row('Rótulo (pergunta)', `<input class="adm-input" id="c_label" placeholder="Ex.: Seu nome" value="${attr(f.label)}">`);
+    html += row('Texto de ajuda', `<textarea class="adm-input" id="c_desc" rows="2" placeholder="aparece em letra menor abaixo da pergunta (opcional)">${esc(f.description)}</textarea>`);
+    if (caps.placeholder) html += row('Placeholder (dica dentro do campo)', `<input class="adm-input" id="c_ph" value="${attr(f.placeholder)}">`);
     html += check('c_req', 'Obrigatório', f.required);
-    html += check('c_ro', 'Somente leitura', f.readonly);
-    html += row('Largura', widthSelect(f));
-    html += row('Pré-preencher via URL (?param=)', `<input class="adm-input" id="c_prefill" value="${attr(f.prefillParam)}">`);
 
-    // opções
+    // opções inline (radio/checkbox/select/ranking) — essas SEMPRE no básico
     if (caps.options) {
       html += `<hr class="fb-hr"><h4 class="fb-insp-sub">Opções</h4>
         <div id="c_opts" class="fb-opts">${(f.options||[]).map((o, i) => optRow(o, i)).join('')}</div>
         <button class="btn btn--ghost btn--small" id="c_addopt">+ opção</button>`;
-      if (caps.allowOther) html += check('c_other', 'Permitir "Outro"', f.allowOther);
-      if (caps.choiceLimits) {
-        html += row('Mín. seleções', `<input type="number" min="0" class="adm-input" id="c_minsel" value="${f.minSelections ?? ''}">`);
-        html += row('Máx. seleções', `<input type="number" min="1" class="adm-input" id="c_maxsel" value="${f.maxSelections ?? ''}">`);
-      }
     }
 
-    // escala / avaliação
+    // escala
     if (caps.scale) {
       html += `<hr class="fb-hr"><h4 class="fb-insp-sub">Escala</h4>`;
-      html += row('De', `<input type="number" class="adm-input" id="c_smin" value="${f.scaleMin}">`);
-      html += row('Até', `<input type="number" class="adm-input" id="c_smax" value="${f.scaleMax}">`);
-      html += row('Rótulo (início)', `<input class="adm-input" id="c_slmin" value="${attr(f.scaleMinLabel)}">`);
-      html += row('Rótulo (fim)', `<input class="adm-input" id="c_slmax" value="${attr(f.scaleMaxLabel)}">`);
+      html += `<div class="fb-row-2col">
+        ${row('De', `<input type="number" class="adm-input" id="c_smin" value="${f.scaleMin}">`)}
+        ${row('Até', `<input type="number" class="adm-input" id="c_smax" value="${f.scaleMax}">`)}
+      </div>`;
+      html += row('Rótulo (início) — opcional', `<input class="adm-input" id="c_slmin" placeholder="ex.: nada provável" value="${attr(f.scaleMinLabel)}">`);
+      html += row('Rótulo (fim) — opcional', `<input class="adm-input" id="c_slmax" placeholder="ex.: muito provável" value="${attr(f.scaleMaxLabel)}">`);
     }
 
     // matriz
@@ -621,14 +679,41 @@ export async function renderFormsBuilder(ctx, formId) {
         <h4 class="fb-insp-sub">Colunas</h4>
         <div id="c_cols" class="fb-opts">${(f.matrixCols||[]).map((o,i)=>optRow(o,i,'col')).join('')}</div>
         <button class="btn btn--ghost btn--small" id="c_addcol">+ coluna</button>`;
-      html += check('c_mmult', 'Múltipla por linha', f.matrixMultiple);
     }
+
+    return html;
+  }
+
+  function fieldAdvancedHtml(f, caps) {
+    const v = f.validation || {};
+    let html = '';
+
+    html += row('Largura', widthSelect(f));
+    if (caps.staticBlock) return html;
+
+    html += check('c_ro', 'Somente leitura', f.readonly);
+    html += row('Pré-preencher via URL (?param=)', `<input class="adm-input" id="c_prefill" placeholder="ex.: nome" value="${attr(f.prefillParam)}">
+      <small class="fb-hint">passa <code>?nome=Maria</code> na URL pra preencher esse campo</small>`);
+
+    // limites de opções
+    if (caps.allowOther) html += check('c_other', 'Permitir opção "Outro"', f.allowOther);
+    if (caps.choiceLimits) {
+      html += `<div class="fb-row-2col">
+        ${row('Mín. seleções', `<input type="number" min="0" class="adm-input" id="c_minsel" value="${f.minSelections ?? ''}">`)}
+        ${row('Máx. seleções', `<input type="number" min="1" class="adm-input" id="c_maxsel" value="${f.maxSelections ?? ''}">`)}
+      </div>`;
+    }
+
+    // matriz: múltipla por linha
+    if (caps.matrix) html += check('c_mmult', 'Múltipla escolha por linha', f.matrixMultiple);
 
     // anexo
     if (caps.attachment) {
       html += `<hr class="fb-hr"><h4 class="fb-insp-sub">Anexo</h4>`;
-      html += row('Tamanho máx (MB)', `<input type="number" min="1" class="adm-input" id="c_fmb" value="${f.fileMaxMb}">`);
-      html += row('Qtd. máx de arquivos', `<input type="number" min="1" class="adm-input" id="c_fcount" value="${f.fileMaxCount}">`);
+      html += `<div class="fb-row-2col">
+        ${row('Tamanho máx (MB)', `<input type="number" min="1" class="adm-input" id="c_fmb" value="${f.fileMaxMb}">`)}
+        ${row('Qtd. máx de arquivos', `<input type="number" min="1" class="adm-input" id="c_fcount" value="${f.fileMaxCount}">`)}
+      </div>`;
       html += row('Tipos aceitos', `<input class="adm-input" id="c_faccept" placeholder=".pdf,image/*" value="${attr(f.fileAccept)}">`);
     }
 
@@ -636,29 +721,38 @@ export async function renderFormsBuilder(ctx, formId) {
     if (caps.length || caps.numeric || caps.dateRange) {
       html += `<hr class="fb-hr"><h4 class="fb-insp-sub">Validação</h4>`;
       if (caps.length) {
-        html += row('Mín. caracteres', `<input type="number" min="0" class="adm-input" id="v_minlen" value="${v.minLen ?? ''}">`);
-        html += row('Máx. caracteres', `<input type="number" min="0" class="adm-input" id="v_maxlen" value="${v.maxLen ?? ''}">`);
+        html += `<div class="fb-row-2col">
+          ${row('Mín. caracteres', `<input type="number" min="0" class="adm-input" id="v_minlen" value="${v.minLen ?? ''}">`)}
+          ${row('Máx. caracteres', `<input type="number" min="0" class="adm-input" id="v_maxlen" value="${v.maxLen ?? ''}">`)}
+        </div>`;
       }
       if (caps.numeric) {
-        html += row('Valor mínimo', `<input type="number" class="adm-input" id="v_min" value="${v.min ?? ''}">`);
-        html += row('Valor máximo', `<input type="number" class="adm-input" id="v_max" value="${v.max ?? ''}">`);
+        html += `<div class="fb-row-2col">
+          ${row('Valor mínimo', `<input type="number" class="adm-input" id="v_min" value="${v.min ?? ''}">`)}
+          ${row('Valor máximo', `<input type="number" class="adm-input" id="v_max" value="${v.max ?? ''}">`)}
+        </div>`;
         html += row('Passo (step)', `<input type="number" class="adm-input" id="v_step" value="${v.step ?? 1}">`);
       }
       if (caps.dateRange) {
-        html += row('Data mínima', `<input type="date" class="adm-input" id="v_mind" value="${v.minDate ?? ''}">`);
-        html += row('Data máxima', `<input type="date" class="adm-input" id="v_maxd" value="${v.maxDate ?? ''}">`);
+        html += `<div class="fb-row-2col">
+          ${row('Data mínima', `<input type="date" class="adm-input" id="v_mind" value="${v.minDate ?? ''}">`)}
+          ${row('Data máxima', `<input type="date" class="adm-input" id="v_maxd" value="${v.maxDate ?? ''}">`)}
+        </div>`;
       }
     }
-    html += row('Padrão (regex)', `<input class="adm-input" id="v_pat" value="${attr(v.pattern)}">`);
-    html += row('Mensagem de erro', `<input class="adm-input" id="v_err" value="${attr(v.errorMessage)}">`);
 
-    // lógica condicional
-    html += logicHtml(f);
+    html += `<hr class="fb-hr"><h4 class="fb-insp-sub">Padrão personalizado</h4>`;
+    html += row('Regex de validação', `<input class="adm-input" id="v_pat" placeholder="ex.: ^[0-9]{11}$" value="${attr(v.pattern)}">`);
+    html += row('Mensagem de erro', `<input class="adm-input" id="v_err" placeholder="Aparece quando o valor não casa" value="${attr(v.errorMessage)}">`);
+
     return html;
   }
 
   function widthSelect(f) {
-    return `<select class="adm-input" id="c_width"><option value="full" ${f.width==='full'?'selected':''}>Inteira</option><option value="half" ${f.width==='half'?'selected':''}>Metade</option></select>`;
+    return `<select class="adm-input" id="c_width">
+      <option value="full" ${f.width==='full'?'selected':''}>Inteira (1 linha)</option>
+      <option value="half" ${f.width==='half'?'selected':''}>Metade (lado a lado)</option>
+    </select>`;
   }
   function optRow(val, i, kind) {
     return `<div class="fb-opt" data-i="${i}" data-kind="${kind || 'opt'}">
@@ -671,13 +765,21 @@ export async function renderFormsBuilder(ctx, formId) {
       if (o.id !== f.id && !isStaticField(o.type)) others.push(o);
     }
     const lg = f.logic || { action: 'show', match: 'all', rules: [] };
-    return `<hr class="fb-hr"><h4 class="fb-insp-sub">Lógica condicional</h4>
-      ${others.length ? `
-      ${row('Ação', `<select class="adm-input" id="l_action"><option value="show" ${lg.action==='show'?'selected':''}>Mostrar se</option><option value="hide" ${lg.action==='hide'?'selected':''}>Ocultar se</option></select>`)}
-      ${row('Combinar', `<select class="adm-input" id="l_match"><option value="all" ${lg.match==='all'?'selected':''}>Todas as regras</option><option value="any" ${lg.match==='any'?'selected':''}>Qualquer regra</option></select>`)}
-      <div id="l_rules">${(lg.rules||[]).map((r,i)=>ruleRow(r,i,others)).join('')}</div>
-      <button class="btn btn--ghost btn--small" id="l_add">+ regra</button>`
-      : `<p class="fb-insp-empty">Adicione outros campos para criar regras.</p>`}`;
+    if (!others.length) {
+      return `<p class="fb-insp-empty">Adicione outros campos primeiro pra criar regras de "mostrar/ocultar este campo se…".</p>`;
+    }
+    return `
+      <p class="fb-hint">Defina quando este campo aparece (ou some) dependendo das respostas em outros campos.</p>
+      ${row('Ação', `<select class="adm-input" id="l_action">
+        <option value="show" ${lg.action==='show'?'selected':''}>Mostrar se</option>
+        <option value="hide" ${lg.action==='hide'?'selected':''}>Ocultar se</option>
+      </select>`)}
+      ${row('Combinar', `<select class="adm-input" id="l_match">
+        <option value="all" ${lg.match==='all'?'selected':''}>Todas as regras</option>
+        <option value="any" ${lg.match==='any'?'selected':''}>Qualquer regra</option>
+      </select>`)}
+      <div id="l_rules" class="fb-rules">${(lg.rules||[]).map((r,i)=>ruleRow(r,i,others)).join('')}</div>
+      <button class="btn btn--ghost btn--small" id="l_add">+ regra</button>`;
   }
   function ruleRow(r, i, others) {
     return `<div class="fb-rule" data-i="${i}">
