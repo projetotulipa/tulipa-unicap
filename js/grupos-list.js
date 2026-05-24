@@ -31,12 +31,17 @@ async function init() {
 
 function cardHtml(g, isArchived = false) {
   const accent = g.accent_color || 'wine';
-  // pretty URL: /atividades/grupos-de-estudo/<slug> — resolvido pelo 404.html
   const url = `grupos-de-estudo/${encodeURIComponent(g.slug)}`;
-  const lede = g.lede ? truncate(stripHtml(g.lede), 130) : 'Clique pra ver descrição, encontros e material complementar.';
+  const lede = g.lede ? truncate(stripHtml(g.lede), 140) : 'Clique pra ver descrição, encontros e material complementar.';
+  const hasCover = !!g.cover_image_url;
   return `
-    <a class="grupo-card grupo-card--${accent} ${isArchived ? 'is-archived' : ''}" href="${escapeAttr(url)}">
-      <div class="grupo-card__emoji" aria-hidden="true">${coverIcon(g.cover_emoji || 'book', 32)}</div>
+    <a class="grupo-card grupo-card--${accent} ${hasCover ? 'has-cover' : ''} ${isArchived ? 'is-archived' : ''}" href="${escapeAttr(url)}">
+      <div class="grupo-card__cover" aria-hidden="true">
+        ${hasCover
+          ? `<img src="${escapeAttr(g.cover_image_url)}" alt="" loading="lazy" onerror="this.parentElement.classList.remove('has-img');this.parentElement.innerHTML='${escapeAttr(coverIcon(g.cover_emoji || 'book', 42))}';" />
+             <div class="grupo-card__cover-overlay"></div>`
+          : coverIcon(g.cover_emoji || 'book', 42)}
+      </div>
       <div class="grupo-card__main">
         <h3 class="grupo-card__title">${escapeHtml(g.group_name || '(sem nome)')}</h3>
         <p class="grupo-card__lede">${escapeHtml(lede)}</p>

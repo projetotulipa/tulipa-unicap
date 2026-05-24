@@ -190,7 +190,11 @@ function buildCard(ctx, group, allGroups) {
   card.dataset.pageId = group.page_id;
 
   card.innerHTML = `
-    <div class="study-card__emoji" aria-hidden="true">${coverIcon(group.cover_emoji || 'book', 32)}</div>
+    <div class="study-card__emoji" aria-hidden="true">${
+      group.cover_image_url
+        ? `<img class="study-card__cover" src="${escapeAttr(group.cover_image_url)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{innerHTML:this.dataset.fallback}))" data-fallback="${escapeAttr(coverIcon(group.cover_emoji || 'book', 32))}" />`
+        : coverIcon(group.cover_emoji || 'book', 32)
+    }</div>
     <div class="study-card__main">
       <header class="study-card__head">
         <h3>${escapeHtml(group.group_name || '(sem nome)')}</h3>

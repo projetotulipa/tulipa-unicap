@@ -3881,6 +3881,60 @@ a.pages-pipeline__node:hover .pages-pipeline__num { color: var(--sage); }
   border-top: 1px dashed rgba(143, 160, 132, 0.25);
 }
 
+/* ---- preview da imagem de capa no editor ---- */
+.study-cover-preview {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  background: rgba(0, 0, 0, 0.20);
+  border: 1px dashed rgba(143, 160, 132, 0.30);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.study-cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.study-cover-preview__empty {
+  text-align: center;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.study-cover-preview__empty p {
+  margin: 0;
+  font-size: 12px;
+  font-style: italic;
+}
+.study-cover-preview__broken {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--rose, #9F5A6B);
+  font-style: italic;
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.30);
+}
+.study-cover-preview.is-broken img { display: none; }
+.study-cover-preview.is-broken .study-cover-preview__broken { display: flex; }
+
+/* cover image no card do dashboard */
+.study-card__emoji img.study-card__cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
 .study-editor-soon {
   text-align: center;
   padding: 60px 20px;

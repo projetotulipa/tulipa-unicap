@@ -650,9 +650,27 @@ function renderSettingsTab() {
     <div class="study-tab study-tab--settings">
       <section class="study-section">
         <h3>Aparência</h3>
+
+        <label class="study-field">
+          <span>Imagem de capa (URL — opcional)</span>
+          <input type="url" data-field="cover_image_url" value="${escapeAttr(page.cover_image_url || '')}" placeholder="https://… (imagem JPG/PNG/WEBP)" />
+          <small>
+            Se preencher, esta imagem substitui o símbolo SVG nos cards e no hero.
+            Recomendado: 1200×800 (ratio 3:2), até 500KB.
+            Pode usar imagens do Unsplash, Wikimedia, Google Drive (link compartilhado) ou Imgur.
+          </small>
+        </label>
+
+        <div class="study-cover-preview" id="coverPreview">
+          ${page.cover_image_url
+            ? `<img src="${escapeAttr(page.cover_image_url)}" alt="" onerror="this.parentElement.classList.add('is-broken')" />
+               <div class="study-cover-preview__broken">⚠ não consegui carregar a imagem</div>`
+            : `<div class="study-cover-preview__empty">${coverIcon(page.cover_emoji || 'book', 48)}<p>sem imagem — usando símbolo</p></div>`}
+        </div>
+
         <div class="study-row">
           <label class="study-field study-field--narrow">
-            <span>Símbolo da capa</span>
+            <span>Símbolo da capa <small>(usado se não houver imagem)</small></span>
             <div class="study-new-emojis" id="settingsEmoji">
               ${COVER_ICONS.map((ic) => `<button type="button" class="study-new-emoji ${page.cover_emoji === ic.value ? 'is-active' : ''}" data-emoji="${escapeAttr(ic.value)}" title="${escapeAttr(ic.label)}" aria-label="${escapeAttr(ic.label)}">${coverIcon(ic.value, 22)}</button>`).join('')}
             </div>
@@ -740,8 +758,14 @@ function renderSettingsTab() {
     });
   });
 
-  // toggles + slug + sort_order
+  // toggles + slug + sort_order + cover_image_url
   bindAutosaveFields(body);
+
+  // preview live da imagem de capa
+  const coverInput = body.querySelector('[data-field="cover_image_url"]');
+  if (coverInput) {
+    coverInput.addEventListener('input', () => updateCoverPreview(coverInput.value));
+  }
 
   // delete
   document.getElementById('deletePageBtn').addEventListener('click', async () => {
@@ -752,6 +776,22 @@ function renderSettingsTab() {
     toastSuccess('Folha removida.');
     ctxRef.api.navigate('#/grupos-estudo');
   });
+}
+
+function updateCoverPreview(url) {
+  const prev = document.getElementById('coverPreview');
+  if (!prev) return;
+  const trimmed = (url || '').trim();
+  if (!trimmed) {
+    prev.classList.remove('is-broken');
+    prev.innerHTML = `<div class="study-cover-preview__empty">${coverIcon(page.cover_emoji || 'book', 48)}<p>sem imagem — usando símbolo</p></div>`;
+    return;
+  }
+  prev.classList.remove('is-broken');
+  prev.innerHTML = `
+    <img src="${escapeAttr(trimmed)}" alt="" onerror="this.parentElement.classList.add('is-broken')" />
+    <div class="study-cover-preview__broken">⚠ não consegui carregar a imagem</div>
+  `;
 }
 
 // =========================================================================

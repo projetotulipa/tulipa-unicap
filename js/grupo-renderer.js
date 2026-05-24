@@ -164,23 +164,31 @@ function render(group, { meetings, fichamentos, resources }) {
 
 // ---------- sections ----------
 function heroHtml(g) {
+  const hasCover = !!g.cover_image_url;
   return `
-    <header class="hero hero--lp grupo-hero grupo-hero--${g.accent_color || 'wine'}" id="topo">
-      <div class="hero__mesh" aria-hidden="true">
-        <span class="blob blob--1"></span>
-        <span class="blob blob--2"></span>
-        <span class="blob blob--3"></span>
-        <span class="blob blob--4"></span>
-        <span class="blob blob--5"></span>
-      </div>
-      <svg class="hero__noise" aria-hidden="true">
-        <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/></filter>
-        <rect width="100%" height="100%" filter="url(#noise)"/>
-      </svg>
-      <div class="petals" id="petals" aria-hidden="true"></div>
+    <header class="hero hero--lp grupo-hero grupo-hero--${g.accent_color || 'wine'} ${hasCover ? 'grupo-hero--has-cover' : ''}" id="topo">
+      ${hasCover ? `
+        <div class="grupo-hero__cover" aria-hidden="true">
+          <img src="${escapeAttr(g.cover_image_url)}" alt="" onerror="this.parentElement.style.display='none'" />
+          <div class="grupo-hero__cover-overlay"></div>
+        </div>
+      ` : `
+        <div class="hero__mesh" aria-hidden="true">
+          <span class="blob blob--1"></span>
+          <span class="blob blob--2"></span>
+          <span class="blob blob--3"></span>
+          <span class="blob blob--4"></span>
+          <span class="blob blob--5"></span>
+        </div>
+        <svg class="hero__noise" aria-hidden="true">
+          <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/></filter>
+          <rect width="100%" height="100%" filter="url(#noise)"/>
+        </svg>
+        <div class="petals" id="petals" aria-hidden="true"></div>
+      `}
       <div class="hero__content">
         <p class="hero__breadcrumb"><a href="../grupos-de-estudo.html">← Grupos de Estudo</a></p>
-        <div class="grupo-hero__emoji" aria-hidden="true">${coverIcon(g.cover_emoji || 'book', 56)}</div>
+        ${hasCover ? '' : `<div class="grupo-hero__emoji" aria-hidden="true">${coverIcon(g.cover_emoji || 'book', 56)}</div>`}
         ${g.hero_eyebrow ? `<p class="hero__eyebrow">${escapeHtml(g.hero_eyebrow)}</p>` : ''}
         <h1 class="hero__title hero__title--single">
           <span class="hero__title-display">${escapeHtml(g.group_name || '')}</span>
