@@ -630,9 +630,9 @@ function allosCtaHtml() {
       ${waveTop('#9F5A6B', 2)}
       <div class="grupo-allos-cta__mandala" aria-hidden="true">${mandalaSeal(280)}</div>
       <div class="grupo-allos-cta__inner">
-        <p class="eyebrow"><span>· ∽ ·</span> Apoio terapêutico</p>
-        <h3>Quer fazer psicoterapia com valor adaptado?</h3>
-        <p>
+        <p class="eyebrow" style="color:#F5EFE2;"><span>· ∽ ·</span> Apoio terapêutico</p>
+        <h3 style="color:#F5EFE2;">Quer fazer psicoterapia com valor adaptado?</h3>
+        <p style="color:rgba(245,239,226,0.92);">
           A Associação <strong>Allos</strong> oferece atendimento psicoterapêutico
           acessível, com valor adaptado à sua realidade. Cuidado profissional pra quem precisa começar.
         </p>
