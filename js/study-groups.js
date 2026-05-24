@@ -79,6 +79,60 @@ export async function getStudyGroupMeetings(groupId, { onlyHappened = false } = 
   return { data: data || [], error };
 }
 
+// Busca meeting_pages pra um array de meeting_ids (retorna mapa { meeting_id → page }).
+export async function getMeetingPages(meetingIds) {
+  if (!meetingIds?.length) return { data: {}, error: null };
+  const { data, error } = await supabase
+    .from('meeting_pages')
+    .select('*')
+    .in('meeting_id', meetingIds);
+  if (error) return { data: {}, error };
+  const map = {};
+  for (const p of data || []) map[p.meeting_id] = p;
+  return { data: map, error: null };
+}
+
+// Upsert do meeting_page (cria se não existe, atualiza se existe).
+export async function upsertMeetingPage(meeting_id, patch) {
+  const { data: userResp } = await supabase.auth.getUser();
+  const created_by = userResp?.user?.id ?? null;
+  const { data, error } = await supabase
+    .from('meeting_pages')
+    .upsert({ meeting_id, created_by, ...patch }, { onConflict: 'meeting_id' })
+    .select()
+    .single();
+  return { data, error };
+}
+
+// Atribui/desvincula fichamento a meeting (via RPC).
+export async function assignFichamento(researchNoteId, meetingId) {
+  const { error } = await supabase.rpc('assign_fichamento_to_meeting', {
+    p_research_note_id: researchNoteId,
+    p_meeting_id: meetingId,
+  });
+  return { error };
+}
+
+// Marca status do meeting (via RPC) — atalho pra presidência.
+export async function markMeetingStatus(meetingId, status) {
+  const { error } = await supabase.rpc('mark_meeting_status', {
+    p_meeting_id: meetingId,
+    p_status: status,
+  });
+  return { error };
+}
+
+// Lista fichamentos do grupo SEM meeting_id (pra modal "atribuir fichamento").
+export async function listUnassignedFichamentos(groupId) {
+  const { data, error } = await supabase
+    .from('research_notes')
+    .select('id, title, body, created_at')
+    .eq('group_id', groupId)
+    .is('meeting_id', null)
+    .order('created_at', { ascending: false });
+  return { data: data || [], error };
+}
+
 // Pega fichamentos de UM grupo (todos), com info do meeting vinculado quando houver.
 export async function getStudyGroupFichamentos(groupId) {
   const { data, error } = await supabase

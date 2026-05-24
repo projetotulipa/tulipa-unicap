@@ -18,6 +18,11 @@ import {
   updateResource,
   deleteResource,
   reorderResources,
+  getMeetingPages,
+  upsertMeetingPage,
+  assignFichamento,
+  markMeetingStatus,
+  listUnassignedFichamentos,
   RESOURCE_KINDS,
   RESOURCE_GROUPS,
   resourceKindLabel,
@@ -196,40 +201,50 @@ function renderContentTab() {
 }
 
 // =========================================================================
-// ABA 2: ENCONTROS & FICHAMENTOS
+// ABA 2: ENCONTROS (acordeão rico — Sprint B)
 // =========================================================================
+// Estado local
+let meetingsState = {
+  meetings: [],
+  meetingPages: {},        // map meeting_id → meeting_page
+  fichByMeeting: new Map(),
+  fichExtras: [],
+  resourcesByMeeting: new Map(),  // resources cujo meeting_id está setado
+  expandedId: null,
+  filter: 'all',           // all | happened | with_content | empty
+  summaryTimers: new Map(),
+};
+
 async function renderMeetingsTab() {
   const body = document.getElementById('studyTabBody');
   body.innerHTML = `
     <div class="study-tab study-tab--meetings">
       <div class="study-loading">
         <span class="pages-bloom"><span class="pages-signet">${stampSeal({ size: 22 })}</span></span>
-        <p>Buscando encontros e fichamentos…</p>
+        <p>Buscando encontros, fichamentos e materiais…</p>
       </div>
     </div>
   `;
 
-  const [meetingsRes, fichamentosRes] = await Promise.all([
+  // fetch tudo em paralelo
+  const [meetingsRes, fichamentosRes, resourcesRes] = await Promise.all([
     getStudyGroupMeetings(page.group_id),
     getStudyGroupFichamentos(page.group_id),
+    getStudyGroupResources(page.id),
   ]);
 
-  if (meetingsRes.error) {
-    body.innerHTML = errorBlock('Erro ao buscar encontros: ' + meetingsRes.error.message);
-    return;
-  }
-  if (fichamentosRes.error) {
-    body.innerHTML = errorBlock('Erro ao buscar fichamentos: ' + fichamentosRes.error.message);
-    return;
-  }
+  if (meetingsRes.error) return body.innerHTML = errorBlock('Erro ao buscar encontros: ' + meetingsRes.error.message);
+  if (fichamentosRes.error) return body.innerHTML = errorBlock('Erro ao buscar fichamentos: ' + fichamentosRes.error.message);
+  if (resourcesRes.error) return body.innerHTML = errorBlock('Erro ao buscar materiais: ' + resourcesRes.error.message);
 
   const meetings = meetingsRes.data;
-  const fichamentos = fichamentosRes.data;
+  const meetingIds = meetings.map((m) => m.id);
+  const pagesRes = await getMeetingPages(meetingIds);
 
-  // agrupa fichamentos por meeting_id
+  // agrupa fichamentos
   const fichByMeeting = new Map();
   const fichExtras = [];
-  for (const f of fichamentos) {
+  for (const f of fichamentosRes.data) {
     if (f.meeting_id) {
       if (!fichByMeeting.has(f.meeting_id)) fichByMeeting.set(f.meeting_id, []);
       fichByMeeting.get(f.meeting_id).push(f);
@@ -238,19 +253,78 @@ async function renderMeetingsTab() {
     }
   }
 
-  const hadMeetings = meetings.length > 0;
-  const hadFichExtras = fichExtras.length > 0;
+  // agrupa resources por meeting
+  const resourcesByMeeting = new Map();
+  for (const r of resourcesRes.data) {
+    if (r.meeting_id) {
+      if (!resourcesByMeeting.has(r.meeting_id)) resourcesByMeeting.set(r.meeting_id, []);
+      resourcesByMeeting.get(r.meeting_id).push(r);
+    }
+  }
+
+  meetingsState = {
+    ...meetingsState,
+    meetings,
+    meetingPages: pagesRes.data,
+    fichByMeeting,
+    fichExtras,
+    resourcesByMeeting,
+    summaryTimers: new Map(),
+  };
+
+  drawMeetingsTab();
+}
+
+function drawMeetingsTab() {
+  const body = document.getElementById('studyTabBody');
+  const { meetings, meetingPages, fichByMeeting, resourcesByMeeting, fichExtras } = meetingsState;
+
+  // ascending pra calcular #encontro, depois desc pra exibir
+  const sortedAsc = [...meetings].sort((a, b) => (a.date > b.date ? 1 : -1));
+  const indexById = new Map();
+  sortedAsc.forEach((m, i) => indexById.set(m.id, i + 1));
+
+  // stats
+  const total = meetings.length;
+  const happened = meetings.filter((m) => m.status === 'happened').length;
+  const withContent = meetings.filter((m) => {
+    const mp = meetingPages[m.id];
+    return (mp?.summary_md?.trim()?.length > 0) ||
+           (fichByMeeting.get(m.id)?.length > 0) ||
+           (resourcesByMeeting.get(m.id)?.length > 0);
+  }).length;
+
+  // filtrar
+  const displayed = [...meetings]
+    .sort((a, b) => (a.date > b.date ? -1 : 1))   // desc (mais recente primeiro)
+    .filter((m) => {
+      if (meetingsState.filter === 'happened') return m.status === 'happened';
+      if (meetingsState.filter === 'with_content') {
+        const mp = meetingPages[m.id];
+        return (mp?.summary_md?.trim()?.length > 0) ||
+               (fichByMeeting.get(m.id)?.length > 0) ||
+               (resourcesByMeeting.get(m.id)?.length > 0);
+      }
+      if (meetingsState.filter === 'empty') {
+        const mp = meetingPages[m.id];
+        const hasC = (mp?.summary_md?.trim()?.length > 0) ||
+                     (fichByMeeting.get(m.id)?.length > 0) ||
+                     (resourcesByMeeting.get(m.id)?.length > 0);
+        return !hasC;
+      }
+      return true;
+    });
 
   body.innerHTML = `
     <div class="study-tab study-tab--meetings">
       <section class="study-section">
         <header class="study-section__head">
           <div>
-            <h3>Encontros realizados</h3>
+            <h3>Encontros do grupo</h3>
             <p class="study-section__hint">
-              Os encontros são criados pela <strong>Secretaria</strong> (presença).
-              Os fichamentos são criados pela <strong>Pesquisa</strong>.
-              Aqui você só visualiza o que está vinculado a este grupo.
+              Os encontros são criados pela <strong>Secretaria</strong>. Aqui você escreve
+              o que rolou em cada um, vincula fichamentos da <strong>Pesquisa</strong> e
+              anexa material complementar específico daquele dia.
             </p>
           </div>
           <a class="btn btn--ghost btn--small" href="#/presenca/grupos/${escapeAttr(page.group_id)}" target="_blank">
@@ -258,89 +332,427 @@ async function renderMeetingsTab() {
           </a>
         </header>
 
-        ${hadMeetings ? `
-          <div class="study-timeline">
-            ${meetings.map((m) => meetingRowHtml(m, fichByMeeting.get(m.id) || [])).join('')}
+        <div class="meeting-stats">
+          <div class="meeting-stats__cell">
+            <strong>${total}</strong>
+            <span>${total === 1 ? 'encontro' : 'encontros'}</span>
+          </div>
+          <div class="meeting-stats__cell">
+            <strong>${happened}</strong>
+            <span>${happened === 1 ? 'realizado' : 'realizados'}</span>
+          </div>
+          <div class="meeting-stats__cell">
+            <strong>${withContent}</strong>
+            <span>com registro</span>
+          </div>
+          <div class="meeting-stats__cell">
+            <strong>${fichExtras.length}</strong>
+            <span>fichamentos avulsos</span>
+          </div>
+        </div>
+
+        <div class="study-resources-filter">
+          ${meetingFilterChip('all', 'todos', total)}
+          ${meetingFilterChip('happened', 'realizados', happened)}
+          ${meetingFilterChip('with_content', 'com registro', withContent)}
+          ${meetingFilterChip('empty', 'sem registro', total - withContent)}
+        </div>
+
+        ${displayed.length > 0 ? `
+          <div class="meeting-list" id="meetingList">
+            ${displayed.map((m) => meetingAccordionHtml(m, indexById.get(m.id))).join('')}
           </div>
         ` : `
           <div class="study-empty">
-            <p>Nenhum encontro registrado ainda. Quando a secretaria criar encontros pra esse grupo, eles aparecem aqui automaticamente.</p>
+            <p>${meetings.length === 0
+              ? 'Nenhum encontro registrado ainda. Quando a Secretaria criar encontros pra esse grupo, eles aparecem aqui.'
+              : 'Nenhum encontro corresponde ao filtro atual.'}</p>
           </div>
         `}
       </section>
 
-      ${hadFichExtras ? `
+      ${fichExtras.length > 0 ? `
         <section class="study-section">
-          <h3>Fichamentos sem encontro vinculado</h3>
+          <h3>Fichamentos avulsos do grupo</h3>
           <p class="study-section__hint">
-            Fichamentos que a Pesquisa criou pro grupo mas não vinculou a um encontro específico.
+            Fichamentos da Pesquisa sem encontro vinculado. Clique em "atribuir" pra vincular a um encontro.
           </p>
           <div class="study-fichamentos">
-            ${fichExtras.map(fichamentoCardHtml).join('')}
+            ${fichExtras.map((f) => fichamentoAvulsoCard(f)).join('')}
           </div>
         </section>
       ` : ''}
     </div>
   `;
 
-  body.querySelectorAll('[data-ficho-toggle]').forEach((el) => {
-    el.addEventListener('click', () => {
-      const id = el.dataset.fichoToggle;
-      const body2 = body.querySelector(`[data-ficho-body="${id}"]`);
-      if (body2) body2.toggleAttribute('hidden');
-      const chev = el.querySelector('.study-fich__chev');
-      if (chev) chev.classList.toggle('is-open');
-    });
-  });
+  bindMeetingHandlers(displayed, indexById);
 }
 
-function meetingRowHtml(m, fichs) {
+function meetingFilterChip(key, label, count) {
+  const active = meetingsState.filter === key ? ' is-active' : '';
+  return `<button class="study-chip${active}" data-meeting-filter="${key}">
+    <span>${escapeHtml(label)}</span>
+    <span>${count}</span>
+  </button>`;
+}
+
+function meetingAccordionHtml(m, idx) {
+  const mp = meetingsState.meetingPages[m.id] || { summary_md: '', is_public: true };
+  const fichs = meetingsState.fichByMeeting.get(m.id) || [];
+  const resources = meetingsState.resourcesByMeeting.get(m.id) || [];
+  const isExpanded = meetingsState.expandedId === m.id;
+
   const date = new Date(m.date + 'T12:00:00');
-  const dateLabel = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase();
+  const year = date.getFullYear();
+
   const statusLabel = { happened: 'realizado', scheduled: 'agendado', cancelled: 'cancelado' }[m.status] || m.status;
   const statusClass = { happened: 'success', scheduled: 'sage', cancelled: 'rose' }[m.status] || 'muted';
-  return `
-    <article class="study-meeting study-meeting--${statusClass}">
-      <header class="study-meeting__head">
-        <div class="study-meeting__date">
-          <strong>${escapeHtml(dateLabel)}</strong>
-          <span class="study-meeting__status">${escapeHtml(statusLabel)}</span>
-        </div>
-        ${fichs.length > 0 ? `<span class="study-meeting__count">${fichs.length} fichamento${fichs.length === 1 ? '' : 's'}</span>` : ''}
-      </header>
-      ${m.notes ? `<p class="study-meeting__notes">${escapeHtml(m.notes)}</p>` : ''}
-      ${fichs.length > 0 ? `
-        <div class="study-fichamentos">
-          ${fichs.map(fichamentoCardHtml).join('')}
-        </div>
-      ` : ''}
-    </article>
-  `;
-}
 
-function fichamentoCardHtml(f) {
-  const created = f.created_at ? new Date(f.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
+  // título do encontro: pega primeira linha do summary se tiver
+  const summaryFirstLine = (mp.summary_md || '').split('\n').find((l) => l.trim())?.replace(/^#+\s*/, '').trim();
+  const heading = summaryFirstLine ? truncate(summaryFirstLine, 60) : '';
+
+  const hasContent = (mp.summary_md?.trim()?.length > 0) || fichs.length > 0 || resources.length > 0;
+
   return `
-    <article class="study-fich">
-      <header class="study-fich__head" data-ficho-toggle="${escapeAttr(f.id)}" tabindex="0">
-        <span class="study-fich__chev">${icon('chevron', { size: 12 })}</span>
-        <div class="study-fich__main">
-          <strong>${escapeHtml(f.title || '(sem título)')}</strong>
-          <span class="study-fich__meta">criado em ${escapeHtml(created)}</span>
+    <article class="meeting-card ${isExpanded ? 'is-expanded' : ''} ${!mp.is_public ? 'is-private' : ''}" data-meeting-id="${escapeAttr(m.id)}">
+      <header class="meeting-card__head" data-action="toggle">
+        <div class="meeting-card__date meeting-card__date--${statusClass}">
+          <strong>${day}</strong>
+          <span>${escapeHtml(month)}</span>
+          <span>${year}</span>
+        </div>
+        <div class="meeting-card__main">
+          <p class="meeting-card__crumb">
+            encontro #${idx} · <span class="meeting-card__status meeting-card__status--${statusClass}">${escapeHtml(statusLabel)}</span>
+            ${!mp.is_public ? `<span class="meeting-card__priv">${icon('eye-off', { size: 10 })}<span style="margin-left:3px;">oculto do site</span></span>` : ''}
+          </p>
+          <h3 class="meeting-card__title">${escapeHtml(heading || (hasContent ? '' : '(sem registro)'))}</h3>
+          ${hasContent ? `
+            <p class="meeting-card__counts">
+              ${fichs.length > 0 ? `<span>${icon('page', { size: 10 })}<span style="margin-left:4px;">${fichs.length} fichamento${fichs.length === 1 ? '' : 's'}</span></span>` : ''}
+              ${resources.length > 0 ? `<span>${icon('book', { size: 10 })}<span style="margin-left:4px;">${resources.length} material${resources.length === 1 ? '' : 'is'}</span></span>` : ''}
+              ${mp.summary_md?.trim() ? `<span>${icon('edit', { size: 10 })}<span style="margin-left:4px;">resumo escrito</span></span>` : ''}
+            </p>
+          ` : ''}
+        </div>
+        <div class="meeting-card__actions">
+          ${m.status !== 'happened' ? `<button class="icon-btn" data-meeting-action="happened" title="Marcar como realizado" aria-label="Marcar como realizado">${icon('check-circle', { size: 14 })}</button>` : ''}
+          <button class="icon-btn ${!mp.is_public ? 'is-active' : ''}" data-meeting-action="toggle-public" title="${mp.is_public ? 'Ocultar no site' : 'Mostrar no site'}" aria-label="Visibilidade">
+            ${icon(mp.is_public ? 'eye' : 'eye-off', { size: 14 })}
+          </button>
+          <span class="meeting-card__chev">${icon('chevron', { size: 14 })}</span>
         </div>
       </header>
-      <div class="study-fich__body" data-ficho-body="${escapeAttr(f.id)}" hidden>
-        ${f.body
-          ? `<div class="study-fich__content">${renderFichamentoBody(f.body)}</div>`
-          : `<p class="muted" style="font-style: italic;">(corpo vazio)</p>`}
+
+      <div class="meeting-card__body" ${isExpanded ? '' : 'hidden'}>
+        ${meetingBodyHtml(m, mp, fichs, resources)}
       </div>
     </article>
   `;
 }
 
-function renderFichamentoBody(body) {
-  // Body é markdown leve (mesmo do markdown-editor da Pesquisa).
-  return mdToHtml(body || '');
+function meetingBodyHtml(m, mp, fichs, resources) {
+  return `
+    <!-- Resumo editorial -->
+    <div class="meeting-block">
+      <header class="meeting-block__head">
+        <h4>${icon('edit', { size: 13 })}<span style="margin-left:6px;">Resumo do encontro</span></h4>
+        <span class="meeting-block__hint">escrito pela presidência · markdown rico (B, I, listas, citações)</span>
+      </header>
+      <textarea class="meeting-summary-ta" data-meeting-summary="${escapeAttr(m.id)}" rows="6" placeholder="O que aconteceu nesse encontro. Qual foi a discussão, quem trouxe o quê, conclusões coletivas, perguntas em aberto…">${escapeHtml(mp.summary_md || '')}</textarea>
+    </div>
+
+    <!-- Fichamentos vinculados -->
+    <div class="meeting-block">
+      <header class="meeting-block__head">
+        <h4>${icon('page', { size: 13 })}<span style="margin-left:6px;">Fichamentos deste encontro</span> <span class="meeting-block__count">(${fichs.length})</span></h4>
+        <button class="btn btn--ghost btn--small" data-meeting-action="assign-fich">
+          ${icon('plus', { size: 11 })}<span style="margin-left:5px;">Atribuir fichamento</span>
+        </button>
+      </header>
+      ${fichs.length > 0 ? `
+        <div class="meeting-fichs">
+          ${fichs.map(fichInMeetingHtml).join('')}
+        </div>
+      ` : `
+        <p class="meeting-empty">nenhum fichamento atribuído. Clique em "atribuir fichamento" pra vincular um da Pesquisa.</p>
+      `}
+    </div>
+
+    <!-- Material específico deste encontro -->
+    <div class="meeting-block">
+      <header class="meeting-block__head">
+        <h4>${icon('book', { size: 13 })}<span style="margin-left:6px;">Material deste encontro</span> <span class="meeting-block__count">(${resources.length})</span></h4>
+        <button class="btn btn--ghost btn--small" data-meeting-action="add-resource">
+          ${icon('plus', { size: 11 })}<span style="margin-left:5px;">Adicionar material</span>
+        </button>
+      </header>
+      ${resources.length > 0 ? `
+        <div class="meeting-resources">
+          ${resources.map((r) => resourceRowHtml(r)).join('')}
+        </div>
+      ` : `
+        <p class="meeting-empty">nenhum material atribuído a este encontro. Você pode anexar vídeo do YouTube, embed do Drive, livro, filme, etc.</p>
+      `}
+    </div>
+
+    ${m.notes?.trim() ? `
+      <!-- Notas operacionais da Secretaria (read-only) -->
+      <div class="meeting-block meeting-block--secretaria">
+        <header class="meeting-block__head">
+          <h4>${icon('alert', { size: 13 })}<span style="margin-left:6px;">Notas da Secretaria</span></h4>
+          <span class="meeting-block__hint">somente leitura · editado na aba da Secretaria</span>
+        </header>
+        <p class="meeting-secretaria-notes">${escapeHtml(m.notes)}</p>
+      </div>
+    ` : ''}
+  `;
+}
+
+function fichInMeetingHtml(f) {
+  const created = f.created_at ? new Date(f.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
+  return `
+    <article class="meeting-fich" data-fich-id="${escapeAttr(f.id)}">
+      <div class="meeting-fich__chev" data-meeting-action="toggle-fich">${icon('chevron', { size: 11 })}</div>
+      <div class="meeting-fich__main">
+        <header>
+          <strong>${escapeHtml(f.title || '(sem título)')}</strong>
+          <span class="meeting-fich__meta">${escapeHtml(created)}</span>
+        </header>
+        <div class="meeting-fich__body" hidden>${mdToHtml(f.body || '(corpo vazio)')}</div>
+      </div>
+      <button class="icon-btn icon-btn--danger" data-meeting-action="unassign-fich" title="Desvincular deste encontro" aria-label="Desvincular">
+        ${icon('x', { size: 12 })}
+      </button>
+    </article>
+  `;
+}
+
+function fichamentoAvulsoCard(f) {
+  const created = f.created_at ? new Date(f.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
+  return `
+    <article class="meeting-fich meeting-fich--avulso" data-fich-id="${escapeAttr(f.id)}">
+      <div class="meeting-fich__chev" data-meeting-action="toggle-fich">${icon('chevron', { size: 11 })}</div>
+      <div class="meeting-fich__main">
+        <header>
+          <strong>${escapeHtml(f.title || '(sem título)')}</strong>
+          <span class="meeting-fich__meta">${escapeHtml(created)} · sem encontro</span>
+        </header>
+        <div class="meeting-fich__body" hidden>${mdToHtml(f.body || '(corpo vazio)')}</div>
+      </div>
+    </article>
+  `;
+}
+
+function bindMeetingHandlers(displayed, indexById) {
+  const body = document.getElementById('studyTabBody');
+
+  // filtros
+  body.querySelectorAll('[data-meeting-filter]').forEach((el) => {
+    el.addEventListener('click', () => {
+      meetingsState.filter = el.dataset.meetingFilter;
+      drawMeetingsTab();
+    });
+  });
+
+  // accordion + actions por meeting
+  body.querySelectorAll('.meeting-card').forEach((card) => {
+    const meetingId = card.dataset.meetingId;
+    const meeting = displayed.find((m) => m.id === meetingId);
+    if (!meeting) return;
+
+    card.addEventListener('click', async (ev) => {
+      const actionBtn = ev.target.closest('[data-meeting-action]');
+      const fichToggle = ev.target.closest('[data-meeting-action="toggle-fich"]');
+      if (fichToggle) {
+        ev.stopPropagation();
+        const row = fichToggle.closest('[data-fich-id]');
+        const body2 = row?.querySelector('.meeting-fich__body');
+        if (body2) {
+          body2.toggleAttribute('hidden');
+          fichToggle.classList.toggle('is-open');
+        }
+        return;
+      }
+      if (actionBtn) {
+        ev.stopPropagation();
+        await handleMeetingAction(actionBtn.dataset.meetingAction, meeting, actionBtn);
+        return;
+      }
+      // toggle accordion (clique no head, fora dos actions)
+      if (ev.target.closest('[data-action="toggle"]')) {
+        meetingsState.expandedId = meetingsState.expandedId === meetingId ? null : meetingId;
+        drawMeetingsTab();
+      }
+    });
+
+    // autosave do summary (se acordeão expandido)
+    const ta = card.querySelector('[data-meeting-summary]');
+    if (ta) {
+      ta.addEventListener('input', () => scheduleSummarySave(meetingId, ta.value));
+    }
+  });
+
+  // fichamentos avulsos: só toggle expand
+  body.querySelectorAll('.meeting-fich--avulso').forEach((row) => {
+    row.addEventListener('click', (ev) => {
+      const chev = ev.target.closest('[data-meeting-action="toggle-fich"]');
+      if (!chev) return;
+      const body2 = row.querySelector('.meeting-fich__body');
+      if (body2) {
+        body2.toggleAttribute('hidden');
+        chev.classList.toggle('is-open');
+      }
+    });
+  });
+}
+
+function scheduleSummarySave(meetingId, value) {
+  if (meetingsState.summaryTimers.has(meetingId)) clearTimeout(meetingsState.summaryTimers.get(meetingId));
+  meetingsState.summaryTimers.set(meetingId, setTimeout(async () => {
+    const { data, error } = await upsertMeetingPage(meetingId, { summary_md: value });
+    meetingsState.summaryTimers.delete(meetingId);
+    if (error) {
+      toastError('Erro ao salvar resumo: ' + error.message);
+      return;
+    }
+    if (data) meetingsState.meetingPages[meetingId] = data;
+  }, 800));
+}
+
+async function handleMeetingAction(action, meeting, btn) {
+  if (action === 'happened') {
+    btn.disabled = true;
+    const { error } = await markMeetingStatus(meeting.id, 'happened');
+    btn.disabled = false;
+    if (error) return toastError('Erro: ' + error.message);
+    meeting.status = 'happened';
+    drawMeetingsTab();
+    toastSuccess('Encontro marcado como realizado.');
+    return;
+  }
+  if (action === 'toggle-public') {
+    const mp = meetingsState.meetingPages[meeting.id] || { is_public: true };
+    const newVal = !mp.is_public;
+    btn.disabled = true;
+    const { data, error } = await upsertMeetingPage(meeting.id, { is_public: newVal });
+    btn.disabled = false;
+    if (error) return toastError('Erro: ' + error.message);
+    if (data) meetingsState.meetingPages[meeting.id] = data;
+    drawMeetingsTab();
+    toastSuccess(newVal ? 'Encontro visível no site.' : 'Encontro oculto no site.');
+    return;
+  }
+  if (action === 'assign-fich') {
+    openAssignFichModal(meeting);
+    return;
+  }
+  if (action === 'unassign-fich') {
+    const row = btn.closest('[data-fich-id]');
+    const fichId = row?.dataset.fichId;
+    if (!fichId) return;
+    if (!confirm('Desvincular esse fichamento deste encontro? Ele continua existindo na Pesquisa, sem meeting.')) return;
+    const { error } = await assignFichamento(fichId, null);
+    if (error) return toastError('Erro: ' + error.message);
+    // refetch fichamentos
+    const { data } = await getStudyGroupFichamentos(page.group_id);
+    rebuildFichGroups(data);
+    drawMeetingsTab();
+    toastSuccess('Fichamento desvinculado.');
+    return;
+  }
+  if (action === 'add-resource') {
+    openResourceModal(null, meeting.id);
+    return;
+  }
+}
+
+async function openAssignFichModal(meeting) {
+  document.querySelectorAll('.container-prompt').forEach((el) => el.remove());
+
+  const { data: unassigned, error } = await listUnassignedFichamentos(page.group_id);
+  if (error) return toastError('Erro ao buscar fichamentos: ' + error.message);
+
+  const modal = document.createElement('div');
+  modal.className = 'container-prompt';
+  modal.innerHTML = `
+    <div class="container-prompt__box">
+      <header class="container-prompt__head">
+        <div>
+          <p class="container-prompt__crumb">atribuir fichamento</p>
+          <h3>Vincular fichamento ao encontro</h3>
+          <p class="container-prompt__desc">Fichamentos do grupo que ainda não estão atribuídos a nenhum encontro.</p>
+        </div>
+        <button class="icon-btn" data-action="cancel" aria-label="Fechar">${icon('x', { size: 16 })}</button>
+      </header>
+      <div class="container-prompt__body">
+        ${unassigned.length === 0 ? `
+          <p class="muted" style="text-align: center; font-style: italic; padding: 30px 0;">
+            Nenhum fichamento disponível pra vincular.<br>
+            Peça pra Pesquisa criar um fichamento pra esse grupo, ou aguarde.
+          </p>
+        ` : `
+          <p style="margin-bottom: 12px; font-size: 13px; color: var(--text-dim); font-style: italic;">
+            Clique num fichamento pra vincular ao encontro de <strong>${escapeHtml(new Date(meeting.date + 'T12:00:00').toLocaleDateString('pt-BR'))}</strong>:
+          </p>
+          <div class="meeting-assign-list">
+            ${unassigned.map((f) => `
+              <button class="meeting-assign-row" data-fich-id="${escapeAttr(f.id)}">
+                <strong>${escapeHtml(f.title || '(sem título)')}</strong>
+                <span>${escapeHtml(stripHtml(f.body || '').slice(0, 100))}${f.body?.length > 100 ? '…' : ''}</span>
+              </button>
+            `).join('')}
+          </div>
+        `}
+      </div>
+      <footer class="container-prompt__foot">
+        <button class="btn btn--ghost btn--small" data-action="cancel">Fechar</button>
+      </footer>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.addEventListener('click', async (ev) => {
+    if (ev.target === modal || ev.target.closest('[data-action="cancel"]')) {
+      modal.remove();
+      return;
+    }
+    const row = ev.target.closest('[data-fich-id]');
+    if (row) {
+      const fichId = row.dataset.fichId;
+      row.disabled = true;
+      row.textContent = 'vinculando…';
+      const { error } = await assignFichamento(fichId, meeting.id);
+      if (error) {
+        toastError('Erro: ' + error.message);
+        row.disabled = false;
+        return;
+      }
+      modal.remove();
+      const { data } = await getStudyGroupFichamentos(page.group_id);
+      rebuildFichGroups(data);
+      drawMeetingsTab();
+      toastSuccess('Fichamento vinculado ao encontro.');
+    }
+  });
+}
+
+function rebuildFichGroups(fichamentos) {
+  const byMeeting = new Map();
+  const extras = [];
+  for (const f of fichamentos) {
+    if (f.meeting_id) {
+      if (!byMeeting.has(f.meeting_id)) byMeeting.set(f.meeting_id, []);
+      byMeeting.get(f.meeting_id).push(f);
+    } else {
+      extras.push(f);
+    }
+  }
+  meetingsState.fichByMeeting = byMeeting;
+  meetingsState.fichExtras = extras;
 }
 
 // =========================================================================
@@ -467,6 +879,18 @@ function resourceRowHtml(r) {
     previewHtml = `<div class="study-resource__embed study-resource__embed--drive"><iframe src="${escapeAttr(src)}" allowfullscreen loading="lazy"></iframe></div>`;
   }
 
+  // badge "vinculado a encontro" — busca a data do meeting no cache atual
+  let meetingBadge = '';
+  if (r.meeting_id) {
+    const m = meetingsState.meetings?.find((x) => x.id === r.meeting_id);
+    if (m) {
+      const d = new Date(m.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+      meetingBadge = `<span class="study-resource__badge study-resource__badge--meeting" title="Vinculado ao encontro de ${escapeAttr(new Date(m.date + 'T12:00:00').toLocaleDateString('pt-BR'))}">${icon('calendar', { size: 9 })}<span style="margin-left:3px;">${escapeHtml(d)}</span></span>`;
+    } else {
+      meetingBadge = `<span class="study-resource__badge study-resource__badge--meeting">vinculado a encontro</span>`;
+    }
+  }
+
   return `
     <article class="study-resource ${r.is_hidden ? 'is-hidden' : ''}" data-resource-id="${escapeAttr(r.id)}" draggable="true">
       <div class="study-resource__handle" aria-hidden="true">${icon('drag', { size: 14 })}</div>
@@ -475,6 +899,7 @@ function resourceRowHtml(r) {
         <header class="study-resource__head">
           <strong>${escapeHtml(r.title)}</strong>
           <span class="study-resource__kind">${escapeHtml(resourceKindLabel(r.kind))}</span>
+          ${meetingBadge}
           ${r.is_hidden ? `<span class="study-resource__badge">oculto</span>` : ''}
         </header>
         ${r.description ? `<p class="study-resource__desc">${escapeHtml(r.description)}</p>` : ''}
@@ -513,11 +938,14 @@ async function handleResourceAction(action, r) {
   }
 }
 
-function openResourceForm(existing = null) {
+// alias retrocompat
+function openResourceForm(existing = null) { return openResourceModal(existing, null); }
+
+function openResourceModal(existing = null, presetMeetingId = null) {
   document.querySelectorAll('.container-prompt').forEach((el) => el.remove());
 
   const isEdit = !!existing?.id;
-  const r = existing || { kind: 'youtube', title: '', description: '', url: '', author: '', year: '' };
+  const r = existing || { kind: 'youtube', title: '', description: '', url: '', author: '', year: '', meeting_id: presetMeetingId };
 
   const modal = document.createElement('div');
   modal.className = 'container-prompt';
@@ -592,20 +1020,42 @@ function openResourceForm(existing = null) {
         return;
       }
       modal.querySelector('[data-action="save"]').disabled = true;
+      const fullPayload = { ...payload };
+      // preserva vínculo a meeting (na criação ou edição)
+      if (r.meeting_id) fullPayload.meeting_id = r.meeting_id;
+
       if (isEdit) {
-        const { error } = await updateResource(existing.id, payload);
+        const { error } = await updateResource(existing.id, fullPayload);
         if (error) return toastError('Erro: ' + error.message);
-        Object.assign(existing, payload);
+        Object.assign(existing, fullPayload);
       } else {
-        const { data, error } = await createResource(page.id, { ...payload, sort_order: resourcesCache.length });
+        const { data, error } = await createResource(page.id, { ...fullPayload, sort_order: resourcesCache.length });
         if (error) return toastError('Erro: ' + error.message);
         resourcesCache.push(data);
       }
       modal.remove();
       drawResources();
+      // se foi adicionado/editado a partir do encontro, refresh aquela aba também
+      if (r.meeting_id) {
+        // atualiza cache local da aba encontros
+        rebuildResourceMeetingMap();
+        if (activeTab === 'meetings') drawMeetingsTab();
+      }
       toastSuccess(isEdit ? 'Material atualizado.' : 'Material adicionado.');
     }
   });
+}
+
+// Reconstrói meetingsState.resourcesByMeeting do resourcesCache atual
+function rebuildResourceMeetingMap() {
+  const byMeeting = new Map();
+  for (const r of resourcesCache) {
+    if (r.meeting_id) {
+      if (!byMeeting.has(r.meeting_id)) byMeeting.set(r.meeting_id, []);
+      byMeeting.get(r.meeting_id).push(r);
+    }
+  }
+  meetingsState.resourcesByMeeting = byMeeting;
 }
 
 function bindResourceDragDrop(container) {

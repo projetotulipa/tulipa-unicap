@@ -6,6 +6,7 @@ import {
   getStudyGroupMeetings,
   getStudyGroupFichamentos,
   getStudyGroupResources,
+  getMeetingPages,
   RESOURCE_KINDS,
   RESOURCE_GROUPS,
   youtubeId,
@@ -57,7 +58,26 @@ async function init() {
   const fichamentos = fichRes.data || [];
   const resources = resourcesRes.data || [];
 
-  render(group, { meetings, fichamentos, resources });
+  // busca meeting_pages (anon só recebe quem é public AND grupo published)
+  const meetingIds = meetings.map((m) => m.id);
+  const pagesRes = await getMeetingPages(meetingIds);
+  const meetingPages = pagesRes.data || {};
+
+  // filtra meetings sem meeting_page público (RLS já cuida do lado servidor, mas
+  // a tabela meeting_pages pode não existir — nesse caso é_public default true).
+  // Pra anon, se meeting_page existe mas é_public=false, não retornou no select acima
+  // — então usamos a presença como proxy de "público". Mas pra usuário autenticado
+  // a chamada retorna tudo. Aqui apenas filtramos os que TÊM page com is_public=false
+  // explicitamente. Sem page = assume público (default).
+  const hiddenMeetingIds = new Set();
+  // só pra anon (em authenticado, vemos tudo): inspeciona is_public dos retornados
+  for (const id of meetingIds) {
+    const mp = meetingPages[id];
+    if (mp && mp.is_public === false) hiddenMeetingIds.add(id);
+  }
+  const visibleMeetings = meetings.filter((m) => !hiddenMeetingIds.has(m.id));
+
+  render(group, { meetings: visibleMeetings, fichamentos, resources, meetingPages });
 }
 
 function prettyUrl(slug) {
@@ -104,7 +124,7 @@ function applyMeta(group) {
   document.head.appendChild(script);
 }
 
-function render(group, { meetings, fichamentos, resources }) {
+function render(group, { meetings, fichamentos, resources, meetingPages }) {
   const accent = group.accent_color || 'wine';
   document.body.classList.add(`grupo-accent--${accent}`);
 
@@ -120,21 +140,39 @@ function render(group, { meetings, fichamentos, resources }) {
     }
   }
 
-  // agrupa resources por group (vídeos, leituras, cultura, links, mídia, outros)
-  const resByGroup = new Map();
+  // agrupa resources POR meeting (pra renderizar dentro do encontro)
+  const resByMeeting = new Map();
+  // E resources SEM meeting (pool geral, pra seção Material complementar)
+  const resPool = [];
   for (const r of resources) {
+    if (r.meeting_id) {
+      if (!resByMeeting.has(r.meeting_id)) resByMeeting.set(r.meeting_id, []);
+      resByMeeting.get(r.meeting_id).push(r);
+    } else {
+      resPool.push(r);
+    }
+  }
+
+  // agrupa resources do pool por group (vídeos, leituras, cultura, links, mídia, outros)
+  const resByGroup = new Map();
+  for (const r of resPool) {
     const kindMeta = RESOURCE_KINDS.find((k) => k.value === r.kind);
     const grp = kindMeta?.group || 'other';
     if (!resByGroup.has(grp)) resByGroup.set(grp, []);
     resByGroup.get(grp).push(r);
   }
 
+  // numera meetings cronologicamente ASC
+  const sortedAsc = [...meetings].sort((a, b) => (a.date > b.date ? 1 : -1));
+  const indexById = new Map();
+  sortedAsc.forEach((m, i) => indexById.set(m.id, i + 1));
+
   APP.innerHTML = `
     ${heroHtml(group)}
     ${group.about_md ? aboutHtml(group) : ''}
     ${group.method_md ? methodHtml(group) : ''}
-    ${meetings.length > 0 || fichExtras.length > 0 ? meetingsHtml(meetings, fichByMeeting, fichExtras) : ''}
-    ${resources.length > 0 ? resourcesHtml(resByGroup) : ''}
+    ${meetings.length > 0 || fichExtras.length > 0 ? meetingsHtml(meetings, { fichByMeeting, fichExtras, resByMeeting, meetingPages, indexById }) : ''}
+    ${resPool.length > 0 ? resourcesHtml(resByGroup) : ''}
     ${allosCtaHtml()}
     ${outrosCtaHtml()}
   `;
@@ -259,22 +297,29 @@ function methodHtml(g) {
   `;
 }
 
-function meetingsHtml(meetings, fichByMeeting, fichExtras) {
-  const items = meetings.map((m) => meetingCardHtml(m, fichByMeeting.get(m.id) || [])).join('');
+function meetingsHtml(meetings, { fichByMeeting, fichExtras, resByMeeting, meetingPages, indexById }) {
   return `
     <section class="section section--missao grupo-timeline-section" id="encontros">
       <div class="section__inner section--lp">
         <p class="eyebrow eyebrow--light"><span>·</span> Encontros</p>
         <h2>O que aconteceu nos encontros.</h2>
-        <p class="grupo-section__hint">Cada encontro está aqui — clique pra ver os fichamentos da pesquisa, quando houver.</p>
+        <p class="grupo-section__hint">Cada encontro tem seu próprio espaço — resumo, fichamentos e material complementar.</p>
+
         ${meetings.length > 0 ? `
-          <div class="grupo-timeline">
-            ${items}
+          <div class="grupo-timeline-v2">
+            ${meetings.map((m) => meetingCardHtml(m, {
+              fichs: fichByMeeting.get(m.id) || [],
+              resources: resByMeeting.get(m.id) || [],
+              page: meetingPages[m.id],
+              index: indexById.get(m.id),
+            })).join('')}
           </div>
         ` : ''}
+
         ${fichExtras.length > 0 ? `
           <div class="grupo-fichamentos-extras">
             <p class="grupo-fich-extras__title">Fichamentos avulsos</p>
+            <p class="grupo-section__hint" style="margin-bottom: 14px;">Sem encontro vinculado — leituras autônomas do grupo.</p>
             <div class="grupo-fichamentos">
               ${fichExtras.map(fichCardHtml).join('')}
             </div>
@@ -285,27 +330,67 @@ function meetingsHtml(meetings, fichByMeeting, fichExtras) {
   `;
 }
 
-function meetingCardHtml(m, fichs) {
+function meetingCardHtml(m, { fichs, resources, page: mp, index }) {
   const date = new Date(m.date + 'T12:00:00');
-  const day = date.getDate();
-  const month = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase();
   const year = date.getFullYear();
+  const weekday = date.toLocaleDateString('pt-BR', { weekday: 'long' });
+
   const statusLabel = { happened: 'realizado', scheduled: 'agendado', cancelled: 'cancelado' }[m.status] || m.status;
   const statusClass = { happened: 'happened', scheduled: 'scheduled', cancelled: 'cancelled' }[m.status] || 'muted';
+
+  const hasContent = (mp?.summary_md?.trim()?.length > 0) || fichs.length > 0 || resources.length > 0;
+
+  // título: primeira linha do summary (com #) ou vazio
+  const summaryFirstLine = (mp?.summary_md || '').split('\n').find((l) => l.trim())?.replace(/^#+\s*/, '').trim();
+
   return `
-    <article class="grupo-meeting grupo-meeting--${statusClass}">
-      <div class="grupo-meeting__date">
-        <strong>${day}</strong>
-        <span>${escapeHtml(month)} · ${year}</span>
+    <article class="grupo-meeting-v2 grupo-meeting-v2--${statusClass} ${!hasContent ? 'is-empty' : ''}" id="encontro-${index}">
+      <div class="grupo-meeting-v2__capsule" aria-hidden="true">
+        <span class="grupo-meeting-v2__day">${day}</span>
+        <span class="grupo-meeting-v2__month">${escapeHtml(month)}</span>
+        <span class="grupo-meeting-v2__year">${year}</span>
+        <span class="grupo-meeting-v2__weekday">${escapeHtml(weekday.slice(0, 3))}</span>
       </div>
-      <div class="grupo-meeting__main">
-        <header class="grupo-meeting__head">
-          <span class="grupo-meeting__status">${escapeHtml(statusLabel)}</span>
-          ${fichs.length > 0 ? `<span class="grupo-meeting__count">${fichs.length} fichamento${fichs.length === 1 ? '' : 's'}</span>` : ''}
+
+      <div class="grupo-meeting-v2__main">
+        <header class="grupo-meeting-v2__head">
+          <p class="grupo-meeting-v2__crumb">
+            <span>Encontro #${index}</span>
+            <span class="grupo-meeting-v2__sep">·</span>
+            <span class="grupo-meeting-v2__status grupo-meeting-v2__status--${statusClass}">${escapeHtml(statusLabel)}</span>
+          </p>
+          ${summaryFirstLine ? `<h3 class="grupo-meeting-v2__title">${escapeHtml(summaryFirstLine)}</h3>` : ''}
+          <a class="grupo-meeting-v2__share" href="#encontro-${index}" aria-label="Link deste encontro">${shareIcon()}</a>
         </header>
-        ${m.notes ? `<p class="grupo-meeting__notes">${escapeHtml(m.notes)}</p>` : ''}
+
+        ${!hasContent ? `
+          <p class="grupo-meeting-v2__empty"><em>sem registro detalhado deste encontro ainda.</em></p>
+        ` : ''}
+
+        ${mp?.summary_md?.trim() ? `
+          <div class="grupo-meeting-v2__summary grupo-prose">
+            ${renderMarkdown(mp.summary_md)}
+          </div>
+        ` : ''}
+
         ${fichs.length > 0 ? `
-          <div class="grupo-fichamentos">${fichs.map(fichCardHtml).join('')}</div>
+          <div class="grupo-meeting-v2__section">
+            <h4 class="grupo-meeting-v2__section-title">${fichs.length === 1 ? 'Fichamento' : 'Fichamentos'}</h4>
+            <div class="grupo-fichamentos">
+              ${fichs.map(fichCardHtml).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${resources.length > 0 ? `
+          <div class="grupo-meeting-v2__section">
+            <h4 class="grupo-meeting-v2__section-title">Material deste encontro</h4>
+            <div class="grupo-meeting-v2__resources">
+              ${resources.map(resourceCardHtml).join('')}
+            </div>
+          </div>
         ` : ''}
       </div>
     </article>
@@ -328,6 +413,16 @@ function fichCardHtml(f) {
       </div>
     </article>
   `;
+}
+
+function shareIcon() {
+  return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M10 13 L14 11"/>
+    <circle cx="6" cy="14" r="2.5"/>
+    <circle cx="18" cy="6" r="2.5"/>
+    <circle cx="18" cy="18" r="2.5"/>
+    <path d="M10 15 L14 17"/>
+  </svg>`;
 }
 
 function resourcesHtml(resByGroup) {
