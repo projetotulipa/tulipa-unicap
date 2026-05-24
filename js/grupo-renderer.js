@@ -173,9 +173,9 @@ function render(group, { meetings, fichamentos, resources, meetingPages, coordin
   APP.innerHTML = `
     ${heroHtml(group)}
     ${group.about_md ? aboutHtml(group) : ''}
-    ${coordinators.length > 0 ? coordinationHtml(coordinators) : ''}
     ${group.method_md ? methodHtml(group) : ''}
     ${meetings.length > 0 || fichExtras.length > 0 ? meetingsHtml(meetings, { fichByMeeting, fichExtras, resByMeeting, meetingPages, indexById }) : ''}
+    ${coordinators.length > 0 ? coordinationHtml(coordinators) : ''}
     ${resPool.length > 0 ? resourcesHtml(resByGroup) : ''}
     ${allosCtaHtml()}
     ${outrosCtaHtml()}
