@@ -3826,12 +3826,50 @@ html:has(.quick-nav) { scroll-padding-top: 130px; }
 }
 
 @media (max-width: 720px) {
+  .section--grupos-vivos {
+    padding: 56px 0;
+  }
+  .section--grupos-vivos h2 {
+    font-size: 28px;
+  }
+  .section--grupos-arquivo {
+    padding: 44px 0;
+  }
+  .section--grupos-arquivo h2 {
+    font-size: 24px;
+  }
+  .grupos-vivos__intro,
+  .grupos-arquivo__intro {
+    font-size: 14.5px;
+    margin: 10px 0 24px;
+  }
   .grupos-vivos__grid,
   .grupos-arquivo__grid {
     grid-template-columns: 1fr;
-    gap: 18px;
+    gap: 16px;
+    max-width: 420px;
+    margin: 0 auto;
   }
   .grupo-card__main {
     padding: 16px 18px 18px;
+  }
+  .grupo-card__title {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .section--grupos-vivos {
+    padding: 44px 0;
+  }
+  .section--grupos-vivos h2 {
+    font-size: 24px;
+  }
+  .section--grupos-arquivo h2 {
+    font-size: 21px;
+  }
+  .grupos-vivos__grid,
+  .grupos-arquivo__grid {
+    gap: 14px;
   }
 }
