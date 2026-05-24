@@ -7,6 +7,7 @@ import {
   getStudyGroupFichamentos,
   getStudyGroupResources,
   getMeetingPages,
+  listCoordinators,
   RESOURCE_KINDS,
   RESOURCE_GROUPS,
   youtubeId,
@@ -47,16 +48,18 @@ async function init() {
   // SEO meta
   applyMeta(group);
 
-  // busca em paralelo encontros + fichamentos + recursos
-  const [meetingsRes, fichRes, resourcesRes] = await Promise.all([
+  // busca em paralelo encontros + fichamentos + recursos + coordenadores
+  const [meetingsRes, fichRes, resourcesRes, coordsRes] = await Promise.all([
     getStudyGroupMeetings(group.group_id),
     getStudyGroupFichamentos(group.group_id),
     getStudyGroupResources(group.page_id, { onlyVisible: true }),
+    listCoordinators(group.page_id),
   ]);
 
   const meetings = meetingsRes.data || [];
   const fichamentos = fichRes.data || [];
   const resources = resourcesRes.data || [];
+  const coordinators = (coordsRes.data || []).filter((c) => !c.is_hidden);
 
   // busca meeting_pages (anon só recebe quem é public AND grupo published)
   const meetingIds = meetings.map((m) => m.id);
@@ -77,7 +80,7 @@ async function init() {
   }
   const visibleMeetings = meetings.filter((m) => !hiddenMeetingIds.has(m.id));
 
-  render(group, { meetings: visibleMeetings, fichamentos, resources, meetingPages });
+  render(group, { meetings: visibleMeetings, fichamentos, resources, meetingPages, coordinators });
 }
 
 function prettyUrl(slug) {
@@ -124,7 +127,7 @@ function applyMeta(group) {
   document.head.appendChild(script);
 }
 
-function render(group, { meetings, fichamentos, resources, meetingPages }) {
+function render(group, { meetings, fichamentos, resources, meetingPages, coordinators }) {
   const accent = group.accent_color || 'wine';
   document.body.classList.add(`grupo-accent--${accent}`);
 
@@ -170,6 +173,7 @@ function render(group, { meetings, fichamentos, resources, meetingPages }) {
   APP.innerHTML = `
     ${heroHtml(group)}
     ${group.about_md ? aboutHtml(group) : ''}
+    ${coordinators.length > 0 ? coordinationHtml(coordinators) : ''}
     ${group.method_md ? methodHtml(group) : ''}
     ${meetings.length > 0 || fichExtras.length > 0 ? meetingsHtml(meetings, { fichByMeeting, fichExtras, resByMeeting, meetingPages, indexById }) : ''}
     ${resPool.length > 0 ? resourcesHtml(resByGroup) : ''}
@@ -396,6 +400,75 @@ function methodHtml(g) {
       </div>
     </section>
   `;
+}
+
+function coordinationHtml(coords) {
+  const isCompact = coords.length >= 2;
+  return `
+    <section class="section section--sobre grupo-coord-section" id="coordenacao">
+      ${waveTop('#F5EFE2', 1)}
+      <div class="section__inner section--lp">
+        <p class="eyebrow"><span>·</span> Coordenação</p>
+        <h2><em>Quem conduz o grupo.</em></h2>
+        <div class="grupo-coord-grid ${isCompact ? 'is-compact' : ''}">
+          ${coords.map((c) => coordCardHtml(c, isCompact)).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function coordCardHtml(c, compact) {
+  const initials = (c.full_name || '?').split(/\s+/).slice(0, 2).map((s) => s[0] || '').join('').toUpperCase();
+  const igHref = c.instagram ? `https://instagram.com/${encodeURIComponent(c.instagram.replace(/^@/, ''))}` : '';
+
+  return `
+    <article class="profile-card ${compact ? 'profile-card--compact' : 'profile-card--simple'} grupo-coord-card">
+      <div class="profile-card__avatar grupo-coord-card__avatar">
+        ${c.avatar_url
+          ? `<img src="${escapeAttr(c.avatar_url)}" alt="Foto de ${escapeAttr(c.full_name)}" loading="lazy" onerror="this.parentElement.classList.add('is-broken')" />`
+          : `<span class="grupo-coord-card__initials">${escapeHtml(initials || '?')}</span>`}
+      </div>
+      <div class="profile-card__main grupo-coord-card__main">
+        <h3>${escapeHtml(c.full_name || '')}</h3>
+        <p class="profile-card__role">— ${escapeHtml(c.role_label || 'Coordenação')}</p>
+        ${c.bio_md ? `<div class="grupo-coord-card__bio">${renderMarkdown(c.bio_md)}</div>` : ''}
+        ${coordSocialsHtml(c, igHref)}
+      </div>
+    </article>
+  `;
+}
+
+function coordSocialsHtml(c, igHref) {
+  const links = [];
+  if (c.instagram) links.push({ label: '@' + c.instagram.replace(/^@/, ''), href: igHref, icon: 'instagram' });
+  if (c.email)     links.push({ label: c.email, href: 'mailto:' + c.email, icon: 'email' });
+  if (c.lattes)    links.push({ label: 'Lattes', href: c.lattes, icon: 'lattes' });
+  if (c.linkedin)  links.push({ label: 'LinkedIn', href: c.linkedin, icon: 'linkedin' });
+  for (const extra of (c.social_links || [])) {
+    if (extra.label && extra.url) links.push({ label: extra.label, href: extra.url, icon: 'link' });
+  }
+  if (links.length === 0) return '';
+  return `
+    <div class="grupo-coord-card__socials">
+      ${links.map((l) => `
+        <a href="${escapeAttr(l.href)}" target="_blank" rel="noopener" class="grupo-coord-card__social grupo-coord-card__social--${l.icon}">
+          ${socialIcon(l.icon)}<span>${escapeHtml(l.label)}</span>
+        </a>
+      `).join('')}
+    </div>
+  `;
+}
+
+function socialIcon(kind) {
+  const icons = {
+    instagram: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`,
+    email:     `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>`,
+    lattes:    `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3 L14 3 L19 8 L19 21 L6 21 Z"/><path d="M14 3 L14 8 L19 8"/><path d="M9 13 L16 13 M9 17 L13 17"/></svg>`,
+    linkedin:  `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.61 0 4.28 2.38 4.28 5.47v6.27zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>`,
+    link:      `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M10 14a4 4 0 0 1 0-6l3-3a4 4 0 0 1 6 6l-1.5 1.5"/><path d="M14 10a4 4 0 0 1 0 6l-3 3a4 4 0 0 1-6-6l1.5-1.5"/></svg>`,
+  };
+  return icons[kind] || icons.link;
 }
 
 function meetingsHtml(meetings, { fichByMeeting, fichExtras, resByMeeting, meetingPages, indexById }) {

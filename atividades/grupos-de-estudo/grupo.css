@@ -860,6 +860,149 @@ a.grupo-resource:hover {
   }
 }
 
+/* ===== COORDENAÇÃO (LP filha) ===== */
+.grupo-coord-section {
+  position: relative;
+}
+.grupo-coord-section h2 em {
+  font-style: italic;
+  color: var(--grupo-wine);
+}
+.grupo-coord-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-top: 28px;
+}
+.grupo-coord-grid.is-compact {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.grupo-coord-card {
+  background: var(--grupo-paper) !important;
+  border: 1px solid rgba(74, 92, 54, 0.15) !important;
+  border-radius: 14px;
+  padding: 28px !important;
+  position: relative;
+  transition: transform 0.32s, box-shadow 0.32s, border-color 0.2s;
+}
+.grupo-coord-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px rgba(92, 34, 48, 0.10);
+  border-color: rgba(159, 90, 107, 0.30);
+}
+
+.grupo-coord-card__avatar {
+  width: 130px !important;
+  height: 130px !important;
+  background: linear-gradient(135deg, var(--grupo-rose), var(--grupo-wine)) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 0 3px var(--grupo-paper),
+              0 0 0 4px rgba(159, 90, 107, 0.30);
+  flex-shrink: 0;
+}
+.grupo-coord-card__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.grupo-coord-card__initials {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 46px;
+  color: var(--grupo-cream);
+  font-weight: 500;
+}
+
+.grupo-coord-card__main h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px !important;
+  font-weight: 500;
+  color: var(--grupo-wine) !important;
+  margin: 0 0 4px;
+  letter-spacing: 0.005em;
+}
+.grupo-coord-card .profile-card__role {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 14px !important;
+  color: var(--grupo-rose) !important;
+  letter-spacing: 0.03em;
+  margin: 0 0 12px;
+}
+
+.grupo-coord-card__bio {
+  font-family: 'Lora', serif;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: rgba(42, 34, 24, 0.85);
+  margin-bottom: 16px;
+}
+.grupo-coord-card__bio p {
+  margin: 0 0 0.8em;
+}
+.grupo-coord-card__bio p:last-child {
+  margin-bottom: 0;
+}
+.grupo-coord-card__bio strong { color: var(--grupo-wine); }
+.grupo-coord-card__bio em { font-style: italic; }
+
+.grupo-coord-card__socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(74, 92, 54, 0.15);
+}
+.grupo-coord-card__social {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid rgba(74, 92, 54, 0.18);
+  border-radius: 999px;
+  color: var(--grupo-wine);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  transition: all 0.18s;
+  word-break: break-all;
+}
+.grupo-coord-card__social:hover {
+  background: var(--grupo-wine);
+  color: var(--grupo-cream);
+  border-color: var(--grupo-wine);
+  transform: translateY(-1px);
+}
+.grupo-coord-card__social--instagram:hover { background: #C13584; border-color: #C13584; }
+.grupo-coord-card__social--linkedin:hover  { background: #0A66C2; border-color: #0A66C2; }
+
+@media (max-width: 720px) {
+  .grupo-coord-grid.is-compact {
+    grid-template-columns: 1fr;
+  }
+  .grupo-coord-card {
+    padding: 22px !important;
+  }
+  .grupo-coord-card__avatar {
+    width: 100px !important;
+    height: 100px !important;
+  }
+  .grupo-coord-card__initials { font-size: 36px; }
+  .grupo-coord-card__main h3 { font-size: 22px !important; }
+  .grupo-coord-card__bio { font-size: 14px; }
+}
+
 /* ===== WAVE DIVIDERS ===== */
 .grupo-wave {
   position: absolute;

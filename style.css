@@ -3866,3 +3866,103 @@ html:has(.quick-nav) { scroll-padding-top: 130px; }
     gap: 14px;
   }
 }
+
+/* ============================================================
+   DIRECTOR CARDS — render dinâmico nas LPs setoriais
+   ============================================================ */
+
+.director-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-top: 18px;
+}
+.director-grid.is-compact {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.director-card {
+  background: var(--cream, #F5EFE2) !important;
+  border: 1px solid rgba(74, 92, 54, 0.15) !important;
+  padding: 28px !important;
+}
+.director-card__avatar {
+  width: 130px !important;
+  height: 130px !important;
+  background: linear-gradient(135deg, #9F5A6B, #5C2230) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  position: relative;
+  box-shadow: 0 0 0 3px var(--cream, #F5EFE2),
+              0 0 0 4px rgba(159, 90, 107, 0.30);
+  flex-shrink: 0;
+}
+.director-card__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.director-card__initials {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 46px;
+  color: #EDDFC2;
+  font-weight: 500;
+}
+
+.director-card__main h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  margin: 0 0 4px;
+}
+.director-card__bio {
+  font-family: 'Lora', serif;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: rgba(42, 34, 24, 0.85);
+  margin-bottom: 16px;
+}
+.director-card__bio p { margin: 0 0 0.8em; }
+.director-card__bio p:last-child { margin-bottom: 0; }
+.director-card__bio strong { color: #5C2230; }
+
+.director-card__socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(74, 92, 54, 0.15);
+}
+.director-card__social {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid rgba(74, 92, 54, 0.18);
+  border-radius: 999px;
+  color: #5C2230;
+  text-decoration: none;
+  font-size: 12.5px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  transition: all 0.18s;
+  word-break: break-all;
+}
+.director-card__social:hover {
+  background: #5C2230;
+  color: #F5EFE2;
+  border-color: #5C2230;
+}
+.director-card__social--instagram:hover { background: #C13584; border-color: #C13584; }
+
+@media (max-width: 720px) {
+  .director-grid.is-compact { grid-template-columns: 1fr; }
+  .director-card { padding: 22px !important; }
+  .director-card__avatar { width: 100px !important; height: 100px !important; }
+  .director-card__initials { font-size: 36px; }
+}

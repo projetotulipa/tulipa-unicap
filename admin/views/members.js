@@ -2,6 +2,8 @@ import { SECTORS, ROLES, describeProfile } from '../sectors.js';
 import { icon } from '../icons.js';
 import { toastSuccess, toastError } from '../toast.js';
 import { supabase } from '../../js/supabase.js';
+import { updateUserProfileBio, uploadDirectorAvatar } from '../../js/directors.js';
+import { resizeImageToSquare, validateImageSize } from '../../js/image-resize.js';
 
 export async function renderMembers(ctx) {
   const { root, api } = ctx;
@@ -45,6 +47,7 @@ export async function renderMembers(ctx) {
     box.innerHTML = `<div class="empty-state">Nenhum usuário cadastrado.</div>`;
     return;
   }
+  membersRowsCache = rows;
 
   box.className = '';
   box.innerHTML = `
@@ -118,11 +121,15 @@ function rowHtml(row) {
       <td class="muted">${formatDate(row.created_at)}</td>
       <td style="white-space:nowrap;">
         <button class="btn btn--ghost btn--small" data-action="save">Salvar</button>
+        <button class="btn btn--ghost btn--small" data-action="open-bio" title="Editar foto, bio e redes">${icon('edit', { size: 12 })}<span style="margin-left:4px;">Bio</span></button>
         <span class="muted" data-action="status" style="font-size:12px;margin-left:6px;"></span>
       </td>
     </tr>
   `;
 }
+
+// estado dos dados carregados pra reabrir bio
+let membersRowsCache = [];
 
 function syncFieldVisibility(tr) {
   const role = tr.querySelector('[data-field="role"]').value;
@@ -150,6 +157,16 @@ function bindRows(api) {
       const tr = ev.target.closest('tr');
       syncFieldVisibility(tr);
     }
+  });
+
+  // clica em "Bio" pra abrir drawer de perfil rico
+  tbody.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-action="open-bio"]');
+    if (!btn) return;
+    const tr = btn.closest('tr');
+    const userId = tr.dataset.userId;
+    const row = membersRowsCache.find((r) => r.user_id === userId);
+    if (row) openProfileBioDrawer(row);
   });
 
   // clica salvar
@@ -368,3 +385,170 @@ function openCreateUserForm(ctx) {
 }
 
 function showErr(el, msg) { el.textContent = msg; el.style.display = ''; }
+
+// ====== drawer: perfil completo (foto + bio + IG + LinkedIn + ...) ======
+function openProfileBioDrawer(row) {
+  document.querySelectorAll('.container-prompt').forEach((el) => el.remove());
+
+  let pendingAvatarFile = null;
+  let currentAvatarUrl = row.avatar_url || '';
+  const userId = row.user_id;
+
+  const modal = document.createElement('div');
+  modal.className = 'container-prompt';
+  modal.innerHTML = `
+    <div class="container-prompt__box" style="width: min(640px, 100%);">
+      <header class="container-prompt__head">
+        <div>
+          <p class="container-prompt__crumb">perfil completo</p>
+          <h3>${escapeHtml(row.display_name || row.email)}</h3>
+          <p class="container-prompt__desc">Foto, bio rica e redes sociais. Quando "visível como diretor" estiver ligado, aparece na LP do setor (${escapeHtml(row.sector || '—')}).</p>
+        </div>
+        <button class="icon-btn" data-action="cancel" aria-label="Fechar">${icon('x', { size: 16 })}</button>
+      </header>
+      <div class="container-prompt__body">
+        <div class="coord-form__avatar">
+          <div class="coord-form__avatar-preview" id="bioAvatarPreview">
+            ${currentAvatarUrl
+              ? `<img src="${escapeHtml(currentAvatarUrl)}" alt="" />`
+              : `<span class="coord-form__avatar-empty">${icon('users', { size: 32 })}<span>sem foto</span></span>`}
+          </div>
+          <div class="coord-form__avatar-actions">
+            <label class="btn btn--ghost btn--small" style="cursor: pointer;">
+              ${icon('plus', { size: 12 })}<span style="margin-left:5px;">${currentAvatarUrl ? 'Trocar' : 'Adicionar foto'}</span>
+              <input type="file" id="bioAvatarInput" accept="image/*" hidden />
+            </label>
+            ${currentAvatarUrl ? `<button class="btn btn--ghost btn--small" data-action="remove-avatar">${icon('trash', { size: 11 })}<span style="margin-left:5px;">Remover</span></button>` : ''}
+            <small style="color: var(--text-dim); font-size: 11px; font-style: italic; display: block; margin-top: 4px;">
+              JPG/PNG/WEBP. Redimensiona pra 400×400 quadrado automaticamente.
+            </small>
+          </div>
+        </div>
+
+        <label class="container-prompt__field">
+          <span>Bio (markdown rico)</span>
+          <textarea id="bioMd" rows="5" placeholder="Psicóloga clínica, mestre em psicologia analítica pela UNICAP. **Pesquisa** sobre arquétipos…">${escapeHtml(row.bio_md || '')}</textarea>
+        </label>
+
+        <label class="container-prompt__field">
+          <span>Instagram (sem @)</span>
+          <input type="text" id="bioIG" value="${escapeHtml((row.instagram || '').replace(/^@/, ''))}" placeholder="mariadasilva" />
+        </label>
+
+        <div class="container-prompt__field">
+          <span>Outros links (label + URL)</span>
+          <div id="bioSocialLinks">
+            ${(row.social_links || []).map((s, i) => bioSocialRow(s, i)).join('')}
+          </div>
+          <button type="button" class="btn btn--ghost btn--small" id="bioAddSocial" style="margin-top: 6px;">
+            ${icon('plus', { size: 11 })}<span style="margin-left:5px;">Adicionar link</span>
+          </button>
+        </div>
+
+        <div class="study-toggle-row" style="border-top: 1px dashed rgba(143, 160, 132, 0.20); padding-top: 14px;">
+          <div>
+            <strong>Visível como diretor</strong>
+            <p>Quando ligado, aparece com foto + bio na LP do setor <strong>${escapeHtml(row.sector || '—')}</strong>. Útil pra coordenadores setoriais.</p>
+          </div>
+          <label class="study-switch">
+            <input type="checkbox" id="bioVisible" ${row.is_director_visible ? 'checked' : ''} />
+            <span></span>
+          </label>
+        </div>
+      </div>
+      <footer class="container-prompt__foot">
+        <button class="btn btn--ghost btn--small" data-action="cancel">Cancelar</button>
+        <button class="btn btn--primary" data-action="save">Salvar perfil</button>
+      </footer>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelector('#bioAvatarInput').addEventListener('change', async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    try {
+      const resized = await resizeImageToSquare(file, 400);
+      validateImageSize(resized, 1024 * 1024);
+      pendingAvatarFile = resized;
+      const previewUrl = URL.createObjectURL(resized);
+      modal.querySelector('#bioAvatarPreview').innerHTML = `<img src="${previewUrl}" alt="" />`;
+    } catch (e) {
+      toastError('Erro ao processar foto: ' + e.message);
+    }
+  });
+
+  modal.querySelector('#bioAddSocial').addEventListener('click', () => {
+    const wrap = modal.querySelector('#bioSocialLinks');
+    const i = wrap.children.length;
+    wrap.insertAdjacentHTML('beforeend', bioSocialRow({ label: '', url: '' }, i));
+  });
+
+  modal.addEventListener('click', async (ev) => {
+    const action = ev.target.closest('[data-action]')?.dataset?.action;
+    if (action === 'cancel' || ev.target === modal) { modal.remove(); return; }
+    if (action === 'remove-avatar') {
+      pendingAvatarFile = null;
+      currentAvatarUrl = '';
+      modal.querySelector('#bioAvatarPreview').innerHTML = `<span class="coord-form__avatar-empty">${icon('users', { size: 32 })}<span>sem foto</span></span>`;
+      ev.target.closest('[data-action="remove-avatar"]')?.remove();
+      return;
+    }
+    if (action === 'remove-social') {
+      ev.target.closest('.coord-social-row')?.remove();
+      return;
+    }
+    if (action === 'save') {
+      const saveBtn = modal.querySelector('[data-action="save"]');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'salvando…';
+
+      let avatarUrl = currentAvatarUrl;
+      if (pendingAvatarFile) {
+        const { url, error } = await uploadDirectorAvatar(userId, pendingAvatarFile);
+        if (error) {
+          toastError('Erro ao enviar foto: ' + error.message);
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Salvar perfil';
+          return;
+        }
+        avatarUrl = url;
+      }
+
+      const socialLinks = Array.from(modal.querySelectorAll('.coord-social-row')).map((row) => ({
+        label: row.querySelector('[data-social-label]').value.trim(),
+        url:   row.querySelector('[data-social-url]').value.trim(),
+      })).filter((s) => s.label && s.url);
+
+      const patch = {
+        avatar_url: avatarUrl,
+        bio_md: modal.querySelector('#bioMd').value,
+        instagram: modal.querySelector('#bioIG').value.trim().replace(/^@/, ''),
+        social_links: socialLinks,
+        is_director_visible: modal.querySelector('#bioVisible').checked,
+      };
+
+      const { error } = await updateUserProfileBio(userId, patch);
+      if (error) {
+        toastError('Erro: ' + error.message);
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Salvar perfil';
+        return;
+      }
+      // atualiza cache local
+      Object.assign(row, patch);
+      modal.remove();
+      toastSuccess('Perfil atualizado.');
+    }
+  });
+}
+
+function bioSocialRow(s, i) {
+  return `
+    <div class="coord-social-row" data-social-i="${i}">
+      <input type="text" data-social-label placeholder="Ex.: site pessoal" value="${escapeHtml(s.label || '')}" />
+      <input type="url" data-social-url placeholder="https://..." value="${escapeHtml(s.url || '')}" />
+      <button type="button" class="icon-btn icon-btn--danger" data-action="remove-social" aria-label="Remover">${icon('x', { size: 12 })}</button>
+    </div>
+  `;
+}

@@ -23,6 +23,12 @@ import {
   assignFichamento,
   markMeetingStatus,
   listUnassignedFichamentos,
+  listCoordinators,
+  createCoordinator,
+  updateCoordinator,
+  deleteCoordinator,
+  reorderCoordinators,
+  uploadCoordinatorAvatar,
   RESOURCE_KINDS,
   RESOURCE_GROUPS,
   resourceKindLabel,
@@ -30,6 +36,7 @@ import {
   driveInfo,
   slugify,
 } from '../../js/study-groups.js';
+import { resizeImageToSquare, validateImageSize } from '../../js/image-resize.js';
 import { toastSuccess, toastError } from '../toast.js';
 
 const ACCENT_OPTIONS = [
@@ -122,10 +129,11 @@ function renderShell() {
     </header>
 
     <nav class="study-editor-tabs" id="studyTabs">
-      ${tabButton('content',  'Conteúdo',     'edit')}
-      ${tabButton('meetings', 'Encontros',    'calendar')}
-      ${tabButton('resources','Materiais',    'book')}
-      ${tabButton('settings', 'Configurações','filter')}
+      ${tabButton('content',     'Conteúdo',      'edit')}
+      ${tabButton('coordination','Coordenação',   'users')}
+      ${tabButton('meetings',    'Encontros',     'calendar')}
+      ${tabButton('resources',   'Materiais',     'book')}
+      ${tabButton('settings',    'Configurações', 'filter')}
     </nav>
 
     <div class="study-editor-body" id="studyTabBody"></div>
@@ -149,10 +157,11 @@ function tabButton(id, label, iconName) {
 
 function renderTab() {
   switch (activeTab) {
-    case 'content':   return renderContentTab();
-    case 'meetings':  return renderMeetingsTab();
-    case 'resources': return renderResourcesTab();
-    case 'settings':  return renderSettingsTab();
+    case 'content':      return renderContentTab();
+    case 'coordination': return renderCoordinationTab();
+    case 'meetings':     return renderMeetingsTab();
+    case 'resources':    return renderResourcesTab();
+    case 'settings':     return renderSettingsTab();
   }
 }
 
@@ -198,6 +207,366 @@ function renderContentTab() {
   body.querySelectorAll('textarea[data-field$="_md"]').forEach((ta) => attachMarkdownEditor(ta));
 
   bindAutosaveFields(body);
+}
+
+// =========================================================================
+// ABA: COORDENAÇÃO — coordenadores do grupo (foto + bio + redes)
+// =========================================================================
+let coordinatorsCache = [];
+
+async function renderCoordinationTab() {
+  const body = document.getElementById('studyTabBody');
+  body.innerHTML = `
+    <div class="study-tab study-tab--coordination">
+      <div class="study-loading">
+        <span class="pages-bloom"><span class="pages-signet">${stampSeal({ size: 22 })}</span></span>
+        <p>Carregando coordenadores…</p>
+      </div>
+    </div>
+  `;
+  const { data, error } = await listCoordinators(page.id);
+  if (error) {
+    body.innerHTML = errorBlock('Erro ao buscar coordenadores: ' + error.message);
+    return;
+  }
+  coordinatorsCache = data;
+  drawCoordination();
+}
+
+function drawCoordination() {
+  const body = document.getElementById('studyTabBody');
+  body.innerHTML = `
+    <div class="study-tab study-tab--coordination">
+      <section class="study-section">
+        <header class="study-section__head">
+          <div>
+            <h3>Coordenação do grupo</h3>
+            <p class="study-section__hint">
+              As pessoas que conduzem o grupo. Aparecem na landing page com foto, bio e redes.
+              Aceita múltiplos coordenadores (drag pra reordenar).
+            </p>
+          </div>
+          <button class="btn btn--primary btn--small" data-action="add-coord">
+            ${icon('plus', { size: 12 })}<span style="margin-left:6px;">Adicionar coordenador</span>
+          </button>
+        </header>
+
+        ${coordinatorsCache.length > 0 ? `
+          <div class="coord-list" id="coordList">
+            ${coordinatorsCache.map(coordRowHtml).join('')}
+          </div>
+        ` : `
+          <div class="study-empty">
+            <p>Nenhum coordenador adicionado. Clique em "Adicionar coordenador" pra começar — você pode ter quantos quiser.</p>
+          </div>
+        `}
+      </section>
+    </div>
+  `;
+
+  body.querySelector('[data-action="add-coord"]').addEventListener('click', () => openCoordModal(null));
+
+  const list = document.getElementById('coordList');
+  if (list) {
+    bindCoordDragDrop(list);
+    list.querySelectorAll('[data-coord-id]').forEach((row) => {
+      row.addEventListener('click', (ev) => {
+        const btn = ev.target.closest('[data-action]');
+        if (!btn) return;
+        ev.preventDefault();
+        const id = row.dataset.coordId;
+        const c = coordinatorsCache.find((x) => x.id === id);
+        if (!c) return;
+        handleCoordAction(btn.dataset.action, c);
+      });
+    });
+  }
+}
+
+function coordRowHtml(c) {
+  const initials = (c.full_name || '?').split(/\s+/).slice(0, 2).map((s) => s[0] || '').join('').toUpperCase();
+  return `
+    <article class="coord-row ${c.is_hidden ? 'is-hidden' : ''}" data-coord-id="${escapeAttr(c.id)}" draggable="true">
+      <div class="coord-row__handle" aria-hidden="true">${icon('drag', { size: 14 })}</div>
+      <div class="coord-row__avatar">
+        ${c.avatar_url
+          ? `<img src="${escapeAttr(c.avatar_url)}" alt="" />`
+          : `<span class="coord-row__initials">${escapeHtml(initials || '?')}</span>`}
+      </div>
+      <div class="coord-row__main">
+        <strong>${escapeHtml(c.full_name || '(sem nome)')}</strong>
+        <span class="coord-row__role">${escapeHtml(c.role_label || 'Coordenação')}</span>
+        ${c.bio_md ? `<p class="coord-row__bio">${escapeHtml(stripHtml(mdToHtml(c.bio_md)).slice(0, 120))}${c.bio_md.length > 120 ? '…' : ''}</p>` : ''}
+        <div class="coord-row__socials">
+          ${c.instagram ? `<span>${icon('external', { size: 9 })}<span style="margin-left:3px;">@${escapeHtml(c.instagram.replace(/^@/, ''))}</span></span>` : ''}
+          ${c.email ? `<span>${icon('contato', { size: 9 })}<span style="margin-left:3px;">${escapeHtml(c.email)}</span></span>` : ''}
+          ${(c.social_links || []).length > 0 ? `<span>+ ${(c.social_links || []).length} link${(c.social_links || []).length === 1 ? '' : 's'}</span>` : ''}
+        </div>
+      </div>
+      <div class="coord-row__actions">
+        <button class="icon-btn" data-action="toggle-hide" title="${c.is_hidden ? 'Mostrar no site' : 'Ocultar do site'}">${icon(c.is_hidden ? 'eye-off' : 'eye', { size: 12 })}</button>
+        <button class="icon-btn" data-action="edit" title="Editar">${icon('edit', { size: 12 })}</button>
+        <button class="icon-btn icon-btn--danger" data-action="delete" title="Remover">${icon('trash', { size: 12 })}</button>
+      </div>
+    </article>
+  `;
+}
+
+async function handleCoordAction(action, c) {
+  if (action === 'edit') return openCoordModal(c);
+  if (action === 'toggle-hide') {
+    const { error } = await updateCoordinator(c.id, { is_hidden: !c.is_hidden });
+    if (error) return toastError('Erro: ' + error.message);
+    c.is_hidden = !c.is_hidden;
+    drawCoordination();
+    return;
+  }
+  if (action === 'delete') {
+    if (!confirm(`Remover ${c.full_name} da coordenação?\n\nA foto (se houver) continua no Storage — mas o vínculo com este grupo é apagado.`)) return;
+    const { error } = await deleteCoordinator(c.id);
+    if (error) return toastError('Erro: ' + error.message);
+    coordinatorsCache = coordinatorsCache.filter((x) => x.id !== c.id);
+    drawCoordination();
+    toastSuccess('Coordenador removido.');
+  }
+}
+
+function bindCoordDragDrop(container) {
+  let dragged = null;
+  container.addEventListener('dragstart', (e) => {
+    const row = e.target.closest('[data-coord-id]');
+    if (!row) return;
+    dragged = row;
+    row.classList.add('is-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  container.addEventListener('dragover', (e) => {
+    if (!dragged) return;
+    e.preventDefault();
+    const target = e.target.closest('[data-coord-id]');
+    if (!target || target === dragged) return;
+    const rect = target.getBoundingClientRect();
+    const before = (e.clientY - rect.top) < rect.height / 2;
+    container.insertBefore(dragged, before ? target : target.nextSibling);
+  });
+  container.addEventListener('dragend', async () => {
+    if (!dragged) return;
+    dragged.classList.remove('is-dragging');
+    const orderedIds = Array.from(container.querySelectorAll('[data-coord-id]')).map((el) => el.dataset.coordId);
+    dragged = null;
+    const { error } = await reorderCoordinators(page.id, orderedIds);
+    if (error) toastError('Erro ao salvar ordem: ' + error.message);
+    else coordinatorsCache.sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id));
+  });
+}
+
+// modal pra criar/editar coordenador
+function openCoordModal(existing) {
+  document.querySelectorAll('.container-prompt').forEach((el) => el.remove());
+
+  const isEdit = !!existing?.id;
+  const c = existing || {
+    full_name: '', role_label: 'Coordenação', bio_md: '',
+    avatar_url: '', instagram: '', email: '', lattes: '', linkedin: '',
+    social_links: [],
+  };
+
+  let pendingAvatarFile = null;
+  let currentAvatarUrl = c.avatar_url || '';
+
+  const modal = document.createElement('div');
+  modal.className = 'container-prompt';
+  modal.innerHTML = `
+    <div class="container-prompt__box" style="width: min(640px, 100%);">
+      <header class="container-prompt__head">
+        <div>
+          <p class="container-prompt__crumb">${isEdit ? 'editar' : 'adicionar'} coordenador</p>
+          <h3>${isEdit ? 'Editar coordenador' : 'Novo coordenador'}</h3>
+          <p class="container-prompt__desc">Foto, nome, papel e bio rica. Suporta Instagram, email, Lattes, LinkedIn e outros links.</p>
+        </div>
+        <button class="icon-btn" data-action="cancel" aria-label="Fechar">${icon('x', { size: 16 })}</button>
+      </header>
+      <div class="container-prompt__body">
+        <div class="coord-form__avatar">
+          <div class="coord-form__avatar-preview" id="avatarPreview">
+            ${currentAvatarUrl
+              ? `<img src="${escapeAttr(currentAvatarUrl)}" alt="" />`
+              : `<span class="coord-form__avatar-empty">${icon('users', { size: 32 })}<span>sem foto</span></span>`}
+          </div>
+          <div class="coord-form__avatar-actions">
+            <label class="btn btn--ghost btn--small" style="cursor: pointer;">
+              ${icon('plus', { size: 12 })}<span style="margin-left:5px;">${currentAvatarUrl ? 'Trocar foto' : 'Adicionar foto'}</span>
+              <input type="file" id="coordAvatarInput" accept="image/*" hidden />
+            </label>
+            ${currentAvatarUrl ? `<button class="btn btn--ghost btn--small" data-action="remove-avatar">${icon('trash', { size: 11 })}<span style="margin-left:5px;">Remover</span></button>` : ''}
+            <small style="color: var(--text-dim); font-size: 11px; font-style: italic; display: block; margin-top: 4px;">
+              JPG/PNG/WEBP. Redimensiona pra 400×400 quadrado automaticamente.
+            </small>
+          </div>
+        </div>
+
+        <label class="container-prompt__field">
+          <span>Nome completo *</span>
+          <input type="text" id="coordName" value="${escapeAttr(c.full_name || '')}" placeholder="Maria da Silva" />
+        </label>
+
+        <label class="container-prompt__field">
+          <span>Papel / título</span>
+          <input type="text" id="coordRole" value="${escapeAttr(c.role_label || 'Coordenação')}" placeholder="Ex.: Coordenação, Co-conduzido por, Convidado(a)" />
+        </label>
+
+        <label class="container-prompt__field">
+          <span>Bio (markdown rico)</span>
+          <textarea id="coordBio" rows="4" placeholder="Psicóloga clínica, mestre em psicologia analítica pela UNICAP. **Pesquisa** sobre sonhos e arquétipos…">${escapeHtml(c.bio_md || '')}</textarea>
+        </label>
+
+        <div class="container-prompt__row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <label class="container-prompt__field">
+            <span>Instagram (sem @)</span>
+            <input type="text" id="coordIG" value="${escapeAttr((c.instagram || '').replace(/^@/, ''))}" placeholder="mariadasilva" />
+          </label>
+          <label class="container-prompt__field">
+            <span>E-mail</span>
+            <input type="email" id="coordEmail" value="${escapeAttr(c.email || '')}" placeholder="maria@email.com" />
+          </label>
+        </div>
+
+        <div class="container-prompt__row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <label class="container-prompt__field">
+            <span>Lattes (URL)</span>
+            <input type="url" id="coordLattes" value="${escapeAttr(c.lattes || '')}" placeholder="http://lattes.cnpq.br/..." />
+          </label>
+          <label class="container-prompt__field">
+            <span>LinkedIn (URL)</span>
+            <input type="url" id="coordLinkedin" value="${escapeAttr(c.linkedin || '')}" placeholder="https://linkedin.com/in/..." />
+          </label>
+        </div>
+
+        <div class="container-prompt__field">
+          <span>Outros links (label + URL)</span>
+          <div id="socialLinks">
+            ${(c.social_links || []).map((s, i) => socialLinkRow(s, i)).join('')}
+          </div>
+          <button type="button" class="btn btn--ghost btn--small" id="addSocialLink" style="margin-top: 6px;">
+            ${icon('plus', { size: 11 })}<span style="margin-left:5px;">Adicionar link</span>
+          </button>
+        </div>
+      </div>
+      <footer class="container-prompt__foot">
+        <button class="btn btn--ghost btn--small" data-action="cancel">Cancelar</button>
+        <button class="btn btn--primary" data-action="save">${isEdit ? 'Salvar' : 'Adicionar'}</button>
+      </footer>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  setTimeout(() => modal.querySelector('#coordName')?.focus(), 80);
+
+  // foto: ao escolher arquivo, faz resize + mostra preview
+  modal.querySelector('#coordAvatarInput').addEventListener('change', async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    try {
+      const resized = await resizeImageToSquare(file, 400);
+      validateImageSize(resized, 1024 * 1024);
+      pendingAvatarFile = resized;
+      const previewUrl = URL.createObjectURL(resized);
+      modal.querySelector('#avatarPreview').innerHTML = `<img src="${previewUrl}" alt="" />`;
+    } catch (e) {
+      toastError('Erro ao processar foto: ' + e.message);
+    }
+  });
+
+  // adicionar link social
+  modal.querySelector('#addSocialLink').addEventListener('click', () => {
+    const wrap = modal.querySelector('#socialLinks');
+    const i = wrap.children.length;
+    wrap.insertAdjacentHTML('beforeend', socialLinkRow({ label: '', url: '' }, i));
+    wrap.lastElementChild.querySelector('input[data-social-label]')?.focus();
+  });
+
+  modal.addEventListener('click', async (ev) => {
+    const action = ev.target.closest('[data-action]')?.dataset?.action;
+    if (action === 'cancel' || ev.target === modal) { modal.remove(); return; }
+    if (action === 'remove-avatar') {
+      pendingAvatarFile = null;
+      currentAvatarUrl = '';
+      modal.querySelector('#avatarPreview').innerHTML = `<span class="coord-form__avatar-empty">${icon('users', { size: 32 })}<span>sem foto</span></span>`;
+      ev.target.closest('[data-action="remove-avatar"]').remove();
+      return;
+    }
+    if (action === 'remove-social') {
+      ev.target.closest('.coord-social-row')?.remove();
+      return;
+    }
+    if (action === 'save') {
+      const saveBtn = modal.querySelector('[data-action="save"]');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'salvando…';
+
+      // coleta dados
+      const full_name = modal.querySelector('#coordName').value.trim();
+      if (!full_name) {
+        toastError('Nome é obrigatório.');
+        saveBtn.disabled = false;
+        saveBtn.textContent = isEdit ? 'Salvar' : 'Adicionar';
+        return;
+      }
+
+      // upload foto se há nova
+      let avatarUrl = currentAvatarUrl;
+      if (pendingAvatarFile) {
+        const { url, error } = await uploadCoordinatorAvatar(page.id, pendingAvatarFile);
+        if (error) {
+          toastError('Erro ao enviar foto: ' + error.message);
+          saveBtn.disabled = false;
+          saveBtn.textContent = isEdit ? 'Salvar' : 'Adicionar';
+          return;
+        }
+        avatarUrl = url;
+      }
+
+      // coleta social_links extras
+      const socialLinks = Array.from(modal.querySelectorAll('.coord-social-row')).map((row) => ({
+        label: row.querySelector('[data-social-label]').value.trim(),
+        url:   row.querySelector('[data-social-url]').value.trim(),
+      })).filter((s) => s.label && s.url);
+
+      const payload = {
+        full_name,
+        role_label: modal.querySelector('#coordRole').value.trim() || 'Coordenação',
+        bio_md: modal.querySelector('#coordBio').value,
+        avatar_url: avatarUrl,
+        instagram: modal.querySelector('#coordIG').value.trim().replace(/^@/, ''),
+        email: modal.querySelector('#coordEmail').value.trim(),
+        lattes: modal.querySelector('#coordLattes').value.trim(),
+        linkedin: modal.querySelector('#coordLinkedin').value.trim(),
+        social_links: socialLinks,
+      };
+
+      if (isEdit) {
+        const { data, error } = await updateCoordinator(existing.id, payload);
+        if (error) { toastError('Erro: ' + error.message); saveBtn.disabled = false; return; }
+        Object.assign(existing, data);
+      } else {
+        const { data, error } = await createCoordinator(page.id, { ...payload, sort_order: coordinatorsCache.length });
+        if (error) { toastError('Erro: ' + error.message); saveBtn.disabled = false; return; }
+        coordinatorsCache.push(data);
+      }
+      modal.remove();
+      drawCoordination();
+      toastSuccess(isEdit ? 'Coordenador atualizado.' : 'Coordenador adicionado.');
+    }
+  });
+}
+
+function socialLinkRow(s, i) {
+  return `
+    <div class="coord-social-row" data-social-i="${i}">
+      <input type="text" data-social-label placeholder="Ex.: site pessoal" value="${escapeAttr(s.label || '')}" />
+      <input type="url" data-social-url placeholder="https://..." value="${escapeAttr(s.url || '')}" />
+      <button type="button" class="icon-btn icon-btn--danger" data-action="remove-social" aria-label="Remover">${icon('x', { size: 12 })}</button>
+    </div>
+  `;
 }
 
 // =========================================================================

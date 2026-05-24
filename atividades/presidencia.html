@@ -62,6 +62,15 @@
     </div>
   </section>
 
+  <!-- DIREÇÃO (dinâmica) — aparece se houver perfis com is_director_visible=true no sector presidencia -->
+  <section class="section section--detalhes" id="direcao" hidden data-director-section>
+    <div class="section__inner" style="max-width:960px">
+      <p class="eyebrow"><span>·</span> Direção</p>
+      <h2><em>Quem conduz a presidência.</em></h2>
+      <div data-directors-sector="presidencia" hidden></div>
+    </div>
+  </section>
+
   <!-- OUTRAS -->
   <section class="section section--outras" data-edit-id="section.outras" data-edit-type="section">
     <div class="section__inner">
@@ -140,5 +149,6 @@
 
   <script src="../script.js" defer></script>
   <script type="module" src="../js/render.js"></script>
+  <script type="module" src="../js/directors-render.js"></script>
 </body>
 </html>

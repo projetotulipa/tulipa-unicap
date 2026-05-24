@@ -122,6 +122,64 @@ export async function markMeetingStatus(meetingId, status) {
   return { error };
 }
 
+// ---------- COORDENADORES DE GRUPO ----------
+
+export async function listCoordinators(pageId) {
+  const { data, error } = await supabase
+    .from('study_group_coordinators')
+    .select('*')
+    .eq('page_id', pageId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  return { data: data || [], error };
+}
+
+export async function createCoordinator(pageId, payload) {
+  const { data: userResp } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from('study_group_coordinators')
+    .insert({ page_id: pageId, created_by: userResp?.user?.id ?? null, ...payload })
+    .select()
+    .single();
+  return { data, error };
+}
+
+export async function updateCoordinator(id, patch) {
+  const { data, error } = await supabase
+    .from('study_group_coordinators')
+    .update(patch)
+    .eq('id', id)
+    .select()
+    .single();
+  return { data, error };
+}
+
+export async function deleteCoordinator(id) {
+  const { error } = await supabase.from('study_group_coordinators').delete().eq('id', id);
+  return { error };
+}
+
+export async function reorderCoordinators(pageId, orderedIds) {
+  const updates = orderedIds.map((id, idx) =>
+    supabase.from('study_group_coordinators').update({ sort_order: idx }).eq('id', id).eq('page_id', pageId)
+  );
+  const results = await Promise.all(updates);
+  const firstError = results.find((r) => r.error)?.error;
+  return { error: firstError || null };
+}
+
+// Upload de avatar pro bucket bio-assets (público)
+export async function uploadCoordinatorAvatar(pageId, file) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `coordinators/${pageId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage
+    .from('bio-assets')
+    .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+  if (error) return { url: null, error };
+  const { data: pub } = supabase.storage.from('bio-assets').getPublicUrl(path);
+  return { url: pub.publicUrl, error: null };
+}
+
 // Lista fichamentos do grupo SEM meeting_id (pra modal "atribuir fichamento").
 export async function listUnassignedFichamentos(groupId) {
   const { data, error } = await supabase
