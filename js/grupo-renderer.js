@@ -156,6 +156,9 @@ function render(group, { meetings, fichamentos, resources }) {
 
   // lazy iframes via IntersectionObserver
   initLazyEmbeds();
+
+  // botão "compartilhar" do hero
+  bindShareButton();
 }
 
 // ---------- sections ----------
@@ -185,9 +188,44 @@ function heroHtml(g) {
           <p class="hero__sub"><span class="rule"></span><em>${escapeHtml(g.hero_subtitle)}</em><span class="rule"></span></p>
         ` : ''}
         ${g.lede ? `<p class="hero__lede">${escapeHtml(g.lede)}</p>` : ''}
+        <button class="grupo-share" type="button" data-share aria-label="Copiar link desta folha">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path d="M10 13 L14 11"/>
+            <circle cx="6" cy="14" r="3"/>
+            <circle cx="18" cy="6" r="3"/>
+            <circle cx="18" cy="18" r="3"/>
+            <path d="M10 15 L14 17"/>
+          </svg>
+          <span>compartilhar</span>
+        </button>
       </div>
     </header>
   `;
+}
+
+function bindShareButton() {
+  const btn = APP.querySelector('[data-share]');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    const url = location.href;
+    const title = document.title;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      btn.classList.add('is-copied');
+      const orig = btn.querySelector('span').textContent;
+      btn.querySelector('span').textContent = 'copiado!';
+      setTimeout(() => {
+        btn.classList.remove('is-copied');
+        btn.querySelector('span').textContent = orig;
+      }, 2000);
+    } catch {
+      // user cancelou o share — ignora
+    }
+  });
 }
 
 function aboutHtml(g) {

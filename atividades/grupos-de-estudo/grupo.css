@@ -485,6 +485,168 @@ a.grupo-resource:hover {
   color: var(--grupo-cream);
 }
 
+/* ===== botão compartilhar (hero) ===== */
+.grupo-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  border-radius: 999px;
+  padding: 8px 14px;
+  margin-top: 16px;
+  color: inherit;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.18s;
+}
+.grupo-share:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+.grupo-share.is-copied {
+  background: rgba(200, 161, 74, 0.30);
+  border-color: var(--grupo-gold);
+}
+.grupo-hero--cream .grupo-share {
+  background: rgba(42, 34, 24, 0.10);
+  border-color: rgba(42, 34, 24, 0.20);
+}
+
+/* ===== view transitions API (browsers que suportam) ===== */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.32s;
+  animation-timing-function: cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* dá nome próprio aos elementos compartilhados entre LP genérica e filha */
+.grupo-card__emoji,
+.grupo-hero__emoji {
+  view-transition-name: grupo-emoji;
+}
+
+/* ===== anim de entrada dos blocos ===== */
+.grupo-app section {
+  animation: grupo-fade-up 0.5s ease both;
+}
+.grupo-app section:nth-child(1) { animation-delay: 0.00s; }
+.grupo-app section:nth-child(2) { animation-delay: 0.05s; }
+.grupo-app section:nth-child(3) { animation-delay: 0.10s; }
+.grupo-app section:nth-child(4) { animation-delay: 0.15s; }
+.grupo-app section:nth-child(5) { animation-delay: 0.20s; }
+.grupo-app section:nth-child(6) { animation-delay: 0.25s; }
+@keyframes grupo-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .grupo-app section { animation: none; }
+  .grupo-bloom__signet { animation: none; }
+}
+
+/* ===== print stylesheet ===== */
+@media print {
+  /* esconde tudo que não é conteúdo principal */
+  .nav, .footer, .to-top, .loader, .skip-link,
+  .grupo-allos-cta, .section--outras,
+  .grupo-hero__emoji, .hero__mesh, .hero__noise, .petals,
+  .grupo-resource__embed, .grupo-share {
+    display: none !important;
+  }
+
+  body, .grupo-app {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+  }
+
+  .hero {
+    background: white !important;
+    color: black !important;
+    min-height: auto !important;
+    padding: 12pt 0 !important;
+  }
+  .hero__breadcrumb { display: none; }
+  .hero__title-display, .hero__lede, .hero__eyebrow, .hero__sub {
+    color: black !important;
+  }
+  .hero__title-display {
+    font-size: 22pt;
+    text-align: left;
+  }
+
+  .section { padding: 8pt 0 !important; }
+
+  /* fichamentos: todos abertos pra impressão */
+  .grupo-fich__body[hidden] {
+    display: block !important;
+  }
+  .grupo-fich__body {
+    background: white !important;
+    color: black !important;
+    border-color: #ccc !important;
+  }
+  .grupo-fich {
+    page-break-inside: avoid;
+    border: 1px solid #ddd !important;
+    background: white !important;
+  }
+  .grupo-fich__head {
+    background: #f5f5f5 !important;
+    color: black !important;
+  }
+  .grupo-fich__main strong { color: #333 !important; }
+  .grupo-fich__chev { display: none; }
+
+  /* timeline mais simples */
+  .grupo-timeline { padding-left: 0; }
+  .grupo-timeline::before { display: none; }
+  .grupo-meeting {
+    page-break-inside: avoid;
+    grid-template-columns: 80px 1fr;
+    margin-bottom: 12pt;
+  }
+  .grupo-meeting__date {
+    position: static !important;
+    background: #f0f0f0 !important;
+    color: black !important;
+    border: 1px solid #ddd !important;
+    text-align: left;
+    padding: 4pt 8pt;
+  }
+  .grupo-meeting__main {
+    background: white !important;
+    color: black !important;
+    border-color: #ccc !important;
+  }
+  .grupo-meeting__notes, .grupo-meeting__head { color: #333 !important; }
+
+  /* resources: simples */
+  .grupo-resources-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .grupo-resource {
+    background: white !important;
+    color: black !important;
+    border-color: #ddd !important;
+    page-break-inside: avoid;
+  }
+  .grupo-resource__head strong { color: #333 !important; }
+
+  /* preserva URLs após links na hora da impressão */
+  .grupo-resource[href]::after {
+    content: ' (' attr(href) ')';
+    font-size: 9pt;
+    color: #888;
+    word-break: break-all;
+  }
+}
+
 /* ===== responsive ===== */
 @media (max-width: 720px) {
   .grupo-timeline {
