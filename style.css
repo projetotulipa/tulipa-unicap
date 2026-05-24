@@ -3677,7 +3677,9 @@ html:has(.quick-nav) { scroll-padding-top: 130px; }
 .grupos-vivos__grid,
 .grupos-arquivo__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  /* auto-fill (não auto-fit) + max 360px: evita esticar quando há só 1 card */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 360px));
+  justify-content: center;
   gap: 24px;
 }
 
