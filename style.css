@@ -3683,18 +3683,17 @@ html:has(.quick-nav) { scroll-padding-top: 130px; }
   gap: 24px;
 }
 
-/* ---- card vertical com cover image grande ---- */
+/* ---- card vertical com cover image grande (sempre paper cream) ---- */
 .grupo-card {
   display: flex;
   flex-direction: column;
-  background: rgba(237, 223, 194, 0.04);
-  border: 1px solid rgba(237, 223, 194, 0.12);
+  background: #F5EFE2;
+  border: 1px solid rgba(74, 92, 54, 0.10);
   border-radius: 16px;
   overflow: hidden;
-  color: #EDDFC2;
+  color: #2A2218;
   text-decoration: none;
   transition: transform 0.32s cubic-bezier(0.2, 0.6, 0.2, 1),
-              background 0.2s,
               border-color 0.2s,
               box-shadow 0.32s;
   position: relative;
@@ -3702,9 +3701,8 @@ html:has(.quick-nav) { scroll-padding-top: 130px; }
 }
 .grupo-card:hover {
   transform: translateY(-6px);
-  background: rgba(237, 223, 194, 0.08);
-  border-color: rgba(237, 223, 194, 0.28);
-  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.30);
+  border-color: rgba(74, 92, 54, 0.25);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.28);
 }
 
 /* cover area: aspect 4:3, com img OU SVG centralizado */
@@ -3760,14 +3758,14 @@ html:has(.quick-nav) { scroll-padding-top: 130px; }
   font-size: 24px;
   font-weight: 500;
   margin: 0 0 8px;
-  color: inherit;
+  color: #5C2230;
   letter-spacing: 0.005em;
 }
 .grupo-card__lede {
   font-family: 'Lora', serif;
   font-size: 13.5px;
   line-height: 1.6;
-  opacity: 0.80;
+  color: rgba(42, 34, 24, 0.75);
   margin: 0 0 16px;
   flex: 1;
 }
@@ -3775,12 +3773,13 @@ html:has(.quick-nav) { scroll-padding-top: 130px; }
   font-family: 'Cormorant Garamond', serif;
   font-style: italic;
   font-size: 13.5px;
-  color: var(--grupo-card-accent, #C8A14A);
+  color: var(--grupo-card-accent, #9F5A6B);
   letter-spacing: 0.02em;
   display: inline-flex;
   align-items: baseline;
   gap: 4px;
   transition: gap 0.18s;
+  font-weight: 500;
 }
 .grupo-card:hover .grupo-card__cta {
   gap: 8px;
@@ -3803,22 +3802,16 @@ html:has(.quick-nav) { scroll-padding-top: 130px; }
 .grupo-card--plum  { --grupo-card-accent: #7B5EA7; }
 .grupo-card--cream { --grupo-card-accent: #EDDFC2; }
 
-/* cards arquivados: tema cream invertido */
+/* cards arquivados: igual cream + dessaturado */
 .section--grupos-arquivo .grupo-card {
   background: white;
-  border: 1px solid rgba(74, 92, 54, 0.15);
-  color: #2A2218;
-  opacity: 0.85;
+  opacity: 0.86;
 }
 .section--grupos-arquivo .grupo-card:hover {
   opacity: 1;
-  background: white;
   border-color: rgba(74, 92, 54, 0.30);
   box-shadow: 0 24px 56px rgba(92, 34, 48, 0.15);
 }
-.section--grupos-arquivo .grupo-card__title { color: #5C2230; }
-.section--grupos-arquivo .grupo-card__lede { color: rgba(42, 34, 24, 0.75); }
-.section--grupos-arquivo .grupo-card__cta { color: #9F5A6B; }
 .section--grupos-arquivo .grupo-card__cover {
   background: linear-gradient(135deg,
               color-mix(in srgb, var(--grupo-card-accent, #9F5A6B) 22%, white) 0%,

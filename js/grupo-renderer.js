@@ -202,7 +202,8 @@ function render(group, { meetings, fichamentos, resources, meetingPages }) {
 
 // ---------- sections ----------
 function heroHtml(g) {
-  const hasCover = !!g.cover_image_url;
+  // só usa cover image se TEM url E o admin não desligou (show_cover_in_hero !== false)
+  const hasCover = !!g.cover_image_url && g.show_cover_in_hero !== false;
   return `
     <header class="hero hero--lp grupo-hero grupo-hero--${g.accent_color || 'wine'} ${hasCover ? 'grupo-hero--has-cover' : ''}" id="topo">
       ${hasCover ? `

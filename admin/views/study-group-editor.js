@@ -1105,9 +1105,9 @@ function renderSettingsTab() {
           <span>Imagem de capa (URL — opcional)</span>
           <input type="url" data-field="cover_image_url" value="${escapeAttr(page.cover_image_url || '')}" placeholder="https://… (imagem JPG/PNG/WEBP)" />
           <small>
-            Se preencher, esta imagem substitui o símbolo SVG nos cards e no hero.
-            Recomendado: 1200×800 (ratio 3:2), até 500KB.
-            Pode usar imagens do Unsplash, Wikimedia, Google Drive (link compartilhado) ou Imgur.
+            Aparece sempre nos cards da página geral. No hero da landing page pode ser
+            mostrada ou escondida (use o toggle abaixo). Recomendado: 1200×800 (ratio 3:2),
+            até 500KB. Pode usar Unsplash, Wikimedia, Google Drive (link público) ou Imgur.
           </small>
         </label>
 
@@ -1116,6 +1116,19 @@ function renderSettingsTab() {
             ? `<img src="${escapeAttr(page.cover_image_url)}" alt="" onerror="this.parentElement.classList.add('is-broken')" />
                <div class="study-cover-preview__broken">⚠ não consegui carregar a imagem</div>`
             : `<div class="study-cover-preview__empty">${coverIcon(page.cover_emoji || 'book', 48)}<p>sem imagem — usando símbolo</p></div>`}
+        </div>
+
+        <div class="study-toggle-row">
+          <div>
+            <strong>Mostrar imagem no hero da landing page</strong>
+            <p>Quando ligado, a capa aparece em destaque no topo da página do grupo.
+            Quando desligado, o hero usa o símbolo SVG e a paleta da cor de destaque
+            (a imagem continua nos cards).</p>
+          </div>
+          <label class="study-switch">
+            <input type="checkbox" data-field="show_cover_in_hero" ${page.show_cover_in_hero !== false ? 'checked' : ''} />
+            <span></span>
+          </label>
         </div>
 
         <div class="study-row">
