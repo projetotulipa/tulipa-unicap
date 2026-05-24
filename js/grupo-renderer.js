@@ -200,6 +200,103 @@ function render(group, { meetings, fichamentos, resources, meetingPages }) {
   bindShareButton();
 }
 
+// ---------- helpers de SVG decorativo ----------
+
+// Wave divider — 3 variantes pra orgânico
+function waveTop(color, variant = 1) {
+  const paths = {
+    1: 'M0,40 C 200,80 400,0 600,40 C 800,80 1000,0 1200,40 L1200,0 L0,0 Z',
+    2: 'M0,30 C 150,70 350,10 550,40 C 750,70 950,20 1200,50 L1200,0 L0,0 Z',
+    3: 'M0,50 C 250,10 450,80 700,30 C 900,0 1100,50 1200,40 L1200,0 L0,0 Z',
+  };
+  return `
+    <svg class="grupo-wave grupo-wave--top" viewBox="0 0 1200 80" preserveAspectRatio="none" aria-hidden="true">
+      <path d="${paths[variant] || paths[1]}" fill="${color}"/>
+    </svg>
+  `;
+}
+
+// Mandala simples — usada atrás do CTA Allos
+function mandalaSeal(size = 200) {
+  return `<svg class="grupo-mandala-seal" viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true">
+    <g fill="none" stroke="currentColor" stroke-width="0.6">
+      <circle cx="50" cy="50" r="40"/>
+      <circle cx="50" cy="50" r="32"/>
+      <circle cx="50" cy="50" r="24"/>
+      <circle cx="50" cy="50" r="16"/>
+      <circle cx="50" cy="50" r="3" fill="currentColor"/>
+      ${Array.from({length: 12}, (_, i) => {
+        const a = (i * 30) * Math.PI / 180;
+        const x1 = 50 + Math.cos(a) * 16;
+        const y1 = 50 + Math.sin(a) * 16;
+        const x2 = 50 + Math.cos(a) * 40;
+        const y2 = 50 + Math.sin(a) * 40;
+        return `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}"/>`;
+      }).join('')}
+      ${Array.from({length: 8}, (_, i) => {
+        const a = (i * 45 + 22.5) * Math.PI / 180;
+        const cx = 50 + Math.cos(a) * 28;
+        const cy = 50 + Math.sin(a) * 28;
+        return `<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="2"/>`;
+      }).join('')}
+    </g>
+  </svg>`;
+}
+
+// Lua crescente — pro estado "sem registro"
+function moonIcon(size = 18) {
+  return `<svg class="grupo-moon" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M20 14 C 19 18 15 21 11 21 C 6 21 2 17 2 12 C 2 7 6 3 11 3 C 9 5 8 8 8 11 C 8 16 14 20 20 14 Z"/>
+  </svg>`;
+}
+
+// Selo "tulipa-mark" — canto do card de encontro
+function meetingSeal() {
+  return `<svg class="grupo-meeting-v2__seal" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 4 C 9 6 8 10 9 14 C 10 17 12 18 12 18 C 12 18 14 17 15 14 C 16 10 15 6 12 4 Z" fill="currentColor" fill-opacity="0.2"/>
+    <path d="M12 18 L12 21"/>
+    <circle cx="12" cy="12" r="11" stroke-dasharray="2 3" stroke-opacity="0.6"/>
+  </svg>`;
+}
+
+// Numeral romano
+function toRoman(num) {
+  const map = [
+    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
+    [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+    [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+  ];
+  let r = '';
+  for (const [v, s] of map) {
+    while (num >= v) { r += s; num -= v; }
+  }
+  return r;
+}
+
+// Pull quote junguiano — 5 citações em rotação
+const PULL_QUOTES = [
+  { body: 'O que negamos no inconsciente nos é dado pelo destino como fato.', author: 'C. G. Jung' },
+  { body: 'Quem olha para fora, sonha — quem olha para dentro, desperta.', author: 'inspirado em Jung' },
+  { body: 'O símbolo é a expressão de algo que ainda não pode ser dito de outro modo.', author: 'C. G. Jung' },
+  { body: 'A psique não é apenas pessoal — ela tem suas raízes coletivas.', author: 'Erich Neumann' },
+  { body: 'Conhecer a nossa sombra é o único modo de não a projetarmos sobre o outro.', author: 'C. G. Jung' },
+];
+
+function pullQuoteHtml(quote) {
+  return `
+    <article class="grupo-pull-quote" aria-hidden="true">
+      <span class="grupo-pull-quote__mark">❝</span>
+      <blockquote><em>${escapeHtml(quote.body)}</em></blockquote>
+      <p class="grupo-pull-quote__author">— ${escapeHtml(quote.author)}</p>
+    </article>
+  `;
+}
+
+// Asterismo decorativo entre seções
+function asterism() {
+  return `<div class="grupo-asterism" aria-hidden="true">∗ &nbsp; ∗ &nbsp; ∗</div>`;
+}
+
 // ---------- sections ----------
 function heroHtml(g) {
   // só usa cover image se TEM url E o admin não desligou (show_cover_in_hero !== false)
@@ -279,6 +376,7 @@ function bindShareButton() {
 function aboutHtml(g) {
   return `
     <section class="section section--sobre" id="sobre">
+      ${waveTop('#F5EFE2', 1)}
       <div class="section__inner section--lp">
         <p class="eyebrow"><span>·</span> Sobre este grupo</p>
         <div class="grupo-prose">${renderMarkdown(g.about_md)}</div>
@@ -290,36 +388,56 @@ function aboutHtml(g) {
 function methodHtml(g) {
   return `
     <section class="section section--detalhes" id="metodo">
+      ${waveTop('#F5EFE2', 2)}
       <div class="section__inner section--lp">
         <p class="eyebrow"><span>·</span> Como funciona</p>
         <div class="grupo-prose">${renderMarkdown(g.method_md)}</div>
+        ${asterism()}
       </div>
     </section>
   `;
 }
 
 function meetingsHtml(meetings, { fichByMeeting, fichExtras, resByMeeting, meetingPages, indexById }) {
+  // monta os items intercalando pull-quotes a cada 3 encontros
+  const items = [];
+  meetings.forEach((m, i) => {
+    items.push(meetingCardHtml(m, {
+      fichs: fichByMeeting.get(m.id) || [],
+      resources: resByMeeting.get(m.id) || [],
+      page: meetingPages[m.id],
+      index: indexById.get(m.id),
+    }));
+    if ((i + 1) % 3 === 0 && i < meetings.length - 1) {
+      const q = PULL_QUOTES[Math.floor(i / 3) % PULL_QUOTES.length];
+      items.push(pullQuoteHtml(q));
+    }
+  });
+
   return `
     <section class="section section--missao grupo-timeline-section" id="encontros">
+      ${waveTop('#3A4827', 3)}
+      <div class="grupo-timeline-ornaments" aria-hidden="true">
+        <span class="grupo-orn grupo-orn--1">✦</span>
+        <span class="grupo-orn grupo-orn--2">∗</span>
+        <span class="grupo-orn grupo-orn--3">⚘</span>
+        <span class="grupo-orn grupo-orn--4">✧</span>
+      </div>
       <div class="section__inner section--lp">
-        <p class="eyebrow eyebrow--light"><span>·</span> Encontros</p>
-        <h2>O que aconteceu nos encontros.</h2>
+        <p class="eyebrow eyebrow--light"><span>❖</span> Encontros</p>
+        <h2 class="grupo-timeline-title"><em>Memória dos encontros.</em></h2>
         <p class="grupo-section__hint">Cada encontro tem seu próprio espaço — resumo, fichamentos e material complementar.</p>
 
         ${meetings.length > 0 ? `
           <div class="grupo-timeline-v2">
-            ${meetings.map((m) => meetingCardHtml(m, {
-              fichs: fichByMeeting.get(m.id) || [],
-              resources: resByMeeting.get(m.id) || [],
-              page: meetingPages[m.id],
-              index: indexById.get(m.id),
-            })).join('')}
+            ${items.join('')}
           </div>
         ` : ''}
 
         ${fichExtras.length > 0 ? `
+          ${asterism()}
           <div class="grupo-fichamentos-extras">
-            <p class="grupo-fich-extras__title">Fichamentos avulsos</p>
+            <p class="grupo-fich-extras__title"><em>Fichamentos avulsos</em></p>
             <p class="grupo-section__hint" style="margin-bottom: 14px;">Sem encontro vinculado — leituras autônomas do grupo.</p>
             <div class="grupo-fichamentos">
               ${fichExtras.map(fichCardHtml).join('')}
@@ -336,38 +454,43 @@ function meetingCardHtml(m, { fichs, resources, page: mp, index }) {
   const day = String(date.getDate()).padStart(2, '0');
   const month = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase();
   const year = date.getFullYear();
-  const weekday = date.toLocaleDateString('pt-BR', { weekday: 'long' });
 
   const statusLabel = { happened: 'realizado', scheduled: 'agendado', cancelled: 'cancelado' }[m.status] || m.status;
   const statusClass = { happened: 'happened', scheduled: 'scheduled', cancelled: 'cancelled' }[m.status] || 'muted';
 
   const hasContent = (mp?.summary_md?.trim()?.length > 0) || fichs.length > 0 || resources.length > 0;
-
-  // título: primeira linha do summary (com #) ou vazio
   const summaryFirstLine = (mp?.summary_md || '').split('\n').find((l) => l.trim())?.replace(/^#+\s*/, '').trim();
+  const roman = toRoman(index);
 
   return `
     <article class="grupo-meeting-v2 grupo-meeting-v2--${statusClass} ${!hasContent ? 'is-empty' : ''}" id="encontro-${index}">
       <div class="grupo-meeting-v2__capsule" aria-hidden="true">
+        <span class="grupo-meeting-v2__ring"></span>
         <span class="grupo-meeting-v2__day">${day}</span>
         <span class="grupo-meeting-v2__month">${escapeHtml(month)}</span>
         <span class="grupo-meeting-v2__year">${year}</span>
-        <span class="grupo-meeting-v2__weekday">${escapeHtml(weekday.slice(0, 3))}</span>
       </div>
 
       <div class="grupo-meeting-v2__main">
+        <span class="grupo-meeting-v2__watermark" aria-hidden="true">${roman}</span>
+        ${meetingSeal()}
+
         <header class="grupo-meeting-v2__head">
           <p class="grupo-meeting-v2__crumb">
-            <span>Encontro #${index}</span>
-            <span class="grupo-meeting-v2__sep">·</span>
+            <span>encontro ${roman}</span>
+            <span class="grupo-meeting-v2__sep">∽</span>
             <span class="grupo-meeting-v2__status grupo-meeting-v2__status--${statusClass}">${escapeHtml(statusLabel)}</span>
           </p>
-          ${summaryFirstLine ? `<h3 class="grupo-meeting-v2__title">${escapeHtml(summaryFirstLine)}</h3>` : ''}
+          ${summaryFirstLine ? `<h3 class="grupo-meeting-v2__title"><em>${escapeHtml(summaryFirstLine)}</em></h3>` : ''}
           <a class="grupo-meeting-v2__share" href="#encontro-${index}" aria-label="Link deste encontro">${shareIcon()}</a>
         </header>
 
         ${!hasContent ? `
-          <p class="grupo-meeting-v2__empty"><em>sem registro detalhado deste encontro ainda.</em></p>
+          <p class="grupo-meeting-v2__empty">
+            ${moonIcon(20)}
+            <span>sem registro deste encontro</span>
+            <em>— em silêncio, aguardando.</em>
+          </p>
         ` : ''}
 
         ${mp?.summary_md?.trim() ? `
@@ -378,7 +501,7 @@ function meetingCardHtml(m, { fichs, resources, page: mp, index }) {
 
         ${fichs.length > 0 ? `
           <div class="grupo-meeting-v2__section">
-            <h4 class="grupo-meeting-v2__section-title">${fichs.length === 1 ? 'Fichamento' : 'Fichamentos'}</h4>
+            <h4 class="grupo-meeting-v2__section-title">─── ${fichs.length === 1 ? 'Fichamento' : 'Fichamentos'} ───</h4>
             <div class="grupo-fichamentos">
               ${fichs.map(fichCardHtml).join('')}
             </div>
@@ -387,7 +510,7 @@ function meetingCardHtml(m, { fichs, resources, page: mp, index }) {
 
         ${resources.length > 0 ? `
           <div class="grupo-meeting-v2__section">
-            <h4 class="grupo-meeting-v2__section-title">Material deste encontro</h4>
+            <h4 class="grupo-meeting-v2__section-title">─── Material deste encontro ───</h4>
             <div class="grupo-meeting-v2__resources">
               ${resources.map(resourceCardHtml).join('')}
             </div>
@@ -444,6 +567,7 @@ function resourcesHtml(resByGroup) {
   if (blocks.length === 0) return '';
   return `
     <section class="section section--sobre grupo-resources-section" id="material">
+      ${waveTop('#F5EFE2', 1)}
       <div class="section__inner section--lp">
         <p class="eyebrow"><span>·</span> Material complementar</p>
         <h2>Para se aprofundar.</h2>
@@ -503,14 +627,16 @@ function kindCta(kind) {
 function allosCtaHtml() {
   return `
     <section class="grupo-allos-cta">
+      ${waveTop('#9F5A6B', 2)}
+      <div class="grupo-allos-cta__mandala" aria-hidden="true">${mandalaSeal(280)}</div>
       <div class="grupo-allos-cta__inner">
-        <p class="eyebrow"><span>·</span> Apoio terapêutico</p>
+        <p class="eyebrow"><span>· ∽ ·</span> Apoio terapêutico</p>
         <h3>Quer fazer psicoterapia com valor adaptado?</h3>
         <p>
           A Associação <strong>Allos</strong> oferece atendimento psicoterapêutico
           acessível, com valor adaptado à sua realidade. Cuidado profissional pra quem precisa começar.
         </p>
-        <a class="btn btn--primary" href="https://allos.org.br/terapiasocial" target="_blank" rel="noopener">
+        <a class="btn btn--primary grupo-allos-cta__btn" href="https://allos.org.br/terapiasocial" target="_blank" rel="noopener">
           <span>Agendar pela Allos</span>
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
             <path d="M5 12h14M13 6l6 6-6 6"/>
@@ -524,6 +650,7 @@ function allosCtaHtml() {
 function outrosCtaHtml() {
   return `
     <section class="section section--outras">
+      ${waveTop('#F5EFE2', 3)}
       <div class="section__inner">
         <p class="eyebrow"><span>·</span> Continue explorando</p>
         <h2>Outros grupos e atividades.</h2>
