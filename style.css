@@ -1755,6 +1755,8 @@ strong { font-weight: 600; }
   overflow: hidden;
   transition: transform var(--transition);
 }
+.outras-grid__card[hidden] { display: none !important; }
+[data-page-link-hidden] { display: none !important; }
 .outras-grid__card:hover {
   transform: translateY(-6px);
 }

@@ -202,6 +202,10 @@ function render(group, { meetings, fichamentos, resources, meetingPages, coordin
 
   // botão "compartilhar" do hero
   bindShareButton();
+
+  // dispara re-render do render.js pra cobrir cards dinâmicos com applyPageVisibility
+  // (esconde "outras atividades" cujo page foi marcado como hidden no admin)
+  try { window.postMessage({ kind: 'tulipa:re-render' }, location.origin); } catch {}
 }
 
 // ---------- helpers de SVG decorativo ----------
