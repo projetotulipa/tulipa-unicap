@@ -27,6 +27,10 @@ async function init() {
     ARCHIVE_GRID.innerHTML = archived.map((g) => cardHtml(g, true)).join('');
     ARCHIVE_SECTION.removeAttribute('hidden');
   }
+
+  // sinaliza pro render.js reaplicar applyPageVisibility após os cards
+  // aparecerem (esconde cards de grupos cuja page foi ocultada via admin)
+  try { window.postMessage({ kind: 'tulipa:re-render' }, location.origin); } catch {}
 }
 
 function cardHtml(g, isArchived = false) {

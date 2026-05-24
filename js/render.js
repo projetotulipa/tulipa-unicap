@@ -295,24 +295,58 @@ function applyBoundVisibility() {
 }
 
 // ---------- esconder referências a páginas marcadas como hidden ----------
-// global.hidden['page.<slug>'] = true → esconde <a href*="<slug>.html"> nos menus
+// global.hidden['page.<slug>'] = true → esconde TUDO que referencia essa página:
+// links no nav, cards de atividade na home, cards de "outras atividades" nas LPs,
+// cards na lista pública de grupos, pills de departamento, items de footer.
+// O alvo escondido é o ancestral "carta" mais próximo do link (ou o próprio link).
 function applyPageVisibility() {
   const data = getData();
   const hidden = data.global?.hidden || {};
-  // primeiro re-mostra tudo que pode ter sido escondido por esta regra
+
+  // primeiro re-mostra tudo que esta regra escondeu antes
   for (const el of document.querySelectorAll('[data-page-link-hidden]')) {
     el.removeAttribute('hidden');
     delete el.dataset.pageLinkHidden;
   }
+
+  // selectors de ancestrais que devem sumir junto com o link
+  // (do mais específico pro mais genérico)
+  const ANCESTOR_SELECTOR = [
+    '.outras-grid__card',
+    '.grupo-card',
+    '.grupo-card--archived',
+    '.dept-pill',
+    '.card',
+    '.profile-card',
+    '.footer__col li',
+    '.nav__menu li',
+    'li[data-edit-id]',
+    'li',
+  ].join(', ');
+
   for (const key of Object.keys(hidden)) {
     if (!key.startsWith('page.')) continue;
     if (!hidden[key]) continue;
     const slug = key.replace('page.', '');
+
+    // cobre múltiplos padrões de href:
+    //   "atividades/<slug>.html"        (links de nav, footer, cards)
+    //   "<slug>.html"                   (links relativos internos)
+    //   "atividades/<slug>"             (pretty URL sem extensão)
+    //   "grupos-de-estudo/<slug>"       (LP filha de grupo)
+    //   "grupos-de-estudo/grupo.html?id=<slug>" (query string)
+    const escSlug = CSS.escape(slug);
     const links = document.querySelectorAll(
-      `a[href*="atividades/${CSS.escape(slug)}.html"], a[href$="${CSS.escape(slug)}.html"]`
+      `a[href*="atividades/${escSlug}.html"],
+       a[href$="${escSlug}.html"],
+       a[href*="atividades/${escSlug}"],
+       a[href*="grupos-de-estudo/${escSlug}"],
+       a[href*="?id=${escSlug}"],
+       a[href*="&id=${escSlug}"]`.replace(/\s+/g, ' ')
     );
+
     for (const a of links) {
-      const target = a.closest('li, .dept-pill, .card') || a;
+      const target = a.closest(ANCESTOR_SELECTOR) || a;
       target.setAttribute('hidden', '');
       target.dataset.pageLinkHidden = '1';
     }
