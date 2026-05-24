@@ -640,6 +640,7 @@ a.grupo-resource:hover {
   font-size: 32px;
   margin: 8px 0 14px;
   letter-spacing: 0.01em;
+  color: #F5EFE2 !important;
 }
 .grupo-allos-cta p {
   font-family: 'Lora', serif;
