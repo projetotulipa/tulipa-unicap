@@ -240,6 +240,49 @@ const ICONS = {
     <path d="M16 24.5 L16 28.5"/>
     <path d="M14.5 9.5 C 14.5 12, 15 14.5, 16 16"/>
   </svg>`,
+
+  // ---- recursos / mídia (study groups) ----
+  book: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 5 C 4 4.4 4.4 4 5 4 L11 4 L11 19 L5 19 C 4.4 19 4 19.4 4 20 L4 5 Z"/>
+    <path d="M20 5 C 20 4.4 19.6 4 19 4 L13 4 L13 19 L19 19 C 19.6 19 20 19.4 20 20 L20 5 Z"/>
+    <path d="M11 4 L13 4"/>
+  </svg>`,
+
+  play: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9"/>
+    <path d="M10 8 L16 12 L10 16 Z" fill="currentColor"/>
+  </svg>`,
+
+  film: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="3" y="4" width="18" height="16" rx="1.5"/>
+    <path d="M3 8 L21 8 M3 16 L21 16"/>
+    <path d="M7 4 L7 8 M7 16 L7 20 M17 4 L17 8 M17 16 L17 20"/>
+  </svg>`,
+
+  mic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="9" y="3" width="6" height="11" rx="3"/>
+    <path d="M5 11 C 5 15 8 17 12 17 C 16 17 19 15 19 11"/>
+    <path d="M12 17 L12 21 M9 21 L15 21"/>
+  </svg>`,
+
+  image: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="3" y="4" width="18" height="16" rx="2"/>
+    <circle cx="9" cy="10" r="2"/>
+    <path d="M3 18 L9 12 L13 16 L17 12 L21 16"/>
+  </svg>`,
+
+  document: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M6 3 L14 3 L19 8 L19 21 L6 21 Z"/>
+    <path d="M14 3 L14 8 L19 8"/>
+    <path d="M9 13 L16 13 M9 17 L14 17 M9 9 L11 9"/>
+  </svg>`,
+
+  // ícone próprio do módulo "Grupos de Estudo" — folha aberta com fita marca-página
+  study: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 5 C 6 4 9 4 12 5 C 15 4 18 4 21 5 L21 19 C 18 18 15 18 12 19 C 9 18 6 18 3 19 Z"/>
+    <path d="M12 5 L12 19"/>
+    <path d="M16 5 L16 11 L17.5 10 L19 11 L19 5"/>
+  </svg>`,
 };
 
 export function icon(name, opts = {}) {

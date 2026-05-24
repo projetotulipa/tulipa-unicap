@@ -12,3 +12,7 @@ desktop.ini
 # Local dev
 node_modules/
 *.log
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/

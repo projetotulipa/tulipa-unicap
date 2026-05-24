@@ -23,6 +23,9 @@ import { renderPages }      from './views/pages.js';
 import { renderPageEditor } from './views/page-editor.js';
 import { renderMembers }    from './views/members.js';
 import { renderBio }        from './views/bio.js';
+import { renderStudyGroups }      from './views/study-groups.js';
+import { renderStudyGroupNew }    from './views/study-group-new.js';
+import { renderStudyGroupEditor } from './views/study-group-editor.js';
 import { renderAttendanceDashboard } from './views/attendance.js';
 import { renderAttendanceGroups }    from './views/attendance-groups.js';
 import { renderAttendancePeople }    from './views/attendance-people.js';
@@ -140,6 +143,10 @@ function enterApp() {
   for (const el of $$('[data-admin-only]')) {
     el.hidden = state.role !== 'admin';
   }
+  // mostra "Grupos de Estudo" pra admin OR sector presidência
+  for (const el of $$('[data-study-only]')) {
+    el.hidden = !canManageStudyGroups();
+  }
   // mostra "Bio" só pra admin
   for (const el of $$('[data-bio-only]')) {
     el.hidden = !canManageBio();
@@ -220,6 +227,11 @@ function route() {
         if (!canManagePages()) { location.hash = defaultHashForUser(); return; }
         if (parts[1]) return renderPageEditor(ctx, parts[1]);
         return renderPages(ctx);
+      case 'grupos-estudo':
+        if (!canManageStudyGroups()) { location.hash = defaultHashForUser(); return; }
+        if (parts[1] === 'novo')   return renderStudyGroupNew(ctx);
+        if (parts[1])              return renderStudyGroupEditor(ctx, parts[1]);
+        return renderStudyGroups(ctx);
       case 'presenca':
         if (!canManageAttendance()) { location.hash = defaultHashForUser(); return; }
         if (parts[1] === 'grupos' && parts[2]) return renderAttendanceGroupDetail(ctx, parts[2]);
@@ -298,6 +310,12 @@ function canManageBio() {
   return state.role === 'admin';
 }
 
+function canManageStudyGroups() {
+  // admin OU sector presidência editam landing pages dos grupos de estudo
+  if (state.role === 'admin') return true;
+  return state.sector === 'presidencia';
+}
+
 function canManageForms() {
   // só admin gerencia formulários e vê as respostas
   return state.role === 'admin';
@@ -321,6 +339,7 @@ function defaultHashForUser() {
   if (state.sector === 'tesouraria') return '#/financeiro';
   if (state.sector === 'pesquisa')   return '#/pesquisa';
   if (state.sector === 'midia')      return '#/midia';
+  if (state.sector === 'presidencia') return '#/grupos-estudo';
   return '#/paginas';
 }
 
