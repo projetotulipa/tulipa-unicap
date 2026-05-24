@@ -13,6 +13,7 @@ let currentScope = null;
 let currentSchema = null;
 let originalsByEditId = null;
 let activeBlockId = null;
+let currentIframeDoc = null;
 
 const viewState = {
   filter: 'all', // all | visible | hidden
@@ -118,6 +119,7 @@ export async function renderPageEditor(ctx, slug) {
 
   currentSchema = getSchema(scope, iframeDoc);
   originalsByEditId = collectOriginals(iframeDoc);
+  currentIframeDoc = iframeDoc;
 
   notifyPreview();
   renderStats(ctx);
@@ -528,6 +530,8 @@ function buildCard(ctx, block, isHidden) {
     .join(' · ');
 
   const fieldCount = block.fields.length;
+  const containerCount = (block.containers || []).length;
+  const hasEditable = fieldCount > 0 || containerCount > 0;
   const isActive = activeBlockId === block.sectionId;
 
   const card = document.createElement('article');
@@ -550,7 +554,7 @@ function buildCard(ctx, block, isHidden) {
       ${summaryText
         ? `<p class="pages-block-letter__preview">${escapeHtml(truncate(summaryText, 160))}</p>`
         : `<p class="pages-block-letter__preview pages-block-letter__preview--empty">sem preview de texto</p>`}
-      <p class="pages-block-letter__meta">${fieldCount > 0 ? `${fieldCount} campo${fieldCount === 1 ? '' : 's'} editável${fieldCount === 1 ? '' : 'is'}` : 'sem campos — apenas reordenar ou ocultar'}</p>
+      <p class="pages-block-letter__meta">${describeBlockMeta(fieldCount, containerCount)}</p>
     </div>
     <div class="pages-block-letter__actions">
       <button class="icon-btn" data-action="move-up" title="Mover para cima" aria-label="Mover para cima">${icon('arrow-up', { size: 14 })}</button>
@@ -558,7 +562,7 @@ function buildCard(ctx, block, isHidden) {
       <button class="icon-btn ${isHidden ? 'is-active' : ''}" data-action="toggle-hide"
               title="${isHidden ? 'Mostrar no site' : 'Ocultar do site'}"
               aria-label="${isHidden ? 'Mostrar' : 'Ocultar'}">${icon(isHidden ? 'eye-off' : 'eye', { size: 14 })}</button>
-      ${fieldCount > 0
+      ${hasEditable
         ? `<button class="btn btn--ghost btn--small" data-action="edit" aria-label="Editar textos do bloco">${icon('edit', { size: 12 })}<span style="margin-left:6px;">Editar</span></button>`
         : ''
       }
@@ -600,6 +604,7 @@ function handleAction(ctx, action, block) {
       draw(ctx);
       openBlockDrawer(ctx, block, {
         scope: currentScope,
+        iframeDoc: currentIframeDoc,
         onChange: () => draw(ctx),
         notifyPreview,
         onClose: () => {
@@ -668,6 +673,14 @@ function bindDragDrop(ctx, container) {
   });
 
   container.addEventListener('drop', (e) => e.preventDefault());
+}
+
+function describeBlockMeta(fieldCount, containerCount) {
+  const parts = [];
+  if (fieldCount > 0) parts.push(`${fieldCount} campo${fieldCount === 1 ? '' : 's'} editável${fieldCount === 1 ? '' : 'is'}`);
+  if (containerCount > 0) parts.push(`${containerCount} lista${containerCount === 1 ? '' : 's'} de items`);
+  if (parts.length === 0) return 'sem campos — apenas reordenar ou ocultar';
+  return parts.join(' · ');
 }
 
 function getEffectiveValue(ctx, editId) {

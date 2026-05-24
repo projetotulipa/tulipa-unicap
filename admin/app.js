@@ -7,6 +7,8 @@ import {
   getData, getScope, patchEdit, setOrder, setBlockOrder, getBlockOrder,
   bootstrap, publish, onChange, listRecentSnapshots,
   listSnapshotsByScope, getSnapshotData, revertToSnapshot, diffSnapshotData,
+  getContainerItems, setContainerItems, addContainerItem, updateContainerItem, removeContainerItem,
+  getContainerOrder, setContainerOrder, setAttr,
 } from '../js/site-data.js';
 import {
   HELP_SLOTS, helpSlotByKey, helpDefault,
@@ -191,6 +193,8 @@ function route() {
     api: {
       supabase, getData, getScope, patchEdit, setOrder,
       setBlockOrder, getBlockOrder,
+      getContainerItems, setContainerItems, addContainerItem, updateContainerItem, removeContainerItem,
+      getContainerOrder, setContainerOrder, setAttr,
       publish, onChange, listRecentSnapshots,
       listSnapshotsByScope, getSnapshotData, revertToSnapshot, diffSnapshotData,
       HELP_SLOTS, helpSlotByKey, helpDefault,

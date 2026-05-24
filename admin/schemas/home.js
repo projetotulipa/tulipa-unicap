@@ -5,6 +5,11 @@
 //   'text'        — uma linha, sem formatação
 //   'rich'        — multi-linha, aceita markdown leve (**negrito**, *itálico*)
 //   'link-label'  — texto puro do link (preserva atributos como href)
+//
+// Containers (opcionais por bloco): listam grupos de "items" do bloco — cards,
+// pills, links — que o admin pode editar individualmente, ocultar, reordenar,
+// adicionar ou remover. Cada container aponta pra um `data-edit-container` real
+// no HTML, e descreve os sub-campos editáveis de cada item.
 
 export const HOME_SCHEMA = {
   scope: 'global',
@@ -69,17 +74,24 @@ export const HOME_SCHEMA = {
       sectionId: 'section.missao',
       iconName: 'missao',
       label: 'Nossa missão',
-      description: 'Citação grande seguida de 3 pilares: Propagar · Aprofundar · Acolher.',
+      description: 'Citação grande seguida de pilares: Propagar · Aprofundar · Acolher.',
       summaryFields: ['missao.title'],
       fields: [
         { id: 'missao.eyebrow', label: 'Eyebrow',                type: 'text' },
         { id: 'missao.title',   label: 'Citação grande (centro)', type: 'rich' },
-        { id: 'missao.pillar.propagar.title',   label: 'Pilar 1 — título',  type: 'text' },
-        { id: 'missao.pillar.propagar.body',    label: 'Pilar 1 — texto',   type: 'rich' },
-        { id: 'missao.pillar.aprofundar.title', label: 'Pilar 2 — título',  type: 'text' },
-        { id: 'missao.pillar.aprofundar.body',  label: 'Pilar 2 — texto',   type: 'rich' },
-        { id: 'missao.pillar.acolher.title',    label: 'Pilar 3 — título',  type: 'text' },
-        { id: 'missao.pillar.acolher.body',     label: 'Pilar 3 — texto',   type: 'rich' },
+      ],
+      containers: [
+        {
+          key: 'missao.pillars',
+          label: 'Pilares',
+          itemNoun: 'pilar',
+          itemNounPlural: 'pilares',
+          defaultBasedOn: 'missao.pillar.propagar',
+          itemFieldSuffixes: [
+            { suffix: '.title', label: 'Título',    type: 'text' },
+            { suffix: '.body',  label: 'Descrição', type: 'rich' },
+          ],
+        },
       ],
     },
     {
@@ -106,19 +118,25 @@ export const HOME_SCHEMA = {
       sectionId: 'section.atividades',
       iconName: 'atividades',
       label: 'Atividades',
-      description: '4 cards: Grupos de Estudo, Leitura Conjunta, Arteterapia, Allos.',
+      description: 'Cabeçalho da seção + cards de atividades. Cada card é editável individualmente.',
       summaryFields: ['atividades.title'],
       fields: [
-        { id: 'atividades.eyebrow', label: 'Eyebrow',           type: 'text' },
-        { id: 'atividades.title',   label: 'Título da seção',   type: 'rich' },
-        { id: 'atividades.card.grupos.title',  label: 'Card 1 — título',  type: 'rich' },
-        { id: 'atividades.card.grupos.body',   label: 'Card 1 — texto',   type: 'rich' },
-        { id: 'atividades.card.leitura.title', label: 'Card 2 — título',  type: 'rich' },
-        { id: 'atividades.card.leitura.body',  label: 'Card 2 — texto',   type: 'rich' },
-        { id: 'atividades.card.arte.title',    label: 'Card 3 — título',  type: 'rich' },
-        { id: 'atividades.card.arte.body',     label: 'Card 3 — texto',   type: 'rich' },
-        { id: 'atividades.card.allos.title',   label: 'Card 4 — título',  type: 'rich' },
-        { id: 'atividades.card.allos.body',    label: 'Card 4 — texto',   type: 'rich' },
+        { id: 'atividades.eyebrow', label: 'Eyebrow',         type: 'text' },
+        { id: 'atividades.title',   label: 'Título da seção', type: 'rich' },
+      ],
+      containers: [
+        {
+          key: 'atividades.cards',
+          label: 'Cards de atividade',
+          itemNoun: 'card',
+          itemNounPlural: 'cards',
+          supportsHref: true,
+          defaultBasedOn: 'atividades.card.grupos',
+          itemFieldSuffixes: [
+            { suffix: '.title', label: 'Título',    type: 'rich' },
+            { suffix: '.body',  label: 'Descrição', type: 'rich' },
+          ],
+        },
       ],
     },
     {
@@ -126,19 +144,36 @@ export const HOME_SCHEMA = {
       sectionId: 'section.departamentos',
       iconName: 'departamentos',
       label: 'Departamentos',
-      description: 'Hierarquia em árvore: 3 cargos no topo + 4 departamentos abaixo.',
+      description: 'Cabeçalho + hierarquia em árvore: cargos no topo e departamentos abaixo.',
       summaryFields: ['depts.title', 'depts.intro'],
       fields: [
-        { id: 'depts.eyebrow', label: 'Eyebrow',         type: 'text' },
-        { id: 'depts.title',   label: 'Título da seção', type: 'rich' },
+        { id: 'depts.eyebrow', label: 'Eyebrow',            type: 'text' },
+        { id: 'depts.title',   label: 'Título da seção',    type: 'rich' },
         { id: 'depts.intro',   label: 'Texto introdutório', type: 'rich' },
-        { id: 'depts.lead.prof-orientador.label', label: 'Cargo topo 1 (esquerda)', type: 'link-label' },
-        { id: 'depts.lead.presidencia.label',     label: 'Cargo topo 2 (centro)',   type: 'link-label' },
-        { id: 'depts.lead.prof-colaborador.label',label: 'Cargo topo 3 (direita)',  type: 'link-label' },
-        { id: 'depts.dept.midia.label',           label: 'Departamento 1',          type: 'link-label' },
-        { id: 'depts.dept.pesquisa.label',        label: 'Departamento 2',          type: 'link-label' },
-        { id: 'depts.dept.tesouraria.label',      label: 'Departamento 3',          type: 'link-label' },
-        { id: 'depts.dept.secretaria.label',      label: 'Departamento 4',          type: 'link-label' },
+      ],
+      containers: [
+        {
+          key: 'depts.leadership',
+          label: 'Cargos do topo',
+          itemNoun: 'cargo',
+          itemNounPlural: 'cargos',
+          supportsHref: true,
+          defaultBasedOn: 'depts.lead.prof-orientador',
+          itemFieldSuffixes: [
+            { suffix: '.label', label: 'Rótulo (texto do botão)', type: 'link-label' },
+          ],
+        },
+        {
+          key: 'depts.depts',
+          label: 'Departamentos',
+          itemNoun: 'departamento',
+          itemNounPlural: 'departamentos',
+          supportsHref: true,
+          defaultBasedOn: 'depts.dept.midia',
+          itemFieldSuffixes: [
+            { suffix: '.label', label: 'Rótulo (texto do botão)', type: 'link-label' },
+          ],
+        },
       ],
     },
     {
@@ -158,19 +193,27 @@ export const HOME_SCHEMA = {
       sectionId: 'section.contato',
       iconName: 'contato',
       label: 'Contato',
-      description: '3 vias de contato: Instagram, endereço UNICAP e e-mail. Mais o selo com citação.',
+      description: 'Vias de contato (Instagram, endereço, e-mail) + selo com citação.',
       summaryFields: ['contato.title', 'contato.body'],
       fields: [
         { id: 'contato.eyebrow', label: 'Eyebrow',          type: 'text' },
         { id: 'contato.title',   label: 'Título da seção',  type: 'rich' },
         { id: 'contato.body',    label: 'Parágrafo introdutório', type: 'rich' },
-        { id: 'contato.link.instagram.title', label: 'Instagram — título', type: 'text' },
-        { id: 'contato.link.instagram.sub',   label: 'Instagram — descrição', type: 'text' },
-        { id: 'contato.link.endereco.title',  label: 'Endereço — título',  type: 'text' },
-        { id: 'contato.link.endereco.sub',    label: 'Endereço — descrição', type: 'text' },
-        { id: 'contato.link.email.title',     label: 'E-mail — título',    type: 'text' },
-        { id: 'contato.link.email.sub',       label: 'E-mail — descrição', type: 'text' },
-        { id: 'contato.card.quote',           label: 'Citação no selo',    type: 'rich' },
+        { id: 'contato.card.quote', label: 'Citação no selo',    type: 'rich' },
+      ],
+      containers: [
+        {
+          key: 'contato.links',
+          label: 'Vias de contato',
+          itemNoun: 'via',
+          itemNounPlural: 'vias',
+          supportsHref: true,
+          defaultBasedOn: 'contato.link.instagram',
+          itemFieldSuffixes: [
+            { suffix: '.title', label: 'Título',    type: 'text' },
+            { suffix: '.sub',   label: 'Descrição', type: 'text' },
+          ],
+        },
       ],
     },
   ],

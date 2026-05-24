@@ -22,11 +22,21 @@ function writeLS(key, value) {
 // {
 //   text:    { 'edit-id': 'novo texto', ... },     // override de innerHTML
 //   hidden:  { 'edit-id': true, ... },             // visibility
-//   order:   ['edit-id-1', 'edit-id-2', ...],      // ordem das seções (parcial ou completa)
+//   order:   ['edit-id-1', 'edit-id-2', ...],      // (legado) ordem global
+//   blockOrder: ['section.x', ...],                // ordem das seções top-level
 //   labels:  { 'edit-id': 'novo label', ... },     // override de labels (links de nav)
+//   items:   { 'container.key': [                  // cards adicionados pelo admin
+//     { id: 'c_abc', basedOn: 'atividades.card.grupos', href: '...' }
+//   ]},
+//   containerOrder: { 'container.key': ['id1', 'id2', ...] }, // ordem por container
+//   removed: { 'edit-id': true, ... },             // items originais marcados pra sumir
+//   attrs:   { 'edit-id': { href: '...' }, ... },  // overrides de atributo (href)
 // }
 
-const EMPTY_SCOPE = () => ({ text: {}, hidden: {}, order: [], blockOrder: [], labels: {} });
+const EMPTY_SCOPE = () => ({
+  text: {}, hidden: {}, order: [], blockOrder: [], labels: {},
+  items: {}, containerOrder: {}, removed: {}, attrs: {},
+});
 
 function ensureShape(data) {
   data ||= {};
@@ -85,6 +95,81 @@ export function setBlockOrder(scope, blockOrder) {
 
 export function getBlockOrder(scope) {
   return currentData[scope]?.blockOrder || [];
+}
+
+// ---------- container items ----------
+export function getContainerItems(scope, key) {
+  const items = currentData[scope]?.items?.[key];
+  return Array.isArray(items) ? items : [];
+}
+
+export function setContainerItems(scope, key, items) {
+  const s = { ...EMPTY_SCOPE(), ...currentData[scope] };
+  const map = { ...(s.items || {}) };
+  if (!items || items.length === 0) {
+    delete map[key];
+  } else {
+    map[key] = [...items];
+  }
+  s.items = map;
+  currentData[scope] = s;
+  writeLS(LS_DATA, currentData);
+  emit();
+}
+
+export function addContainerItem(scope, key, item) {
+  const items = getContainerItems(scope, key);
+  setContainerItems(scope, key, [...items, item]);
+}
+
+export function updateContainerItem(scope, key, itemId, patch) {
+  const items = getContainerItems(scope, key);
+  const next = items.map((it) => (it.id === itemId ? { ...it, ...patch } : it));
+  setContainerItems(scope, key, next);
+}
+
+export function removeContainerItem(scope, key, itemId) {
+  const items = getContainerItems(scope, key).filter((it) => it.id !== itemId);
+  setContainerItems(scope, key, items);
+}
+
+export function getContainerOrder(scope, key) {
+  const order = currentData[scope]?.containerOrder?.[key];
+  return Array.isArray(order) ? order : null;
+}
+
+export function setContainerOrder(scope, key, order) {
+  const s = { ...EMPTY_SCOPE(), ...currentData[scope] };
+  const map = { ...(s.containerOrder || {}) };
+  if (!order || order.length === 0) {
+    delete map[key];
+  } else {
+    map[key] = [...order];
+  }
+  s.containerOrder = map;
+  currentData[scope] = s;
+  writeLS(LS_DATA, currentData);
+  emit();
+}
+
+export function setAttr(scope, id, attr, value) {
+  const s = { ...EMPTY_SCOPE(), ...currentData[scope] };
+  const map = { ...(s.attrs || {}) };
+  const cur = { ...(map[id] || {}) };
+  if (value == null || value === '') {
+    delete cur[attr];
+  } else {
+    cur[attr] = value;
+  }
+  if (Object.keys(cur).length === 0) {
+    delete map[id];
+  } else {
+    map[id] = cur;
+  }
+  s.attrs = map;
+  currentData[scope] = s;
+  writeLS(LS_DATA, currentData);
+  emit();
 }
 
 export function onChange(fn) {
@@ -246,11 +331,30 @@ export async function revertToSnapshot(scope, version, { note } = {}) {
 }
 
 // diff resumido entre dois snapshots de dados (objects). Retorna lista de mudanças.
-// Compara: text/hidden/labels (chaves modificadas/adicionadas/removidas) e blockOrder (mudança).
+// Compara: text/hidden/labels/attrs/items/containerOrder por chave e blockOrder global.
 export function diffSnapshotData(oldData, newData) {
   const changes = [];
-  const buckets = ['text', 'labels', 'hidden'];
-  for (const b of buckets) {
+  const flatBuckets = ['text', 'labels', 'hidden', 'attrs'];
+  for (const b of flatBuckets) {
+    const o = oldData?.[b] || {};
+    const n = newData?.[b] || {};
+    const keys = new Set([...Object.keys(o), ...Object.keys(n)]);
+    for (const k of keys) {
+      const ov = o[k];
+      const nv = n[k];
+      if (JSON.stringify(ov) === JSON.stringify(nv)) continue;
+      changes.push({
+        bucket: b,
+        key: k,
+        before: ov,
+        after: nv,
+        kind: ov === undefined ? 'add' : nv === undefined ? 'remove' : 'change',
+      });
+    }
+  }
+  // containerOrder e items são objects-of-arrays — comparam por chave
+  const mapBuckets = ['containerOrder', 'items'];
+  for (const b of mapBuckets) {
     const o = oldData?.[b] || {};
     const n = newData?.[b] || {};
     const keys = new Set([...Object.keys(o), ...Object.keys(n)]);
