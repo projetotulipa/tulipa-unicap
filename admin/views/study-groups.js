@@ -5,6 +5,7 @@
 import { icon } from '../icons.js';
 import { stampSeal, stampPage } from '../pages/signet.js';
 import { listStudyGroupPagesAdmin, deleteStudyGroupPage, updateStudyGroupPage } from '../../js/study-groups.js';
+import { coverIcon } from '../../js/study-group-icons.js';
 import { toastSuccess, toastError } from '../toast.js';
 
 const viewState = { filter: 'all' }; // all | published | drafts | archived
@@ -189,7 +190,7 @@ function buildCard(ctx, group, allGroups) {
   card.dataset.pageId = group.page_id;
 
   card.innerHTML = `
-    <div class="study-card__emoji" aria-hidden="true">${escapeHtml(group.cover_emoji || '📖')}</div>
+    <div class="study-card__emoji" aria-hidden="true">${coverIcon(group.cover_emoji || 'book', 32)}</div>
     <div class="study-card__main">
       <header class="study-card__head">
         <h3>${escapeHtml(group.group_name || '(sem nome)')}</h3>

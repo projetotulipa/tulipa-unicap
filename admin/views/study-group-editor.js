@@ -7,6 +7,7 @@ import { icon } from '../icons.js';
 import { stampSeal } from '../pages/signet.js';
 import { supabase } from '../../js/supabase.js';
 import { attachMarkdownEditor, mdToHtml } from '../markdown-editor.js';
+import { COVER_ICONS, coverIcon } from '../../js/study-group-icons.js';
 import {
   updateStudyGroupPage,
   deleteStudyGroupPage,
@@ -36,7 +37,7 @@ const ACCENT_OPTIONS = [
   { value: 'cream',  label: 'Creme',   hex: '#EDDFC2' },
 ];
 
-const COVER_EMOJIS = ['📖', '🌹', '🌙', '🔮', '🎭', '🌳', '🏛️', '⚱️', '🌀', '🪞', '🌌', '✦', '⚘', '🔍', '🦋'];
+// pickers de cover usam SVGs (COVER_ICONS de js/study-group-icons.js)
 
 let page = null;     // payload corrente do study_groups_public
 let pageId = null;
@@ -82,6 +83,8 @@ export async function renderStudyGroupEditor(ctx, id) {
     return;
   }
   page = data;
+  // view study_groups_public retorna `page_id` (não `id`) — normaliza pro código interno
+  page.id = page.page_id;
   renderShell();
   renderTab();
 }
@@ -93,7 +96,7 @@ function renderShell() {
   root.innerHTML = `
     <header class="pages-editor-hero study-editor-hero study-editor-hero--accent-${accent}">
       <div class="pages-editor-hero__seal-wrap">
-        <span class="study-editor-hero__emoji" aria-hidden="true">${escapeHtml(page.cover_emoji || '📖')}</span>
+        <span class="study-editor-hero__emoji" aria-hidden="true">${coverIcon(page.cover_emoji || 'book', 36)}</span>
       </div>
       <div class="pages-editor-hero__inner">
         <p class="pages-editor-hero__crumbs">
@@ -649,9 +652,9 @@ function renderSettingsTab() {
         <h3>Aparência</h3>
         <div class="study-row">
           <label class="study-field study-field--narrow">
-            <span>Emoji da capa</span>
+            <span>Símbolo da capa</span>
             <div class="study-new-emojis" id="settingsEmoji">
-              ${COVER_EMOJIS.map((e) => `<button type="button" class="study-new-emoji ${page.cover_emoji === e ? 'is-active' : ''}" data-emoji="${escapeAttr(e)}">${e}</button>`).join('')}
+              ${COVER_ICONS.map((ic) => `<button type="button" class="study-new-emoji ${page.cover_emoji === ic.value ? 'is-active' : ''}" data-emoji="${escapeAttr(ic.value)}" title="${escapeAttr(ic.label)}" aria-label="${escapeAttr(ic.label)}">${coverIcon(ic.value, 22)}</button>`).join('')}
             </div>
           </label>
           <label class="study-field study-field--narrow">

@@ -11,6 +11,7 @@ import {
   youtubeId,
   driveInfo,
 } from './study-groups.js';
+import { coverIcon } from './study-group-icons.js';
 
 const APP = document.getElementById('grupoApp');
 
@@ -179,7 +180,7 @@ function heroHtml(g) {
       <div class="petals" id="petals" aria-hidden="true"></div>
       <div class="hero__content">
         <p class="hero__breadcrumb"><a href="../grupos-de-estudo.html">← Grupos de Estudo</a></p>
-        <div class="grupo-hero__emoji" aria-hidden="true">${escapeHtml(g.cover_emoji || '📖')}</div>
+        <div class="grupo-hero__emoji" aria-hidden="true">${coverIcon(g.cover_emoji || 'book', 56)}</div>
         ${g.hero_eyebrow ? `<p class="hero__eyebrow">${escapeHtml(g.hero_eyebrow)}</p>` : ''}
         <h1 class="hero__title hero__title--single">
           <span class="hero__title-display">${escapeHtml(g.group_name || '')}</span>
@@ -458,7 +459,7 @@ function renderError({ title, message }) {
       </div>
       <div class="hero__content">
         <p class="hero__breadcrumb"><a href="../grupos-de-estudo.html">← Grupos de Estudo</a></p>
-        <div class="grupo-hero__emoji" aria-hidden="true">🌙</div>
+        <div class="grupo-hero__emoji" aria-hidden="true">${coverIcon('moon', 56)}</div>
         <h1 class="hero__title hero__title--single">
           <span class="hero__title-display">${escapeHtml(title)}</span>
         </h1>

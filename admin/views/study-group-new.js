@@ -11,6 +11,7 @@ import {
   createGroupAndPage,
   slugify,
 } from '../../js/study-groups.js';
+import { COVER_ICONS, coverIcon, DEFAULT_COVER_ICON } from '../../js/study-group-icons.js';
 import { toastSuccess, toastError } from '../toast.js';
 
 const ACCENT_OPTIONS = [
@@ -23,7 +24,7 @@ const ACCENT_OPTIONS = [
   { value: 'cream',  label: 'Creme',   hex: '#EDDFC2' },
 ];
 
-const COVER_EMOJIS = ['📖', '🌹', '🌙', '🔮', '🎭', '🌳', '🏛️', '⚱️', '🌀', '🪞', '🌌', '✦', '⚘', '🔍', '🦋'];
+// pickers de cover usam SVGs de js/study-group-icons.js (COVER_ICONS)
 
 const state = {
   mode: 'pick',          // pick | existing | new
@@ -35,7 +36,7 @@ const state = {
   heroSubtitle: '',
   lede: '',
   accent: 'wine',
-  emoji: '📖',
+  emoji: DEFAULT_COVER_ICON,  // nome do ícone SVG (não emoji)
   saving: false,
 };
 
@@ -46,7 +47,7 @@ export async function renderStudyGroupNew(ctx) {
   Object.assign(state, {
     mode: 'pick', selectedGroupId: null, newGroupName: '', newGroupDesc: '',
     slug: '', slugTouched: false, heroSubtitle: '', lede: '',
-    accent: 'wine', emoji: '📖', saving: false,
+    accent: 'wine', emoji: DEFAULT_COVER_ICON, saving: false,
   });
 
   root.innerHTML = `
@@ -193,10 +194,10 @@ function formHtml() {
 
         <div class="study-new-row">
           <label class="study-new-field study-new-field--narrow">
-            <span>Emoji da capa</span>
+            <span>Símbolo da capa</span>
             <div class="study-new-emojis" id="emojiPicker">
-              ${COVER_EMOJIS.map((e) => `
-                <button type="button" class="study-new-emoji ${state.emoji === e ? 'is-active' : ''}" data-emoji="${escapeAttr(e)}">${e}</button>
+              ${COVER_ICONS.map((ic) => `
+                <button type="button" class="study-new-emoji ${state.emoji === ic.value ? 'is-active' : ''}" data-emoji="${escapeAttr(ic.value)}" title="${escapeAttr(ic.label)}" aria-label="${escapeAttr(ic.label)}">${coverIcon(ic.value, 22)}</button>
               `).join('')}
             </div>
           </label>

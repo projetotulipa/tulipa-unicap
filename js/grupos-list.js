@@ -3,6 +3,7 @@
 // pra LP filha (atualmente grupo.html?id=<slug>; Pretty URLs via 404 redirect).
 
 import { listPublishedStudyGroups } from './study-groups.js';
+import { coverIcon } from './study-group-icons.js';
 
 const ACTIVE_SECTION  = document.getElementById('grupos-ativos');
 const ACTIVE_GRID     = document.getElementById('gruposAtivosGrid');
@@ -35,7 +36,7 @@ function cardHtml(g, isArchived = false) {
   const lede = g.lede ? truncate(stripHtml(g.lede), 130) : 'Clique pra ver descrição, encontros e material complementar.';
   return `
     <a class="grupo-card grupo-card--${accent} ${isArchived ? 'is-archived' : ''}" href="${escapeAttr(url)}">
-      <div class="grupo-card__emoji" aria-hidden="true">${escapeHtml(g.cover_emoji || '📖')}</div>
+      <div class="grupo-card__emoji" aria-hidden="true">${coverIcon(g.cover_emoji || 'book', 32)}</div>
       <div class="grupo-card__main">
         <h3 class="grupo-card__title">${escapeHtml(g.group_name || '(sem nome)')}</h3>
         <p class="grupo-card__lede">${escapeHtml(lede)}</p>
