@@ -39,6 +39,9 @@ async function init() {
     return;
   }
 
+  // Pretty URL: troca /grupo.html?id=<slug> por /<slug> na barra (sem reload)
+  prettyUrl(group.slug);
+
   // SEO meta
   applyMeta(group);
 
@@ -54,6 +57,15 @@ async function init() {
   const resources = resourcesRes.data || [];
 
   render(group, { meetings, fichamentos, resources });
+}
+
+function prettyUrl(slug) {
+  // só faz sentido se atualmente estamos em grupo.html (não se já viemos do redirect)
+  if (!/\/grupo\.html$/.test(location.pathname)) return;
+  const newPath = location.pathname.replace(/\/grupo\.html$/, `/${encodeURIComponent(slug)}`);
+  try {
+    history.replaceState({}, '', newPath + location.hash);
+  } catch {}
 }
 
 function applyMeta(group) {

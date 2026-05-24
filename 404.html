@@ -10,6 +10,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Cormorant+SC:wght@400;500&family=Fraunces:ital,opsz,wght@1,9..144,500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 20 C 35 30, 30 50, 35 65 C 40 78, 50 80, 50 80 C 50 80, 60 78, 65 65 C 70 50, 65 30, 50 20 Z' fill='%235C2230'/%3E%3Cpath d='M50 78 L50 95' stroke='%234A5C36' stroke-width='2' fill='none'/%3E%3C/svg%3E" />
+
+  <!-- Pretty URLs pra grupos de estudo: /atividades/grupos-de-estudo/<slug> → grupo.html?id=<slug>
+       (GitHub Pages serve este 404.html quando o path não existe; aqui detectamos e redirecionamos.) -->
+  <script>
+    (function () {
+      var path = location.pathname;
+      // detecta "/atividades/grupos-de-estudo/<slug>" (com ou sem barra final),
+      // exceto quando o slug é "grupo.html" (já existe esse arquivo)
+      var m = path.match(/\/atividades\/grupos-de-estudo\/([a-z0-9][a-z0-9-]*)\/?$/i);
+      if (m && m[1].toLowerCase() !== 'grupo.html') {
+        // esconde o body pra evitar flash da página 404 durante o redirect
+        var s = document.createElement('style');
+        s.textContent = 'body{visibility:hidden}';
+        document.head.appendChild(s);
+        var base = path.replace(/\/atividades\/grupos-de-estudo\/[a-z0-9][a-z0-9-]*\/?$/i,
+                                '/atividades/grupos-de-estudo/grupo.html');
+        var slug = m[1];
+        location.replace(base + '?id=' + encodeURIComponent(slug) + location.hash);
+      }
+    })();
+  </script>
 </head>
 <body data-scope="global">
   <main class="notfound">

@@ -3633,3 +3633,159 @@ html:has(.quick-nav) { scroll-padding-top: 130px; }
   .file-tree { background: #f8f8f8 !important; color: black !important; border: 1px solid #ccc !important; }
 }
 
+/* ============================================================
+   GRUPOS DE ESTUDO — cards dinâmicos na LP genérica
+   (renderizados por js/grupos-list.js)
+   ============================================================ */
+
+.section--grupos-vivos {
+  background: linear-gradient(180deg, #4A5C36 0%, #3A4827 100%);
+  color: #EDDFC2;
+  padding: 80px 0;
+}
+.section--grupos-vivos .eyebrow,
+.section--grupos-vivos .eyebrow--light { color: #EDDFC2; opacity: 0.85; }
+.section--grupos-vivos .eyebrow span { background: rgba(237, 223, 194, 0.15); color: #EDDFC2; }
+.section--grupos-vivos h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 38px;
+  font-weight: 500;
+  color: #EDDFC2;
+}
+.grupos-vivos__intro,
+.grupos-arquivo__intro {
+  font-family: 'Lora', serif;
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.80;
+  margin: 12px 0 32px;
+  max-width: 620px;
+}
+
+.section--grupos-arquivo {
+  background: #F5EFE2;
+  color: #2A2218;
+  padding: 60px 0;
+}
+.section--grupos-arquivo h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 500;
+  color: #5C2230;
+}
+
+.grupos-vivos__grid,
+.grupos-arquivo__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.grupo-card {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 16px;
+  align-items: start;
+  padding: 20px 22px;
+  background: rgba(237, 223, 194, 0.06);
+  border: 1px solid rgba(237, 223, 194, 0.15);
+  border-radius: 14px;
+  color: #EDDFC2;
+  text-decoration: none;
+  transition: transform 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.grupo-card:hover {
+  transform: translateY(-3px);
+  background: rgba(237, 223, 194, 0.10);
+  border-color: rgba(237, 223, 194, 0.30);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.20);
+}
+
+.grupo-card__emoji {
+  font-size: 36px;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(237, 223, 194, 0.10);
+  border-radius: 12px;
+  border: 1px solid rgba(237, 223, 194, 0.15);
+}
+
+.grupo-card__title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 500;
+  margin: 0 0 6px;
+  color: inherit;
+}
+.grupo-card__lede {
+  font-family: 'Lora', serif;
+  font-size: 13.5px;
+  line-height: 1.55;
+  opacity: 0.80;
+  margin: 0 0 12px;
+}
+.grupo-card__cta {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: #C8A14A;
+  letter-spacing: 0.02em;
+}
+
+/* accents — uma barrinha colorida no topo do card */
+.grupo-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--grupo-card-accent, #9F5A6B);
+}
+.grupo-card--wine  { --grupo-card-accent: #9F5A6B; }
+.grupo-card--rose  { --grupo-card-accent: #C8929B; }
+.grupo-card--sage  { --grupo-card-accent: #8FA084; }
+.grupo-card--moss  { --grupo-card-accent: #4A5C36; }
+.grupo-card--gold  { --grupo-card-accent: #C8A14A; }
+.grupo-card--plum  { --grupo-card-accent: #7B5EA7; }
+.grupo-card--cream { --grupo-card-accent: #EDDFC2; }
+
+/* cards arquivados: tema cream invertido */
+.section--grupos-arquivo .grupo-card {
+  background: white;
+  border: 1px solid rgba(74, 92, 54, 0.15);
+  color: #2A2218;
+  opacity: 0.85;
+}
+.section--grupos-arquivo .grupo-card:hover {
+  opacity: 1;
+  background: white;
+  border-color: rgba(74, 92, 54, 0.30);
+  box-shadow: 0 12px 32px rgba(92, 34, 48, 0.10);
+}
+.section--grupos-arquivo .grupo-card__title { color: #5C2230; }
+.section--grupos-arquivo .grupo-card__lede { color: rgba(42, 34, 24, 0.75); }
+.section--grupos-arquivo .grupo-card__cta { color: #9F5A6B; }
+.section--grupos-arquivo .grupo-card__emoji {
+  background: rgba(74, 92, 54, 0.08);
+  border-color: rgba(74, 92, 54, 0.15);
+}
+
+@media (max-width: 720px) {
+  .grupos-vivos__grid,
+  .grupos-arquivo__grid {
+    grid-template-columns: 1fr;
+  }
+  .grupo-card {
+    grid-template-columns: 50px 1fr;
+    padding: 16px 18px;
+  }
+  .grupo-card__emoji {
+    width: 50px;
+    height: 50px;
+    font-size: 28px;
+  }
+}

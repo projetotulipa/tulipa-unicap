@@ -199,6 +199,31 @@
     </div>
   </section>
 
+  <!-- =====  GRUPOS ATIVOS (dinâmico) ===== -->
+  <section class="section section--grupos-vivos" id="grupos-ativos" hidden>
+    <div class="section__inner">
+      <p class="eyebrow eyebrow--light"><span>·</span> Grupos atuais</p>
+      <h2 class="grupos-vivos__title">O que está acontecendo agora.</h2>
+      <p class="grupos-vivos__intro">
+        Cada grupo abaixo está ativo neste semestre. Clique pra ver descrição,
+        os encontros realizados, fichamentos e material complementar.
+      </p>
+      <div class="grupos-vivos__grid" id="gruposAtivosGrid"></div>
+    </div>
+  </section>
+
+  <!-- =====  ARQUIVO (dinâmico) ===== -->
+  <section class="section section--grupos-arquivo" id="grupos-arquivo" hidden>
+    <div class="section__inner">
+      <p class="eyebrow"><span>·</span> Arquivo</p>
+      <h2>Grupos que já encerraram.</h2>
+      <p class="grupos-arquivo__intro">
+        Memória viva — todos os fichamentos e materiais permanecem disponíveis pra consulta.
+      </p>
+      <div class="grupos-arquivo__grid" id="gruposArquivoGrid"></div>
+    </div>
+  </section>
+
   <!-- =====  PARA QUEM (cream)  ===== -->
   <section class="section section--sobre" data-edit-id="section.sobre-2" data-edit-type="section">
     <div class="section__inner section--lp">
@@ -354,5 +379,6 @@
 
   <script src="../script.js" defer></script>
   <script type="module" src="../js/render.js"></script>
+  <script type="module" src="../js/grupos-list.js"></script>
 </body>
 </html>
